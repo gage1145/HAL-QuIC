@@ -19,7 +19,7 @@ df_ <- raw_file %>%
   )
 
 df_p <- df_ %>%
-  filter(sample == "P") %>%
+  filter(sample == "P" & assay == "RT-QuIC") %>%
   group_by(sample, wells, dilutions, assay, reaction) %>%
   mutate(norm_smooth = rollmean(norm, 10, na.pad=TRUE)) %>%
   ungroup()
@@ -41,7 +41,7 @@ df_calcs <- df_p %>%
 # Fits a double-sigmoid model (growth + decay) to one group's smoothed time series.
 # Returns df with added columns: pred, growth, decay, comb.
 fit_double_sigmoid <- function(df) {
-  form <- norm_smooth ~ SSlogis(time, Asym, xmid, scal)
+  df <- df %>% filter(!is.na(norm_smooth))
 
   time_to_max <- df$time[which.max(df$norm_smooth)]
   max_val     <- max(df$norm_smooth, na.rm = TRUE)
@@ -49,12 +49,23 @@ fit_double_sigmoid <- function(df) {
   df_growth <- df %>%
     mutate(norm_smooth = ifelse(time > time_to_max, max_val, norm_smooth))
 
+  # Fit only the post-peak slice so SSlogis sees a clean descending sigmoid
+  # with a negative asymptote, rather than a long flat run of zeros
   df_decay <- df %>%
     mutate(norm_smooth = ifelse(time < time_to_max, 0, norm_smooth - max_val))
 
+  equil     <- min(df_decay$norm_smooth, na.rm = TRUE)
+  post_span <- max(df$time) - time_to_max
+
+  form <- norm_smooth ~ SSlogis(time, Asym, xmid, scal)
+
   tryCatch({
-    growth_coefs <- coef(nls(form, df_growth))
-    decay_coefs  <- coef(nls(form, df_decay))
+    growth_coefs <- coef(nls(form, df_growth,
+      start = list(Asym = max_val, xmid = time_to_max, scal = time_to_max / 4)
+    ))
+    decay_coefs  <- coef(nls(form, df_decay,
+      start = list(Asym = equil, xmid = time_to_max + post_span / 2, scal = post_span / 4)
+    ))
 
     a <- growth_coefs[1]; b <- growth_coefs[2]; c <- growth_coefs[3]
     d <- decay_coefs[1];  e <- decay_coefs[2];  f <- decay_coefs[3]
@@ -84,19 +95,22 @@ df_modeled <- df_p %>%
   group_modify(~ fit_double_sigmoid(.x)) %>%
   ungroup()
 
+df_unmodeled <- df_modeled %>%
+  filter(is.na(pred))
+
 
 # --- Plots ---
 
 # Equation
 # norm_smooth ~ (a / (1 + exp((b - time) / c))) + (d / (1 + exp((e - time) / f)))
 
-df_modeled %>%
-  # filter(wells == "A01", reaction == levels(reaction)[1]) %>%
+df_unmodeled %>%
+  filter(wells == "A01") %>%
   ggplot(aes(time)) +
   geom_point(aes(y = norm_smooth)) +
-  geom_line(aes(y = pred),   color = "red",    linewidth = 1) +
-  geom_line(aes(y = growth), color = "blue",   linewidth = 1) +
-  geom_line(aes(y = decay),  color = "orange", linewidth = 1)
+  geom_line(aes(y = pred),   color = "red",    linewidth = 1) 
+  # geom_line(aes(y = growth), color = "blue",   linewidth = 1) +
+  # geom_line(aes(y = decay),  color = "orange", linewidth = 1)
 
 df_modeled %>%
   mutate(resid = norm_smooth - pred) %>%
