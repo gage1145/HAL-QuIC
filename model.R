@@ -1,4 +1,5 @@
 library(tidyverse)
+library(broom)
 library(arrow)
 library(magrittr)
 library(modelr)
@@ -19,22 +20,7 @@ df_ <- raw_file %>%
   select(-c(norm, deriv))
 
 df_p <- df_ %>%
-  filter(sample == "P" & assay == "RT-QuIC" & reaction == levels(reaction)[1]) 
-  # group_by(across(all_of(group_list))) %>%
-  # mutate(norm = rollmean(norm, 10, na.pad=TRUE)) %>%
-  # ungroup()
-
-# df_ttm <- df_p %>%
-#   filter(norm == max(norm, na.rm=TRUE), .by = group_list) %>%
-#   rename(time_to_max = time)
-
-# df_calcs <- df_p %>%
-#   calculate_metrics(
-#     group_list,
-#     threshold=4, time_col="time", ttt_values="norm", auc_values = "norm", norm_col = "norm", deriv_col = "deriv"
-#   ) %>%
-#   left_join(df_ttm)
-
+  filter(sample == "P" & assay == "RT-QuIC") 
 
 norm_n_der <- function(df, x, y, norm_point, groups, window=3, smooth=10, zero=TRUE) {
   df %>%
@@ -58,7 +44,7 @@ df_test_sum <- df_test %>%
     max_deriv            = max(deriv, na.rm=TRUE),
     growth_scale         = max_deriv / 4,
     peak_norm            = norm[which.min(deriv2)],
-    time_to_growth_max   = time[which(norm == peak_norm)],
+    time_to_growth_max   = time[which(norm == peak_norm)[1]],
     time_to_growth_mid   = time[which.max(deriv)],
     max_equillibrium     = max(norm[which(time > time_to_growth_max)], na.rm=TRUE),
     min_equillibrium     = min(norm[which(time > time_to_growth_max)], na.rm=TRUE),
@@ -74,141 +60,61 @@ df_test_sum <- df_test %>%
     .groups = "drop"
   )
 
-df_test %>%
+
+form <- norm ~ (a / (1 + exp((b - time) / c))) + (d / (1 + exp((e - time) / f)))
+
+df_mod <- df_test %>%
   left_join(df_test_sum) %>%
   group_by(across(all_of(group_list))) %>%
+  nest() %>%
   mutate(
-    growth = peak_norm / (1 + exp((time_to_growth_mid - time) / growth_scale)),
-    decay  = peak_decay / (1 + exp((time_to_decay_mid - time) / decay_scale)),
-    combined = growth + decay
-  ) %>%
-  select(wells, time, norm, growth, decay, combined) %>%
-  pivot_longer(c(norm, growth, decay, combined), names_to="data") %>%
-  mutate(data = factor(data, levels=c("norm", "growth", "decay", "combined"))) %>%
-  arrange(data) %>%
-  ggplot(aes(time, value, color=data)) +
-  geom_line() +
-  scale_color_manual(values=c("black", "red", "blue", "green")) +
-  # scale_linewidth_manual(values=c(1, 1, 1, 3)) +
-  # scale_linetype_manual(values = c(NULL, "dashed", "dashed", NULL)) +
-  # geom_line(aes(y=growth), color="red", linetype="dashed") +
-  # geom_line(aes(y=decay), color="blue", linetype="dashed") +
-  # geom_line(aes(y=combined), color="green", linewidth=1) +
-  facet_grid(vars(wells)) +
-  scale_x_continuous(breaks=seq(0, 72, 2))
-
-
-
-# Fits a double-sigmoid model (growth + decay) to one group's smoothed time series.
-# Returns df with added columns: pred, growth, decay, comb.
-fit_double_sigmoid <- function(df) {
-
-  max_time    <- max(df$time, na.rm=TRUE)
-  max_val     <- df$norm[which.min(df$deriv2)]
-  time_to_max <- df$time[which(df$norm == max_val)[1]]
-  time_to_mid <- df$time[which.max(df$deriv)]
-
-  df_growth <- df %>%
-    # filter(time <= time_to_max)
-    mutate(norm = ifelse(time > time_to_max, max_val, norm))
-
-  df_decay <- df %>%
-    # filter(time >= time_to_max) %>%
-    mutate(
-      norm = ifelse(time <= time_to_max, 0, norm - max_val)
-      # norm = norm - max_val
-    )
-
-  equillibrium     <- min(df_decay$norm, na.rm = TRUE)
-  decay_mid <- (max_time - time_to_max) / 2
-
-  form <- norm ~ SSlogis(time, Asym, xmid, scal)
-
-  growth_coefs <- decay_coefs <- cc <- c()
-
-  tryCatch(
-    {
-      growth_coefs <- nls(
-        form, df_growth,
-        start = list(Asym = max_val, xmid = time_to_mid, scal = time_to_mid / 2)
-      ) |> coef()
-      a <- growth_coefs[1]; b <- growth_coefs[2]; c <- growth_coefs[3]
-    }, 
-    error = function(e) warning("Growth model failed: ", conditionMessage(e))
+    model = map(data, ~ tryCatch(
+      nls(form, data = .x,
+        start = list(
+          a = .x$peak_norm[1],
+          b = .x$time_to_growth_mid[1],
+          c = .x$growth_scale[1],
+          d = .x$peak_decay[1],
+          e = .x$time_to_decay_mid[1],
+          f = .x$decay_scale[1]
+        ),
+        algorithm = "port",
+        lower = c(a = -Inf, b = -Inf, c = -Inf, d = -Inf, e = .x$time_to_growth_max[1], f = 0.01)
+      ),
+      error = function(e) NULL
+    ))
   )
 
-  tryCatch(
-    {
-      decay_coefs  <- nls(
-        form, df_decay,
-        start = list(Asym = equillibrium, xmid = decay_mid, scal = decay_mid / 2)
-      ) |> coef()
-      d <- decay_coefs[1];  e <- decay_coefs[2];  f <- decay_coefs[3]
-    }, 
-    error = function(e) warning("Decay model failed: ", conditionMessage(e))
-  )
-
-  if (length(growth_coefs) == 0 | length(decay_coefs) == 0) return(
-    mutate(df, pred = NA_real_, growth = NA_real_, decay = NA_real_, comb = NA_real_)
-  )
-  
-  tryCatch(
-    {
-      comb_mod <- nls(
-        norm ~ (a / (1 + exp((b - time) / c))) + (d / (1 + exp((e - time) / f))),
-        df,
-        start = list(a=a, b=b, c=c, d=d, e=e, f=f)
-      )
-      cc <- coef(comb_mod)
-    },
-    error = function(e) warning("Combined model failed: ", conditionMessage(e))
-  )
-
-  if (length(cc) == 0) return(
-    mutate(df, pred = NA_real_, growth = NA_real_, decay = NA_real_, comb = NA_real_)
-  )
-
-  tryCatch(
-    {
-      df %>%
-        add_predictions(comb_mod) %>%
+df_results <- df_mod %>%
+  filter(map_lgl(model, ~ inherits(.x, "nls"))) %>%
+  mutate(
+    augmented = map2(model, data, ~ {
+      cc <- coef(.x)
+      .y %>%
+        add_predictions(.x) %>%
+        add_residuals(.x) %>%
         mutate(
           growth = cc[1] / (1 + exp((cc[2] - time) / cc[3])),
-          decay  = cc[4] / (1 + exp((cc[5] - time) / cc[6])),
-          comb   = growth + decay
-        ) %>%
-        return()
-    }, 
-    error = function(e) {
-      warning("Failed to add predictions: ", conditionMessage(e))
-      mutate(df, pred = NA_real_, growth = NA_real_, decay = NA_real_, comb = NA_real_)
-    }
-  )
-}
+          decay  = cc[4] / (1 + exp((cc[5] - time) / cc[6]))
+        )
+    })
+  ) %>%
+  unnest(augmented)
 
-df_modeled <- df_test %>%
-  group_by(across(all_of(group_list))) %>%
-  group_modify(~ fit_double_sigmoid(.)) %>%
-  ungroup()
+df_results %>%
+  select(wells, reaction, time, norm, pred, growth, decay, resid) %>%
+  filter(reaction %in% levels(reaction)[1:20]) %>%
+  pivot_longer(c(norm, pred, growth, decay), names_to = "series") %>%
+  mutate(series = factor(series, levels = c("norm", "pred", "growth", "decay"))) %>%
+  arrange(time) %>%
+  ggplot(aes(time, value, color = series)) +
+  geom_hline(yintercept=0) +
+  geom_line() +
+  geom_point(aes(y=resid), size=0.1) +
+  scale_color_manual(values = c("black", "darkgreen", "red", "blue")) +
+  facet_grid(wells ~ reaction) +
+  labs(x = "Time", y = "Normalized RFU")
 
-df_unmodeled <- df_modeled %>%
-  filter(is.na(pred))
-
-
-# --- Plots ---
-
-# Equation
-# norm ~ (a / (1 + exp((b - time) / c))) + (d / (1 + exp((e - time) / f)))
-
-df_unmodeled %>%
-  # filter(wells == "A01") %>%
-  ggplot(aes(time)) +
-  geom_point(aes(y = norm)) +
-  geom_line(aes(y = pred),   color = "red",    linewidth = 1) 
-  # geom_line(aes(y = growth), color = "blue",   linewidth = 1) +
-  # geom_line(aes(y = decay),  color = "orange", linewidth = 1)
-
-df_modeled %>%
-  mutate(resid = norm - pred) %>%
+df_results %>%
   ggplot(aes(resid)) +
   geom_histogram()
