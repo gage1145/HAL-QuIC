@@ -79,7 +79,8 @@ df_mod <- df_test %>%
           f = .x$decay_scale[1]
         ),
         algorithm = "port",
-        lower = c(a = -Inf, b = -Inf, c = -Inf, d = -Inf, e = .x$time_to_growth_max[1], f = 0.01)
+        lower = c(a = 0, b = 0, c = 0.01, d = -Inf, e = .x$time_to_growth_mid[1], f = 0.1),
+        upper = c(a = Inf, b = .x$max_time[1], c = 10, d = Inf, e = .x$max_time[1], f = 300)
       ),
       error = function(e) NULL
     ))
