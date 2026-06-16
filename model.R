@@ -5,6 +5,7 @@ library(magrittr)
 library(modelr)
 library(quicR)
 library(zoo)
+library(skimr)
 
 
 
@@ -20,7 +21,7 @@ df_ <- raw_file %>%
   select(-c(norm, deriv))
 
 df_p <- df_ %>%
-  filter(sample == "P" & assay == "RT-QuIC") 
+  filter(sample %in% c("N", "P"), time <= 72) 
 
 norm_n_der <- function(df, x, y, norm_point, groups, window=3, smooth=10, zero=TRUE) {
   df %>%
@@ -102,20 +103,59 @@ df_results <- df_mod %>%
   ) %>%
   unnest(augmented)
 
-df_results %>%
-  select(wells, reaction, time, norm, pred, growth, decay, resid) %>%
-  filter(reaction %in% levels(reaction)[1:20]) %>%
-  pivot_longer(c(norm, pred, growth, decay), names_to = "series") %>%
-  mutate(series = factor(series, levels = c("norm", "pred", "growth", "decay"))) %>%
-  arrange(time) %>%
-  ggplot(aes(time, value, color = series)) +
-  geom_hline(yintercept=0) +
+df_unmod <- df_mod %>%
+  filter(map_lgl(model, is.null))
+
+df_unmod %>% 
+  as.data.frame() %>%
+  select(-c(data, model)) %>%
+  skim()
+
+df_unmod %>%
+  ungroup() %>%
+  unnest(data) %>%
+  summarize(
+    norm = mean(norm),
+    .by = c(time, wells, assay)
+  ) %>%
+  ggplot(aes(time, norm)) +
   geom_line() +
-  geom_point(aes(y=resid), size=0.1) +
-  scale_color_manual(values = c("black", "darkgreen", "red", "blue")) +
-  facet_grid(wells ~ reaction) +
-  labs(x = "Time", y = "Normalized RFU")
+  facet_grid(vars(wells), vars(assay))
 
 df_results %>%
+  ungroup() %>%
+  na.omit() %>%
+  filter(time < 68) %>%
+  select(sample, assay, time, norm, pred, growth, decay, resid) %>%
+  pivot_longer(c(pred, growth, decay), names_to = "series") %>%
+  summarize(
+    across(c(value, norm, resid), list(mean = mean, sd = sd, min = min, max = max)),
+    n = n(),
+    .by = c(time, sample, assay, series, )
+  ) %>%
+  arrange(time) %>%
+  ggplot(aes(time, value_mean, color = series)) +
+  geom_point(aes(y=norm_mean), size=0.1, color="black") +
+  geom_point(aes(y=resid_mean), size=0.1, color="black") +
+  geom_line(linewidth = 1, linetype="dashed") +
+  scale_color_manual(values = c("darkgreen", "red", "blue")) +
+  facet_grid(vars(sample), vars(assay)) +
+  labs(x = "Time", y = "Normalized RFU")
+
+# Plot histogram of residuals
+df_results %>%
   ggplot(aes(resid)) +
-  geom_histogram()
+  geom_histogram() +
+  scale_x_continuous(limits = c(-1, 1))
+
+df_results %>%
+  ggplot(aes(time, resid)) +
+  stat_bin_hex(bins = 200, color = NULL) +
+  # geom_point() +
+  # geom_smooth(method = "loess", se = TRUE) +
+  scale_fill_gradient2(low = "darkblue", mid="darkorange", high="darkred", midpoint = 200) +
+  facet_grid(cols=vars(assay)) +
+  scale_y_continuous(limits = c(-4, 4)) +
+  scale_x_continuous(limits = c(0, 72), breaks = seq(0, 70, 4)) +
+  coord_cartesian(expand = FALSE) +
+  labs(x = "Time", y = "Residuals")
