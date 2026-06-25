@@ -1,0 +1,132 @@
+---
+title: "Modeling RT-QuIC Kinetics"
+date: today
+author: "Gage Rowden"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+    theme: flatly
+    embed-resources: true
+    fig-align: center
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+library(tidyverse)
+library(latex2exp)
+
+main_theme <- theme(
+  plot.title = element_text(size = 30, hjust = 0.5),
+  axis.title = element_text(size = 24),
+  axis.text = element_text(size = 20),
+  legend.title = element_text(size = 24),
+  legend.text = element_text(size = 20),
+  strip.text = element_text(size = 24),
+  panel.background = element_rect(fill = "white"),
+  panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+)
+```
+
+## Introduction
+This R package contains code for modeling the kinetics of the enzymes in the RT-QuIC assay. The enzymes are modeled using a two-component model, with the growth rate and decay rate of the enzyme being modeled separately.
+
+The model is described by the following equations:
+
+$$
+\begin{aligned}
+  \text{primary} &= \frac{P}{1 + e^{a_1(b_1 - \text{time})}} \\
+  \text{secondary} &= \frac{S}{1 + e^{a_2(b_2 - \text{time})}}
+\end{aligned}
+$$
+
+where $P$ and $S$ represent the primary and secondary phase asymptotes, respectively. Coefficients $a_1$ and $a_2$ represent the midpoint of the inflection point of the curves. And, $b_1$ and $b_2$, modulate the steepness of the curves. The model is fit to the data using nonlinear least squares `nls()`.
+
+
+```{r}
+#| fig-height: 12
+fit_single <- function(x, a, b, c) {
+  return(a / (1 + exp(c * (b - x))))
+}
+
+coefs <- tibble(
+  P1 = 5, P2 = 10, P3 = 15,
+  a1 = 20, a2 = 30, a3 = 40,
+  b1 = 1, b2 = 0.5, b3 = 0.25
+)
+
+coefs_long <- coefs %>%
+  pivot_longer(everything(), names_to = "coefficient", values_to = "value")
+
+combos <- expand.grid(letters = c("P", "a", "b"), numbers = 1:3)
+
+df_coef <- tibble(
+  coefficient = paste0(combos$letters, combos$numbers),
+  x = c(
+    30, coefs$a1 - 5, 30, 
+    30, coefs$a2 - 5, 30, 
+    30, coefs$a3 - 5, 30),
+  y = c(
+    coefs$P1 - 1, coefs$P3 / 2, coefs$P3 / 2 + 4, 
+    coefs$P2 - 1, coefs$P3 / 2, coefs$P3 / 2, 
+    coefs$P3 - 1, coefs$P3 / 2, coefs$P3 / 2 - 4), 
+) %>%
+  left_join(coefs_long, by = "coefficient") %>%
+  mutate(
+    coef = str_extract(coefficient, "^[A-z]"),
+    mod_number = as.factor(str_extract(coefficient, "[0-9]$")),
+    label = paste(coef, "=", value)
+  )
+
+df_ <- tibble(
+  time = seq(0, 48, 0.25),
+  P1 = fit_single(time, coefs$P1, coefs$a1, coefs$b1),
+  P2 = fit_single(time, coefs$P2, coefs$a1, coefs$b1),
+  P3 = fit_single(time, coefs$P3, coefs$a1, coefs$b1),
+  a1 = fit_single(time, coefs$P3, coefs$a1, coefs$b1),
+  a2 = fit_single(time, coefs$P3, coefs$a2, coefs$b1),
+  a3 = fit_single(time, coefs$P3, coefs$a3, coefs$b1),
+  b1 = fit_single(time, coefs$P3, coefs$a1, coefs$b1),
+  b2 = fit_single(time, coefs$P3, coefs$a1, coefs$b2),
+  b3 = fit_single(time, coefs$P3, coefs$a1, coefs$b3)
+) %>%
+  pivot_longer(-time, names_to = "parameter", values_to = "value") %>%
+  mutate(
+      coef = case_when(
+        str_detect(parameter, "P") ~ "P", 
+        str_detect(parameter, "a") ~ "a", 
+        str_detect(parameter, "b") ~ "b"
+      ),
+      mod_number = as.factor(str_extract(parameter, "[0-9]$"))
+  )
+
+df_eq <- df_coef %>%
+  summarize(
+    .by = coef
+  ) %>%
+    mutate(
+      label = case_when(
+        coef == "P" ~ TeX(r"($f(t)=\frac{\textbf{P}}{1+e^{a(b - t)}}$)", output = "character"),
+        coef == "a" ~ TeX(r"($f(t)=\frac{P}{1+e^{\textbf{a}(b - t)}}$)", output = "character"),
+        coef == "b" ~ TeX(r"($f(t)=\frac{P}{1+e^{a(\textbf{b} - t)}}$)", output = "character")
+      )
+    )
+
+df_ %>%
+  mutate(coef = factor(coef, levels = c("P", "a", "b"))) %>%
+  ggplot(aes(time, value, color=mod_number)) +
+  geom_line(show.legend = FALSE) +
+  geom_text(aes(x=x, y=y, label = label), data = df_coef, size=6, show.legend = FALSE) +
+  geom_text(aes(label = label), data = df_eq, x = 0, y = 13, size = 6, hjust = 0, parse = TRUE, inherit.aes = FALSE) +
+  facet_grid(rows=vars(fct_inorder(coef)), scales = "free_y") +
+  labs(x = "Time (hr)", y = "Normalized Fluorescence", title = "Fit to Single Sigmoid Model") +
+  main_theme +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_blank()
+  )
+```
