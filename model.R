@@ -22,10 +22,10 @@ df_ <- raw_file %>%
     across(c(reaction, wells, dilutions, assay, mortem, sample_type, animal, sample), as.factor)
   ) %>%
   select(-c(norm, deriv)) %>%
-  filter(time != 0)
-
-df_p <- df_ %>%
-  filter(sample %in% c("P"), time <= 72) 
+  filter(
+    time != 0,
+    sample %in% c("P"), time <= 72
+  )
 
 norm_n_der <- function(df, x, y, norm_point, groups, window=3, smooth=10, zero=TRUE) {
   df %>%
@@ -38,7 +38,7 @@ norm_n_der <- function(df, x, y, norm_point, groups, window=3, smooth=10, zero=T
     )
 }
 
-df_test <- df_p %>%
+df_test <- df_ %>%
   norm_n_der("time", "rfu", 8, group_list)
 
 df_test_sum <- df_test %>%
@@ -65,10 +65,6 @@ df_test_sum <- df_test %>%
     .groups = "drop"
   )
 
-
-
-# form3 <- as.formula(paste(deparse(form2), "+ (g / (1 + exp(i * (h - time))))"))
-
 fit_model <- function(data, 
                       peak_norm, 
                       time_to_growth_mid, 
@@ -78,25 +74,25 @@ fit_model <- function(data,
                       decay_scale,
                       max_time,
                       ...) {
-  form1 <- norm ~ (a / (1 + exp(c * (b - time))))
-  form2 <- as.formula(paste(deparse(form1), "+ (d / (1 + exp(f * (e - time))))"))
+  form1 <- norm ~ (S1 / (1 + exp(a1 * (b1 - time))))
+  form2 <- as.formula(paste(deparse(form1), "+ (S2 / (1 + exp(a2 * (b2 - time))))"))
 
   peak_scalar <- 2
   time_scalar <- 0.9
 
-  lower_a <- 0
-  lower_b <- 0
-  lower_c <- 0.01
-  lower_d <- -peak_norm * peak_scalar
-  lower_e <- time_to_growth_mid
-  lower_f <- 0
+  lower_S1 <- 0
+  lower_a1 <- 0
+  lower_b1 <- 0.01
+  lower_S2 <- -peak_norm * peak_scalar
+  lower_a2 <- -peak_norm * peak_scalar
+  lower_b2 <- time_to_growth_mid
 
-  upper_a <- peak_norm * peak_scalar
-  upper_b <- max_time * time_scalar
-  upper_c <- 10
-  upper_d <- peak_norm * peak_scalar
-  upper_e <- max_time * time_scalar
-  upper_f <- 5
+  upper_S1 <- peak_norm * peak_scalar
+  upper_a1 <- peak_norm * peak_scalar
+  upper_b1 <- max_time * time_scalar
+  upper_S2 <- peak_norm * peak_scalar
+  upper_a2 <- peak_norm * peak_scalar
+  upper_b2 <- max_time * time_scalar
 
   fit_single <- function() {
     single_mod <- NULL
@@ -105,13 +101,13 @@ fit_model <- function(data,
         single_mod <- nls(
           form1, data = data,
           start = list(
-            a = peak_norm,
-            b = time_to_growth_mid,
-            c = growth_scale
+            S1 = peak_norm,
+            a1 = peak_norm,
+            b1 = time_to_growth_mid
           ),
           algorithm = "port",
-          lower = c(a = lower_a, b = lower_b, c = lower_c),
-          upper = c(a = upper_a, b = upper_b, c = upper_c)
+          lower = c(S1 = lower_S1, a1 = lower_a1, b1 = lower_b1),
+          upper = c(S1 = upper_S1, a1 = upper_a1, b1 = upper_b1)
         )
       },
       error = function(e) {
@@ -129,17 +125,17 @@ fit_model <- function(data,
       double_mod <- nls(
         form2, data = data,
         start = list(
-          a = peak_norm,  b = time_to_growth_mid, c = growth_scale,
-          d = peak_decay, e = time_to_decay_mid,  f = decay_scale
+          S1 = peak_norm,  a1 = growth_scale, b1 = time_to_growth_mid,
+          S2 = peak_decay, a2 = decay_scale,  b2 = time_to_decay_mid
         ),
         algorithm = "port",
         lower = c(
-          a = lower_a, b = lower_b, c = lower_c, 
-          d = lower_d, e = lower_e, f = lower_f
+          S1 = lower_S1, a1 = lower_a1, b1 = lower_b1, 
+          S2 = lower_S2, a2 = lower_a2, b2 = lower_b2
         ),
         upper = c(
-          a = upper_a, b = upper_b, c = upper_c, 
-          d = upper_d, e = upper_e, f = upper_f
+          S1 = upper_S1, a1 = upper_a1, b1 = upper_b1, 
+          S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
         )
       )
     })
@@ -150,21 +146,21 @@ fit_model <- function(data,
         double_mod <- nls(
           form2, data = data,
           start = list(
-            a = coefs[1],
-            b = coefs[2],
-            c = coefs[3],
-            d = peak_decay,
-            e = time_to_decay_mid,
-            f = decay_scale
+            S1 = coefs[1],
+            a1 = coefs[2],
+            b1 = coefs[3],
+            S2 = peak_decay,
+            a2 = decay_scale,
+            b2 = time_to_decay_mid
           ),
           algorithm = "port",
           lower = c(
-            a = lower_a, b = lower_b, c = lower_c, 
-            d = lower_d, e = lower_e, f = lower_f
+            S1 = lower_S1, a1 = lower_a1, b1 = lower_b1, 
+            S2 = lower_S2, a2 = lower_a2, b2 = lower_b2
           ),
           upper = c(
-            a = upper_a, b = upper_b, c = upper_c, 
-            d = upper_d, e = upper_e, f = upper_f
+            S1 = upper_S1, a1 = upper_a1, b1 = upper_b1, 
+            S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
           )
         )
       })
@@ -201,8 +197,8 @@ df_results <- df_mod %>%
         add_predictions(.x) %>%
         add_residuals(.x) %>%
         mutate(
-          growth = cc[1] / (1 + exp((cc[2] - time) * cc[3])),
-          decay  = cc[4] / (1 + exp((cc[5] - time) * cc[6]))
+          growth = cc[1] / (1 + exp((cc[3] - time) * cc[2])),
+          decay  = cc[4] / (1 + exp((cc[6] - time) * cc[5]))
         )
     }),
     coefficients = map(model, coef)
@@ -225,20 +221,20 @@ main_theme <- theme(
   panel.border = element_rect(color = "black", fill = NA, size = 1)
 )
 
-# df_unmod %>%
-#   ungroup() %>%
-#   unnest(data) %>%
-#   summarize(
-#     norm = mean(norm),
-#     .by = c(time, wells, assay, reaction)
-#   ) %>%
-#   ggplot(aes(time, norm)) +
-#   geom_line() +
-#   facet_wrap(vars(wells, assay, reaction)) +
-#   main_theme +
-#   theme(
-#     strip.text = element_blank(),
-#   )
+df_unmod %>%
+  ungroup() %>%
+  unnest(data) %>%
+  summarize(
+    norm = mean(norm),
+    .by = c(time, wells, assay, reaction)
+  ) %>%
+  ggplot(aes(time, norm)) +
+  geom_line() +
+  facet_wrap(vars(wells, assay, reaction)) +
+  main_theme +
+  theme(
+    strip.text = element_blank(),
+  )
 
 # Samples with greatest deviation from model
 df_long <- df_results %>%
@@ -315,8 +311,15 @@ res_time <- df_long %>%
   labs(
     x = "Time", y = "Residuals", title = "Residuals over Time",
   ) +
-  main_theme
-res_time
+  main_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.1, .95),
+    legend.justification = c(0, 1),
+    legend.background = element_blank(),
+    legend.direction = "horizontal",
+  )
 
 (res_hist | qqplot) / res_time
 ggsave("figures/residual_vis.png", width = 16, height = 12)
@@ -330,8 +333,8 @@ df_results %>%
   arrange(decay_slope) %>%
   head(12) %>%
   mutate(
-    across(c(a,b,c,d,e,f), ~ signif(., 2)),
-    label = TeX(sprintf(r"($f(t)=\frac{%s}{1+e^{%s(%s - t)}} + \frac{%s}{1+e^{%s(%s - t)}}$)", a,b,c,d,e,f), output = "character"),
+    across(c(S1,a1,b1,S2,a2,b2), ~ signif(., 2)),
+    label = TeX(sprintf(r"($f(t)=\frac{%s}{1+e^{%s(%s - t)}} + \frac{%s}{1+e^{%s(%s - t)}}$)", S1,a1,b1,S2,a2,b2), output = "character"),
   ) %>%
   unnest(data) %>%
   ggplot(aes(time)) +
