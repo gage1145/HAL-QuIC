@@ -14,18 +14,7 @@ library(latex2exp)
 
 raw_file <- "data/data.parquet"
 
-group_list <- c("sample", "wells", "dilutions", "assay", "reaction")
-
-df_ <- raw_file %>%
-  read_parquet() %>%
-  mutate(
-    across(c(reaction, wells, dilutions, assay, mortem, sample_type, animal, sample), as.factor)
-  ) %>%
-  select(-c(norm, deriv)) %>%
-  filter(
-    time != 0,
-    sample %in% c("P"), time <= 72
-  )
+group_list <- c("sample", "wells", "dilutions", "assay", "reaction", "mortem", "sample_type", "animal")
 
 norm_n_der <- function(df, x, y, norm_point, groups, window=3, smooth=10, zero=TRUE) {
   df %>%
@@ -38,12 +27,17 @@ norm_n_der <- function(df, x, y, norm_point, groups, window=3, smooth=10, zero=T
     )
 }
 
-df_test <- df_ %>%
-  norm_n_der("time", "rfu", 8, group_list)
-
-df_test_sum <- df_test %>%
+df_ <- raw_file %>%
+  read_parquet() %>%
+  mutate(across(all_of(group_list), as.factor)) %>%
+  select(-c(norm, deriv)) %>%
+  filter(time <= 72) %>%
+  norm_n_der("time", "rfu", 8, group_list) %>%
+  filter(norm > 4) %>%
   group_by(across(all_of(group_list))) %>%
-  na.omit() %>%
+  na.omit()
+
+df_temp <- df_ %>%
   summarize(
     max_time             = max(time, na.rm=TRUE),
     max_deriv            = max(deriv, na.rm=TRUE),
@@ -51,8 +45,8 @@ df_test_sum <- df_test %>%
     peak_norm            = norm[which.min(deriv2)],
     time_to_growth_max   = time[which(norm == peak_norm)[1]],
     time_to_growth_mid   = time[which.max(deriv)],
-    max_equillibrium     = max(norm[which(time > time_to_growth_max)], na.rm=TRUE),
-    min_equillibrium     = min(norm[which(time > time_to_growth_max)], na.rm=TRUE),
+    max_equillibrium     = max(norm[which(time >= time_to_growth_max)], na.rm=TRUE),
+    min_equillibrium     = min(norm[which(time >= time_to_growth_max)], na.rm=TRUE),
     max_decay            = max_equillibrium - peak_norm,
     min_decay            = min_equillibrium - peak_norm,
     equillibrium         = ifelse(abs(min_decay) > max_decay, min_equillibrium, max_equillibrium),
@@ -61,9 +55,16 @@ df_test_sum <- df_test %>%
     time_to_decay        = time_to_equillibrium - time_to_growth_max,
     time_to_decay_mid    = time_to_growth_max + time_to_decay / 2,
     decay_slope          = peak_decay / time_to_decay,
+    decay_slope          = replace_na(decay_slope, 0),
     decay_scale          = abs(decay_slope),
     .groups = "drop"
   )
+
+df_ <- df_ %>%
+  nest() %>%
+  left_join(df_temp)
+
+rm(df_temp)
 
 fit_model <- function(data, 
                       peak_norm, 
@@ -78,21 +79,20 @@ fit_model <- function(data,
   form2 <- as.formula(paste(deparse(form1), "+ (S2 / (1 + exp(a2 * (b2 - time))))"))
 
   peak_scalar <- 2
-  time_scalar <- 0.9
 
   lower_S1 <- 0
-  lower_a1 <- 0
-  lower_b1 <- 0.01
+  lower_a1 <- 0.01
+  lower_b1 <- 0
   lower_S2 <- -peak_norm * peak_scalar
-  lower_a2 <- -peak_norm * peak_scalar
+  lower_a2 <- 0
   lower_b2 <- time_to_growth_mid
 
   upper_S1 <- peak_norm * peak_scalar
-  upper_a1 <- peak_norm * peak_scalar
-  upper_b1 <- max_time * time_scalar
+  upper_a1 <- 20
+  upper_b1 <- max_time
   upper_S2 <- peak_norm * peak_scalar
-  upper_a2 <- peak_norm * peak_scalar
-  upper_b2 <- max_time * time_scalar
+  upper_a2 <- 10
+  upper_b2 <- max_time
 
   fit_single <- function() {
     single_mod <- NULL
@@ -110,48 +110,22 @@ fit_model <- function(data,
           upper = c(S1 = upper_S1, a1 = upper_a1, b1 = upper_b1)
         )
       },
-      error = function(e) {
-        sprintf("Unable to fit single modlel: %s", e)
-      }
+      # silent = TRUE
     )
-    return(single_mod)
+    return(coef(single_mod))
   }
 
   fit_double <- function(single_mod) {
 
     double_mod <- NULL
 
-    try({
-      double_mod <- nls(
-        form2, data = data,
-        start = list(
-          S1 = peak_norm,  a1 = growth_scale, b1 = time_to_growth_mid,
-          S2 = peak_decay, a2 = decay_scale,  b2 = time_to_decay_mid
-        ),
-        algorithm = "port",
-        lower = c(
-          S1 = lower_S1, a1 = lower_a1, b1 = lower_b1, 
-          S2 = lower_S2, a2 = lower_a2, b2 = lower_b2
-        ),
-        upper = c(
-          S1 = upper_S1, a1 = upper_a1, b1 = upper_b1, 
-          S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
-        )
-      )
-    })
-
-    if(is.null(double_mod) & !is.null(single_mod)) {
-      try({
-        coefs <- coef(single_mod)
+    try(
+      {
         double_mod <- nls(
           form2, data = data,
           start = list(
-            S1 = coefs[1],
-            a1 = coefs[2],
-            b1 = coefs[3],
-            S2 = peak_decay,
-            a2 = decay_scale,
-            b2 = time_to_decay_mid
+            S1 = peak_norm,  a1 = growth_scale, b1 = time_to_growth_mid,
+            S2 = peak_decay, a2 = decay_scale,  b2 = time_to_decay_mid
           ),
           algorithm = "port",
           lower = c(
@@ -163,11 +137,37 @@ fit_model <- function(data,
             S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
           )
         )
-      })
+      },
+      # silent = TRUE
+    )
+
+    if(is.null(double_mod) & !is.null(single_mod)) {
+      try(
+        {
+          # coefs <- coef(single_mod)
+          double_mod <- nls(
+            form2, data = data,
+            start = list(
+              S1 = single_mod[1], a1 = single_mod[2], b1 = single_mod[3],
+              S2 = peak_decay, a2 = decay_scale, b2 = time_to_decay_mid
+            ),
+            algorithm = "port",
+            lower = c(
+              S1 = lower_S1, a1 = lower_a1, b1 = lower_b1, 
+              S2 = lower_S2, a2 = lower_a2, b2 = lower_b2
+            ),
+            upper = c(
+              S1 = upper_S1, a1 = upper_a1, b1 = upper_b1, 
+              S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
+            )
+          )
+        },
+        # silent = TRUE
+      )
     }
       
     if(is.null(double_mod)) return(single_mod)
-    return(double_mod)
+    return(coef(double_mod))
   }
 
   mod <- NULL
@@ -176,13 +176,12 @@ fit_model <- function(data,
   return(mod)
 }
 
-df_mod <- df_test %>%
-  group_by(across(all_of(group_list))) %>%
-  nest() %>%
-  ungroup() %>%
-  left_join(df_test_sum) %>%
+df_mod <- df_ %>%
+  # ungroup() %>%
+#   head(1) %>%
+  slice_sample(n = 10) %>%
   mutate(
-    model = pmap(., fit_model)
+    model = pmap(., fit_model, .progress = TRUE)
   )
 
 df_unmod <- df_mod %>%
@@ -330,21 +329,21 @@ ggsave("figures/residual_vis.png", width = 16, height = 12)
 
 df_results %>%
 #   slice_sample(n=12) %>%
-  arrange(decay_slope) %>%
+  arrange(peak_decay) %>%
   head(12) %>%
   mutate(
     across(c(S1,a1,b1,S2,a2,b2), ~ signif(., 2)),
-    label = TeX(sprintf(r"($f(t)=\frac{%s}{1+e^{%s(%s - t)}} + \frac{%s}{1+e^{%s(%s - t)}}$)", S1,a1,b1,S2,a2,b2), output = "character"),
+    # label = TeX(sprintf(r"($f(t)=\frac{%s}{1+e^{%s(%s - t)}} + \frac{%s}{1+e^{%s(%s - t)}}$)", S1,a1,b1,S2,a2,b2), output = "character"),
   ) %>%
   unnest(data) %>%
   ggplot(aes(time)) +
   geom_hline(yintercept = 0, linetype = "dotted") +
-  geom_line(aes(y=norm), linewidth=0.5, color="blue") +
+  geom_point(aes(y=norm), size=0.1, color="black") +
   geom_line(aes(y=pred), linewidth=1.2, color="darkred", linetype="dashed") +
   geom_line(aes(y=growth), linewidth=1.2, color="darkgreen", linetype="dashed") +
   geom_line(aes(y=decay), linewidth=1.2, color="darkorange", linetype="dashed") +
   facet_wrap(vars(reaction, wells)) +
-  geom_text(aes(label = label), x = 30, y = 2, hjust = 0, inherit.aes = FALSE, size = 4, parse = TRUE) +
+#   geom_text(aes(label = label), x = 0, y = -3, hjust = 0, inherit.aes = FALSE, size = 4, parse = TRUE) +
   labs(x = "Time (hr)", y = "Normalized Fluorescence", title = "Example Fits") +
   main_theme +
   theme(
@@ -352,3 +351,8 @@ df_results %>%
   )
 
 ggsave("figures/example_fits.png", width = 20, height = 12)
+
+
+# Save Results to Parquet ------------------------------------------------
+
+write_parquet(select(df_results, -model), "data/results.parquet")
