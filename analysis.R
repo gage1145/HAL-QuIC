@@ -6,6 +6,7 @@ library(ggpubr)
 library(ggcorrplot)
 library(plotly)
 library(ggfortify)
+library(Rdimtools)
 
 main_theme <- theme(
   plot.title = element_text(size = 30, hjust = 0.5),
@@ -21,7 +22,14 @@ main_theme <- theme(
 file <- "data/results.parquet"
 
 df_ <- read_parquet(file) %>%
-  mutate(across(everything(), ~ replace_na(., 0)))
+  mutate(
+    sample_type = case_when(
+      str_detect(sample_type, "oral") ~ "oral swab",
+      str_detect(sample_type, "nasal") ~ "nasal swab",
+      TRUE ~ sample_type
+    ),
+    across(everything(), ~ replace_na(., 0))
+  )
 
 
 
@@ -41,32 +49,40 @@ ggcorrplot(
 
 pca <- df_ %>%
   select(all_of(params)) %>%
-  prcomp(scale. = TRUE)
+  do.spc(df_$assay, ndim = 1)
 
-eigenvectors <- pca$rotation %>%
-  as.data.frame() %>%
-  mutate(
-    across(everything(), ~ .x * 3),
-    variable = rownames(.)
-  )
+# eigenvectors <- pca$rotation %>%
+#   as.data.frame() %>%
+#   mutate(
+#     across(everything(), ~ .x * 10),
+#     variable = rownames(.)
+#   )
 
-summary(pca)
+# summary(pca)
 
-kms <- kmeans(df_[params], centers = 2)
+# kms <- kmeans(df_[params], centers = 2)
 
 df_pca <- df_ %>%
-  bind_cols(pca$x) %>%
-  mutate(cluster = kms$cluster)
+  mutate(
+    Y1 = pca$Y[, 1],
+    # Y2 = pca$Y[, 2],
+  )
+  # bind_cols(pca$Y, names = "") 
+  # mutate(cluster = kms$cluster)
 
 df_pca %>%
-  ggplot(aes(x = PC1, y = PC2, color = assay)) +
-  geom_point(size = 2) +
-  geom_segment(aes(x = 0, y = 0, xend = PC1, yend = PC2), data = eigenvectors, linewidth = 1, color = "blue") +
-  geom_label(aes(label = variable), data = eigenvectors, size = 6, color = "blue") +
-  stat_ellipse(aes(group=cluster), color="black", level=0.95) +
+  arrange(mortem) %>%
+  ggplot(aes(x = mortem, y = Y1, color = assay)) +
+  geom_boxplot() +
+  # geom_point(size = 2, alpha=0.1) +
+  # geom_segment(aes(x = 0, y = 0, xend = PC1, yend = PC2), data = eigenvectors, linewidth = 1, color = "blue") +
+  # geom_text(aes(label = variable), data = eigenvectors, size = 6, color = "blue") +
+  # stat_ellipse(aes(group=cluster), color="black", level=0.95) +
+  # facet_grid(cols = vars(mortem), rows = vars(assay)) +
   # scale_color_gradient(low="blue", high="red") +
+  # coord_fixed() +
   guides(
-    color = guide_legend(override.aes = list(size = 6)) 
+    color = guide_legend(override.aes = list(size = 6, alpha = 1)) 
   ) +
   main_theme +
   theme(
@@ -77,5 +93,5 @@ df_pca %>%
     legend.background = element_blank(),
     legend.direction = "vertical",
   )
-
+ggsave("figures/pca.png", width = 16, height = 6)
 

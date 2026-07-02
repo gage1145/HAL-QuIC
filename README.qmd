@@ -367,6 +367,7 @@ fit_model <- function(data,
 ![](figures/example_fits.png)
 ![](figures/deviants.png)
 ![](figures/residual_vis.png)
+![](figures/pca.png)
 
 
 

@@ -3,7 +3,6 @@ library(broom)
 library(arrow)
 library(magrittr)
 library(modelr)
-library(quicR)
 library(zoo)
 library(skimr)
 library(ggpubr)
@@ -18,12 +17,12 @@ group_list <- c("sample", "wells", "dilutions", "assay", "reaction", "mortem", "
 
 norm_n_der <- function(df, x, y, norm_point, groups, window=3, smooth=10, zero=TRUE) {
   df %>%
-    group_by(across(all_of(groups))) %>%
     mutate(
       norm   = rollmean(!!sym(y), smooth, na.pad=TRUE),
       norm   = norm / norm[norm_point] - ifelse(zero, 1, 0),
       deriv  = (lead(norm, window) - lag(norm, window)) / (lead(!!sym(x), window) - lag(!!sym(x), window)),
-      deriv2 = (lead(deriv, window) - lag(deriv, window)) / (lead(!!sym(x), window) - lag(!!sym(x), window))
+      deriv2 = (lead(deriv, window) - lag(deriv, window)) / (lead(!!sym(x), window) - lag(!!sym(x), window)),
+      .by = all_of(groups)
     )
 }
 
@@ -33,8 +32,6 @@ df_ <- raw_file %>%
   select(-c(norm, deriv)) %>%
   filter(time <= 72) %>%
   norm_n_der("time", "rfu", 8, group_list) %>%
-  filter(norm > 4) %>%
-  group_by(across(all_of(group_list))) %>%
   na.omit()
 
 df_temp <- df_ %>%
@@ -57,12 +54,13 @@ df_temp <- df_ %>%
     decay_slope          = peak_decay / time_to_decay,
     decay_slope          = replace_na(decay_slope, 0),
     decay_scale          = abs(decay_slope),
-    .groups = "drop"
-  )
+    .by = group_list
+  ) 
+  # filter(peak_norm > 4)
 
 df_ <- df_ %>%
-  nest() %>%
-  left_join(df_temp)
+  nest(.by = group_list) %>%
+  right_join(df_temp)
 
 rm(df_temp)
 
@@ -77,6 +75,17 @@ fit_model <- function(data,
                       ...) {
   form1 <- norm ~ (S1 / (1 + exp(a1 * (b1 - time))))
   form2 <- as.formula(paste(deparse(form1), "+ (S2 / (1 + exp(a2 * (b2 - time))))"))
+
+  # Bound each fit so a single pathological group can't hang the run.
+  # setTimeLimit gives a hard wall-clock guard (nls checks for interrupts
+  # while iterating); nls.control keeps a non-converging fit from grinding.
+  fit_timeout   <- 10  # seconds per nls() call
+  fit_control   <- nls.control(maxiter = 100, warnOnly = TRUE)
+  nls_bounded <- function(...) {
+    setTimeLimit(elapsed = fit_timeout, transient = TRUE)
+    on.exit(setTimeLimit(elapsed = Inf, transient = TRUE), add = TRUE)
+    nls(..., control = fit_control)
+  }
 
   peak_scalar <- 2
 
@@ -94,11 +103,11 @@ fit_model <- function(data,
   upper_a2 <- 10
   upper_b2 <- max_time
 
-  fit_single <- function() {
+  fit_single <- function(...) {
     single_mod <- NULL
-    tryCatch(
+    try(
       {
-        single_mod <- nls(
+        single_mod <- nls_bounded(
           form1, data = data,
           start = list(
             S1 = peak_norm,
@@ -109,19 +118,18 @@ fit_model <- function(data,
           lower = c(S1 = lower_S1, a1 = lower_a1, b1 = lower_b1),
           upper = c(S1 = upper_S1, a1 = upper_a1, b1 = upper_b1)
         )
-      },
-      # silent = TRUE
+      }, silent = TRUE
     )
-    return(coef(single_mod))
+    return(single_mod)
   }
 
-  fit_double <- function(single_mod) {
+  fit_double <- function(single_mod, ...) {
 
     double_mod <- NULL
 
     try(
       {
-        double_mod <- nls(
+        double_mod <- nls_bounded(
           form2, data = data,
           start = list(
             S1 = peak_norm,  a1 = growth_scale, b1 = time_to_growth_mid,
@@ -137,15 +145,13 @@ fit_model <- function(data,
             S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
           )
         )
-      },
-      # silent = TRUE
+      }, silent = TRUE
     )
 
     if(is.null(double_mod) & !is.null(single_mod)) {
       try(
         {
-          # coefs <- coef(single_mod)
-          double_mod <- nls(
+          double_mod <- nls_bounded(
             form2, data = data,
             start = list(
               S1 = single_mod[1], a1 = single_mod[2], b1 = single_mod[3],
@@ -161,13 +167,12 @@ fit_model <- function(data,
               S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
             )
           )
-        },
-        # silent = TRUE
+        }, silent = TRUE
       )
     }
       
     if(is.null(double_mod)) return(single_mod)
-    return(coef(double_mod))
+    return(double_mod)
   }
 
   mod <- NULL
@@ -177,12 +182,7 @@ fit_model <- function(data,
 }
 
 df_mod <- df_ %>%
-  # ungroup() %>%
-#   head(1) %>%
-  slice_sample(n = 10) %>%
-  mutate(
-    model = pmap(., fit_model, .progress = TRUE)
-  )
+  mutate(model = pmap(., fit_model, .progress = TRUE))
 
 df_unmod <- df_mod %>%
   filter(map_lgl(model, is.null))
@@ -196,8 +196,8 @@ df_results <- df_mod %>%
         add_predictions(.x) %>%
         add_residuals(.x) %>%
         mutate(
-          growth = cc[1] / (1 + exp((cc[3] - time) * cc[2])),
-          decay  = cc[4] / (1 + exp((cc[6] - time) * cc[5]))
+          growth = cc[1] / (1 + exp(cc[2] * (cc[3] - time))),
+          decay  = cc[4] / (1 + exp(cc[5] * (cc[6] - time)))
         )
     }),
     coefficients = map(model, coef)
@@ -217,7 +217,7 @@ main_theme <- theme(
   legend.text = element_text(size = 20),
   strip.text = element_text(size = 24),
   panel.background = element_rect(fill = "white"),
-  panel.border = element_rect(color = "black", fill = NA, size = 1)
+  panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
 )
 
 df_unmod %>%
@@ -240,15 +240,15 @@ df_long <- df_results %>%
   unnest(data)
   # ungroup() %>%
 df_dev <- df_long %>%
-group_by(across(all_of(group_list))) %>%
   summarize(
     dev = mean(resid, na.rm=TRUE),
-    sd = sd(resid, na.rm=TRUE)
+    sd = sd(resid, na.rm=TRUE),
+    .by = group_list
   )
 
 overall_deviation <- mean(df_long$resid, na.rm=TRUE)
 overall_sd <- sd(df_long$resid, na.rm=TRUE)
-threshold <- abs(overall_deviation) + 0.15 * overall_sd
+threshold <- abs(overall_deviation) + 1 * overall_sd
 
 deviants <- df_dev %>%
   filter(abs(dev) > threshold) %>%
@@ -279,7 +279,7 @@ ggsave("figures/deviants.png", width = 16, height = 12)
 
 res_hist <- df_long %>%
   ggplot(aes(resid)) +
-  geom_histogram(bins = 200, fill="black") +
+  geom_histogram(bins = 100, fill="black") +
   scale_x_continuous(limits = c(-1, 1)) +
   labs(x = "Residuals", y = "Count", title = "Histogram of Residuals") +
   main_theme
@@ -328,12 +328,13 @@ ggsave("figures/residual_vis.png", width = 16, height = 12)
 
 
 df_results %>%
-#   slice_sample(n=12) %>%
-  arrange(peak_decay) %>%
-  head(12) %>%
+  filter(peak_norm > 4) %>%
+  slice_sample(n=24) %>%
+  # arrange(time_to_growth_max) %>%
+  # head(12) %>%
   mutate(
     across(c(S1,a1,b1,S2,a2,b2), ~ signif(., 2)),
-    # label = TeX(sprintf(r"($f(t)=\frac{%s}{1+e^{%s(%s - t)}} + \frac{%s}{1+e^{%s(%s - t)}}$)", S1,a1,b1,S2,a2,b2), output = "character"),
+    # label = TeX(sprintf(r"($f(t)=\frac{%s}{1+e^{%s(%s - t)}} + \frac{%s}{1+e^{%s(%s - t)}}$)", S1,a1,b1,S2,a2,b2)),
   ) %>%
   unnest(data) %>%
   ggplot(aes(time)) +
@@ -342,8 +343,8 @@ df_results %>%
   geom_line(aes(y=pred), linewidth=1.2, color="darkred", linetype="dashed") +
   geom_line(aes(y=growth), linewidth=1.2, color="darkgreen", linetype="dashed") +
   geom_line(aes(y=decay), linewidth=1.2, color="darkorange", linetype="dashed") +
-  facet_wrap(vars(reaction, wells)) +
-#   geom_text(aes(label = label), x = 0, y = -3, hjust = 0, inherit.aes = FALSE, size = 4, parse = TRUE) +
+  facet_wrap(vars(reaction, wells), ncol = 6) +
+  # geom_text(aes(label = label), x = 0, y = 30, hjust = 0, inherit.aes = FALSE, size = 4, parse = TRUE) +
   labs(x = "Time (hr)", y = "Normalized Fluorescence", title = "Example Fits") +
   main_theme +
   theme(
