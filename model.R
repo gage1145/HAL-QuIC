@@ -61,8 +61,6 @@ df_ <- df_ %>%
   nest(.by = group_list) %>%
   right_join(df_temp)
 
-rm(df_temp)
-
 fit_model <- function(data, 
                       peak_norm, 
                       time_to_growth_mid, 
@@ -180,7 +178,7 @@ fit_model <- function(data,
   return(mod)
 }
 
-df_mod <- df_ %>%
+df_mod <- df_combined %>%
   mutate(model = pmap(., fit_model, .progress = TRUE))
 
 df_unmod <- df_mod %>%
