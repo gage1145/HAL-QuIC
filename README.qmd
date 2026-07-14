@@ -18,6 +18,9 @@ execute:
 ```{r, echo=FALSE}
 library(tidyverse)
 library(latex2exp)
+library(skimr)
+library(arrow)
+library(zoo)
 
 main_theme <- theme(
   plot.title = element_text(size = 30, hjust = 0.5),
@@ -95,6 +98,11 @@ df_example %>%
 ```
 
 ## How do the parameters affect the curves?
+The $S$ parameter affects the height of the asymptote. For example, if $S=10$, the curve will approach 10 in the equillibrium phase as $t\rightarrow\infty$. If $S=0$, the other parameters will not affect the curve, and become redundant.
+
+The $a$ parameter affects the steepness of the inflection point. A lower value of $a$ will result in a smoother curve, and as $a\rightarrow0$, the curve will approach a constant value at $S/2$. Alternatively, as $a\rightarrow\infty$, the curve will approach $S$ instantaneously at when $t=b$.
+
+The $b$ parameter affects the timing of the inflection point (i.e. when the curve reaches $S/2$). This value can range from $-\infty\rightarrow\infty$, but for the purpose of this analysis, $b$ is constrained to positive values.
 ```{r, echo=FALSE}
 #| fig-height: 12
 fit_single <- function(x, S, a, b) {
@@ -184,7 +192,7 @@ df_ %>%
 ## The Data
 The data is a time series of fluorescence measurements from a single well in a single reaction. The data is normalized to the first time point, and the time points are evenly spaced between 0 and 48 hours. The data is also filtered for only positive control samples and time points greater than zero.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 raw_file <- "data/data.parquet"
 
 group_list <- c("sample", "wells", "dilutions", "assay", "reaction")
@@ -199,58 +207,92 @@ df_ <- raw_file %>%
     time != 0,
     sample %in% c("P"), time <= 72
   )
+
+skim(df_)
 ```
 
 ## Normalizing the Data
 The data is first smoothed using a rolling mean, and then normalized to the eighth time point. The first and second derivatives were then estimated from the normalized data which made finding time points of inflection easier.
 
-```{r Normalize, eval=FALSE}
+```{r Normalize, eval=TRUE}
 norm_n_der <- function(df, x, y, norm_point, groups, window=3, smooth=10, zero=TRUE) {
   df %>%
-    group_by(across(all_of(groups))) %>%
     mutate(
       norm   = rollmean(!!sym(y), smooth, na.pad=TRUE),
       norm   = norm / norm[norm_point] - ifelse(zero, 1, 0),
       deriv  = (lead(norm, window) - lag(norm, window)) / (lead(!!sym(x), window) - lag(!!sym(x), window)),
-      deriv2 = (lead(deriv, window) - lag(deriv, window)) / (lead(!!sym(x), window) - lag(!!sym(x), window))
+      deriv2 = (lead(deriv, window) - lag(deriv, window)) / (lead(!!sym(x), window) - lag(!!sym(x), window)),
+      .by = all_of(groups)
     )
 }
 
 df_test <- norm_n_der(df_, "time", "rfu", 8, group_list)
 ```
 
+```{r Normalize Plot, echo=FALSE}
+#| fig-height: 12
+rxn <- unique(df_$reaction)[1]
+well <- unique(df_$wells)[1]
+df_raw <- df_ %>%
+  filter(reaction == rxn, wells == well) %>%
+  rename(raw = rfu) %>%
+  pivot_longer(raw, names_to = "metric") %>%
+  mutate(type = "raw")
+
+df_norm <- df_test %>%
+  filter(reaction == rxn, wells == well) %>%
+  pivot_longer(c(norm, deriv, deriv2), names_to = "metric") %>%
+  mutate(type = "norm")
+
+df_raw %>%
+  bind_rows(df_norm) %>%
+  mutate(metric = factor(metric, levels = c("raw", "norm", "deriv", "deriv2"), labels = c("Raw", "Normalized", "Derivative", "Second Derivative"))) %>%
+  ggplot(aes(time, value, color = metric)) +
+  geom_line(linewidth = 1.2, show.legend = FALSE) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_wrap(vars(fct_inorder(metric)), scales = "free_y", ncol = 1, strip.position = "right") +
+  scale_color_manual(values = c('#7b3294','#c2a5cf','#a6dba0','#008837')) +
+  main_theme +
+  theme(
+    axis.title = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0, .85),
+    legend.justification = c(0, 1),
+    legend.background = element_blank()
+  )
+```
+
 ## Estimating Starting Values
 The model uses the `nls()` function from the `stats` package. Because this is a parametric model, coefficients are first estimated using certain landmarks of the raw data.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 df_test_sum <- df_test %>%
-  group_by(across(all_of(group_list))) %>%
-  na.omit() %>%
   summarize(
     max_time             = max(time, na.rm=TRUE),
     max_deriv            = max(deriv, na.rm=TRUE),
     growth_scale         = max_deriv,
     peak_norm            = norm[which.min(deriv2)],
-    time_to_growth_max   = time[which(norm == peak_norm)[1]],
+    time_to_growth_max   = time[norm == peak_norm][1],
     time_to_growth_mid   = time[which.max(deriv)],
-    max_equillibrium     = max(norm[which(time > time_to_growth_max)], na.rm=TRUE),
-    min_equillibrium     = min(norm[which(time > time_to_growth_max)], na.rm=TRUE),
+    max_equillibrium     = max(norm[time >= time_to_growth_max], na.rm=TRUE),
+    min_equillibrium     = min(norm[time >= time_to_growth_max], na.rm=TRUE),
     max_decay            = max_equillibrium - peak_norm,
     min_decay            = min_equillibrium - peak_norm,
     equillibrium         = ifelse(abs(min_decay) > max_decay, min_equillibrium, max_equillibrium),
-    time_to_equillibrium = time[which(norm == equillibrium)][1],
+    time_to_equillibrium = time[norm == equillibrium][1],
     peak_decay           = equillibrium - peak_norm,
     time_to_decay        = time_to_equillibrium - time_to_growth_max,
     time_to_decay_mid    = time_to_growth_max + time_to_decay / 2,
-    decay_slope          = peak_decay / time_to_decay,
+    decay_slope          = replace_na(peak_decay / time_to_decay, 0),
     decay_scale          = abs(decay_slope),
-    .groups = "drop"
+    .by = group_list
   )
 ```
 
 ## Fitting the Model
 The model first attempts to fit a single sigmoidal function to the data using the three of the landmarks shown above. If this fails, the model is fit to the data using two sigmoidal functions.
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 fit_model <- function(data, 
                       peak_norm, 
                       time_to_growth_mid, 
