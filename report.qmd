@@ -37,7 +37,7 @@ main_theme <- theme(
 ```
 
 ## Introduction
-This R package contains code for modeling the kinetics of the enzymes in the RT-QuIC assay. The enzymes are modeled using a two-component model, with the primary and secondary phases of the reaction being modeled separately.
+This R project contains code for modeling the kinetics of the prion protein misfolding in the RT-QuIC assay. This misfolding is modeled using a two-component model, with the primary and secondary phases of the reaction being modeled separately.
 
 The model is described by the following equations:
 
