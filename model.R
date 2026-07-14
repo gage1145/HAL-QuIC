@@ -54,7 +54,7 @@ df_temp <- df_ %>%
     decay_slope          = replace_na(peak_decay / time_to_decay, 0),
     decay_scale          = abs(decay_slope),
     .by = group_list
-  ) 
+  )
   # filter(peak_norm > 4)
 
 df_ <- df_ %>%
@@ -225,13 +225,13 @@ df_unmod %>%
     .by = c(time, wells, assay, reaction)
   ) %>%
   {
-  ggplot(aes(time, norm)) +
-  geom_line() +
-  facet_wrap(vars(wells, assay, reaction)) +
-  main_theme +
-  theme(
-    strip.text = element_blank(),
-  )
+    ggplot(aes(time, norm)) +
+    geom_line() +
+    facet_wrap(vars(wells, assay, reaction)) +
+    main_theme +
+    theme(
+      strip.text = element_blank(),
+    ) 
   } %>%
   try(silent = TRUE)
 
@@ -329,9 +329,8 @@ ggsave("figures/residual_vis.png", width = 16, height = 12)
 
 df_results %>%
   filter(peak_norm > 4) %>%
-  slice_sample(n=24) %>%
-  # arrange(time_to_growth_max) %>%
-  # head(12) %>%
+  arrange(decay_slope) %>%
+  head(24) %>%
   mutate(
     across(c(S1,a1,b1,S2,a2,b2), ~ signif(., 2)),
     # label = TeX(sprintf(r"($f(t)=\frac{%s}{1+e^{%s(%s - t)}} + \frac{%s}{1+e^{%s(%s - t)}}$)", S1,a1,b1,S2,a2,b2)),
@@ -339,7 +338,7 @@ df_results %>%
   unnest(data) %>%
   ggplot(aes(time)) +
   geom_hline(yintercept = 0, linetype = "dotted") +
-  geom_point(aes(y=norm), size=0.1, color="black") +
+  geom_line(aes(y=norm), linewidth=0.5, color="black") +
   geom_line(aes(y=pred), linewidth=1.2, color="darkred", linetype="dashed") +
   geom_line(aes(y=growth), linewidth=1.2, color="darkgreen", linetype="dashed") +
   geom_line(aes(y=decay), linewidth=1.2, color="darkorange", linetype="dashed") +
