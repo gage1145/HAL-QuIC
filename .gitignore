@@ -2,6 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
-*.png
 results.parquet
 /.quarto/
