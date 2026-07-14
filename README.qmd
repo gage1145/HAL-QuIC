@@ -230,7 +230,7 @@ df_test <- norm_n_der(df_, "time", "rfu", 8, group_list)
 ```
 
 ```{r Normalize Plot, echo=FALSE}
-#| fig-height: 12
+#| fig-height: 6
 rxn <- unique(df_$reaction)[1]
 well <- unique(df_$wells)[1]
 df_raw <- df_ %>%
@@ -246,11 +246,17 @@ df_norm <- df_test %>%
 
 df_raw %>%
   bind_rows(df_norm) %>%
-  mutate(metric = factor(metric, levels = c("raw", "norm", "deriv", "deriv2"), labels = c("Raw", "Normalized", "Derivative", "Second Derivative"))) %>%
+  mutate(
+    metric = factor(
+      metric, 
+      levels = c("raw", "norm", "deriv", "deriv2"), 
+      labels = c("Raw", "Normalized", "1st Derivative", "2nd Derivative")
+    )
+  ) %>%
   ggplot(aes(time, value, color = metric)) +
   geom_line(linewidth = 1.2, show.legend = FALSE) +
   geom_hline(yintercept = 0, linetype = "dashed") +
-  facet_wrap(vars(fct_inorder(metric)), scales = "free_y", ncol = 1, strip.position = "right") +
+  facet_wrap(vars(fct_inorder(metric)), scales = "free_y", ncol = 2, strip.position = "right") +
   scale_color_manual(values = c('#7b3294','#c2a5cf','#a6dba0','#008837')) +
   main_theme +
   theme(
