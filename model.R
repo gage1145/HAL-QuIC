@@ -238,28 +238,28 @@ df_unmod %>%
 # Samples with greatest deviation from model
 df_long <- df_results %>%
   unnest(data)
-  # ungroup() %>%
-df_dev <- df_long %>%
+
+overall_deviation <- mean(df_long$resid, na.rm=TRUE)
+overall_sd <- sd(df_long$resid, na.rm=TRUE)
+threshold <- abs(overall_deviation) + 0.25 * overall_sd
+
+deviants <- df_long %>%
   summarize(
     dev = mean(resid, na.rm=TRUE),
     sd = sd(resid, na.rm=TRUE),
     .by = group_list
-  )
-
-overall_deviation <- mean(df_long$resid, na.rm=TRUE)
-overall_sd <- sd(df_long$resid, na.rm=TRUE)
-threshold <- abs(overall_deviation) + 1 * overall_sd
-
-deviants <- df_dev %>%
+  ) %>%
   filter(abs(dev) > threshold) %>%
   arrange(desc(dev))
 
 df_long %>%
-  right_join(select(deviants, -c(dev, sd))) %>%
+  inner_join(select(deviants, -c(dev, sd))) %>%
   pivot_longer(c(pred, resid, norm), names_to = "series") %>%
   mutate(series = factor(series, levels = c("norm", "pred", "resid"))) %>%
   ggplot(aes(time, value, color = series, linetype = series)) +
   geom_line(linewidth = 1.2) +
+  geom_vline(aes(xintercept = time_to_growth_max), linetype = "dashed") +
+  geom_vline(aes(xintercept = time_to_equillibrium), linetype = "dashed") +
   scale_color_manual(values = c("black", "red", "blue")) +
   scale_linetype_manual(values = c("solid", "dashed", "dashed")) +
   facet_wrap(vars(reaction, assay, wells)) +
