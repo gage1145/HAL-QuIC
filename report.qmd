@@ -4,11 +4,13 @@ date: today
 author: "Gage Rowden"
 format:
   html:
+    grid: 
+      body-width: 1000px
     toc: true
     toc-depth: 3
     toc-title: "Contents"
     theme: flatly
-    embed-resources: true
+    # embed-resources: true
     fig-align: center
 execute:
   warning: false
@@ -41,28 +43,30 @@ The model is described by the following equations:
 
 $$
 \begin{aligned}
-  G(t)&=\frac{S_1}{1+e^{a_1(b_1-\text{t})}}\\
-  D(t)&=\frac{S_2}{1+e^{a_2(b_2-\text{t})}}
+  g_1(t)&=\frac{S_1}{1+e^{a_1(b_1-\text{t})}}\\
+  g_2(t)&=\frac{S_2}{1+e^{a_2(b_2-\text{t})}}
 \end{aligned}
 $$
 
 where $S_1$ and $S_2$ represent the primary and secondary phase asymptotes, respectively. Parameters $a_1$ and $a_2$, modulate the steepness of the inflection point; $b_1$ and $b_2$ represent the midpoint of the inflection point of the curves. The model can be described as the sum of these two logistic functions.
 
 $$
-f(t)=G(t)+D(t)
+f(t)=g_1(t)+g_2(t)
 $$
 
 ## Example Graph
 
 ```{r Example Graph, echo=FALSE}
 #| fig-caption: "Example Graph highlighting the sum of the two components. The blue line is the combined component, the red line is the growth component, and the green line is the decay component."
-#| fig-height: 5
-S1 <- 15
-S2 <- -5.5
+#| fig-height: 6
+#| fig-width: 12
+
+S1 <- 25
+S2 <- -12.5
 a1 <- 1.5
-a2 <- 0.16
-b1 <- 14
-b2 <- 25
+a2 <- 0.5
+b1 <- 10
+b2 <- 16
 
 tex_label <- TeX(sprintf(r"($f(t)=\frac{%s}{1+e^{%s(%s - t)}} + \frac{%s}{1+e^{%s(%s - t)}}$)", S1,a1,b1,S2,a2,b2),output = "character")
 
@@ -91,20 +95,14 @@ df_example %>%
     strip.text = element_blank(),
     legend.title = element_blank(),
     legend.position = "inside",
-    legend.position.inside = c(0, .85),
+    legend.position.inside = c(0, .95),
     legend.justification = c(0, 1),
     legend.background = element_blank()
   )
 ```
 
 ## How do the parameters affect the curves?
-The $S$ parameter affects the height of the asymptote. For example, if $S=10$, the curve will approach 10 in the equillibrium phase as $t\rightarrow\infty$. If $S=0$, the other parameters will not affect the curve, and become redundant.
-
-The $a$ parameter affects the steepness of the inflection point. A lower value of $a$ will result in a smoother curve, and as $a\rightarrow0$, the curve will approach a constant value at $S/2$. Alternatively, as $a\rightarrow\infty$, the curve will approach $S$ instantaneously at when $t=b$.
-
-The $b$ parameter affects the timing of the inflection point (i.e. when the curve reaches $S/2$). This value can range from $-\infty\rightarrow\infty$, but for the purpose of this analysis, $b$ is constrained to positive values.
 ```{r, echo=FALSE}
-#| fig-height: 12
 fit_single <- function(x, S, a, b) {
   return(S / (1 + exp(a * (b- x))))
 }
@@ -162,37 +160,57 @@ df_ <- tibble(
       mod_number = as.factor(str_extract(parameter, "[0-9]$"))
   )
 
-df_eq <- df_coef %>%
-  summarize(
-    .by = coef
-  ) %>%
-    mutate(
-      label = case_when(
-        coef == "S" ~ TeX(r"($f(t)=\frac{\textbf{S}}{1+e^{a(b - t)}}$)", output = "character"),
-        coef == "a" ~ TeX(r"($f(t)=\frac{S}{1+e^{\textbf{a}(b - t)}}$)", output = "character"),
-        coef == "b" ~ TeX(r"($f(t)=\frac{S}{1+e^{a(\textbf{b} - t)}}$)", output = "character")
-      )
-    )
+make_param_plot <- function(coef) {
+  df_c <- df_coef %>%
+    filter(coef == !!coef)
 
-df_ %>%
-  mutate(coef = factor(coef, levels = c("S", "a", "b"))) %>%
-  ggplot(aes(time, value, color=mod_number)) +
-  geom_line(show.legend = FALSE) +
-  geom_text(aes(x=x, y=y, label = label), data = df_coef, size=6, show.legend = FALSE) +
-  geom_text(aes(label = label), data = df_eq, x = 0, y = 13, size = 6, hjust = 0, parse = TRUE, inherit.aes = FALSE) +
-  facet_grid(rows=vars(fct_inorder(coef)), scales = "free_y") +
-  main_theme +
-  theme(
-    legend.position = "bottom",
-    strip.text = element_blank(),
-    axis.title = element_blank(),
-  )
+  df_ %>%
+    filter(coef == !!coef) %>%
+    ggplot(aes(time, value, color=mod_number)) +
+    geom_line(show.legend = FALSE, linewidth=1.2) +
+    geom_text(aes(x=x, y=y, label = label), data = df_c, size=6, show.legend = FALSE) +
+    main_theme +
+    theme(
+      legend.position = "bottom",
+      axis.title = element_blank(),
+    )
+}
 ```
 
-## The Data
-The data is a time series of fluorescence measurements from a single well in a single reaction. The data is normalized to the first time point, and the time points are evenly spaced between 0 and 48 hours. The data is also filtered for only positive control samples and time points greater than zero.
+```{r S Param Plot, echo=FALSE}
+#| fig-height: 6
+#| fig-width: 12
+make_param_plot("S")
+```
 
-```{r, eval=TRUE}
+The $S$ parameter affects the height of the asymptote. For example, if $S=10$, the curve will approach 10 in the equillibrium phase as $t\rightarrow\infty$. If $S=0$, the other parameters will not affect the curve, and therefore become redundant.
+
+---
+
+```{r a Param Plot, echo=FALSE}
+#| fig-height: 6
+#| fig-width: 12
+make_param_plot("a")
+```
+
+The $a$ parameter affects the steepness of the inflection point. A lower value of $a$ will result in a smoother curve, and as $a\rightarrow0$, the curve will approach a constant value at $S/2$. Alternatively, as $a\rightarrow\infty$, the curve will approach $S$ instantaneously at when $t=b$.
+
+---
+
+```{r b Param Plot, echo=FALSE}
+#| fig-height: 6
+#| fig-width: 12
+make_param_plot("b")
+```
+
+The $b$ parameter affects the timing of the inflection point (i.e. when the curve reaches $S/2$). This value can range from $-\infty\rightarrow\infty$, but for the purpose of this analysis, $b$ is constrained to positive values.
+
+---
+
+## The Training Data
+The data is a time series of fluorescence measurements from a single well in a single reaction. The data is normalized to the first time point, and the time points are evenly spaced between 0 and 48 hours. The data is also filtered for only positive control samples and $t>0$.
+
+```{r, eval=TRUE, echo=FALSE}
 raw_file <- "data/data.parquet"
 
 group_list <- c("sample", "wells", "dilutions", "assay", "reaction")
@@ -229,8 +247,10 @@ norm_n_der <- function(df, x, y, norm_point, groups, window=3, smooth=10, zero=T
 df_test <- norm_n_der(df_, "time", "rfu", 8, group_list)
 ```
 
+### Example of Normalized Data
 ```{r Normalize Plot, echo=FALSE}
 #| fig-height: 6
+#| fig-width: 12
 rxn <- unique(df_$reaction)[1]
 well <- unique(df_$wells)[1]
 df_raw <- df_ %>%
@@ -276,13 +296,12 @@ The model uses the `nls()` function from the `stats` package. Because this is a 
 df_test_sum <- df_test %>%
   summarize(
     max_time             = max(time, na.rm=TRUE),
-    max_deriv            = max(deriv, na.rm=TRUE),
-    growth_scale         = max_deriv,
+    growth_scale         = max(deriv, na.rm=TRUE),
     peak_norm            = norm[which.min(deriv2)],
     time_to_growth_max   = time[norm == peak_norm][1],
     time_to_growth_mid   = time[which.max(deriv)],
-    max_equillibrium     = max(norm[time >= time_to_growth_max], na.rm=TRUE),
-    min_equillibrium     = min(norm[time >= time_to_growth_max], na.rm=TRUE),
+    max_equillibrium     = max(norm[time > time_to_growth_max], na.rm=TRUE),
+    min_equillibrium     = min(norm[time > time_to_growth_max], na.rm=TRUE),
     max_decay            = max_equillibrium - peak_norm,
     min_decay            = min_equillibrium - peak_norm,
     equillibrium         = ifelse(abs(min_decay) > max_decay, min_equillibrium, max_equillibrium),
@@ -297,70 +316,89 @@ df_test_sum <- df_test %>%
 ```
 
 ## Fitting the Model
-The model first attempts to fit a single sigmoidal function to the data using the three of the landmarks shown above. If this fails, the model is fit to the data using two sigmoidal functions.
+The model first attempts to fit a double sigmoidal model to the data using the landmarks shown above. If this fails, the function then reverts to a single sigmoidal model. It then re-attempts the double sigmoidal fit using the coefficients generated from the single model. If that fails again, the model returns just the single sigmoidal model.
 ```{r, eval=TRUE}
-fit_model <- function(data, 
-                      peak_norm, 
-                      time_to_growth_mid, 
-                      growth_scale, 
-                      peak_decay, 
-                      time_to_decay_mid, 
-                      decay_scale,
-                      max_time,
-                      ...) {
+fit_model <- function(data, peak_norm, time_to_growth_mid, growth_scale, peak_decay, time_to_decay_mid, decay_scale,max_time, ...) {
   form1 <- norm ~ (S1 / (1 + exp(a1 * (b1 - time))))
   form2 <- as.formula(paste(deparse(form1), "+ (S2 / (1 + exp(a2 * (b2 - time))))"))
 
-  peak_scalar <- 2
-  time_scalar <- 0.9
+  fit_timeout   <- 10  # seconds per nls() call
+  fit_control   <- nls.control(maxiter = 100, warnOnly = TRUE)
+  nls_bounded <- function(...) {
+    setTimeLimit(elapsed = fit_timeout, transient = TRUE)
+    on.exit(setTimeLimit(elapsed = Inf, transient = TRUE), add = TRUE)
+    nls(..., control = fit_control)
+  }
 
-  lower_S1 <- 0
-  lower_a1 <- 0
-  lower_b1 <- 0.01
-  lower_S2 <- -peak_norm * peak_scalar
-  lower_a2 <- -peak_norm * peak_scalar
-  lower_b2 <- time_to_growth_mid
+  peak_scalar <- 2
+  is_negative_decay <- peak_decay < 0
+
+  lower_S1 <- peak_norm
+  lower_a1 <- 0.1
+  lower_b1 <- 0
+  lower_S2 <- ifelse(is_negative_decay, -peak_norm * peak_scalar, 0)
+  lower_a2 <- 0
+  lower_b2 <- -time_to_decay_mid
 
   upper_S1 <- peak_norm * peak_scalar
-  upper_a1 <- peak_norm * peak_scalar
-  upper_b1 <- max_time * time_scalar
-  upper_S2 <- peak_norm * peak_scalar
-  upper_a2 <- peak_norm * peak_scalar
-  upper_b2 <- max_time * time_scalar
+  upper_a1 <- 20
+  upper_b1 <- max_time
+  upper_S2 <- ifelse(is_negative_decay, 0, peak_norm * peak_scalar)
+  upper_a2 <- 10
+  upper_b2 <- max_time
 
-  fit_single <- function() {
+  fit_single <- function(...) {
     single_mod <- NULL
-    tryCatch(
-      {
-        single_mod <- nls(
-          form1, data = data,
-          start = list(
-            S1 = peak_norm,
-            a1 = peak_norm,
-            b1 = time_to_growth_mid
-          ),
-          algorithm = "port",
-          lower = c(S1 = lower_S1, a1 = lower_a1, b1 = lower_b1),
-          upper = c(S1 = upper_S1, a1 = upper_a1, b1 = upper_b1)
-        )
-      },
-      error = function(e) {
-        sprintf("Unable to fit single modlel: %s", e)
-      }
-    )
+    single_mod <- nls_bounded(
+      form1, data = data,
+      start = list(
+        S1 = peak_norm,
+        a1 = peak_norm,
+        b1 = time_to_growth_mid
+      ),
+      algorithm = "port",
+      lower = c(S1 = lower_S1, a1 = lower_a1, b1 = lower_b1),
+      upper = c(S1 = upper_S1, a1 = upper_a1, b1 = upper_b1)
+    ) %>%
+      try(silent = TRUE)
     return(single_mod)
   }
 
-  fit_double <- function(single_mod) {
+  fit_double <- function(...) {
+    mod <- NULL
+    mod <- nls_bounded(
+      form2, data = data,
+      start = list(
+        S1 = peak_norm,  a1 = growth_scale, b1 = time_to_growth_mid,
+        S2 = peak_decay, a2 = decay_scale,  b2 = time_to_decay_mid
+      ),
+      algorithm = "port",
+      lower = c(
+        S1 = lower_S1, a1 = lower_a1, b1 = lower_b1, 
+        S2 = lower_S2, a2 = lower_a2, b2 = lower_b2
+      ),
+      upper = c(
+        S1 = upper_S1, a1 = upper_a1, b1 = upper_b1, 
+        S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
+      )
+    ) %>%
+      try()
 
-    double_mod <- NULL
+    if(is.null(mod)) {
+      mod <- try(fit_single())
+      
+      if(is.null(mod)) return(NULL)
+      
+      coefs <- coef(mod)
+      S1 <- coefs[1]
+      a1 <- coefs[2]
+      b1 <- coefs[3]
 
-    try({
-      double_mod <- nls(
+      mod <- nls_bounded(
         form2, data = data,
         start = list(
-          S1 = peak_norm,  a1 = growth_scale, b1 = time_to_growth_mid,
-          S2 = peak_decay, a2 = decay_scale,  b2 = time_to_decay_mid
+          S1 = S1, a1 = a1, b1 = b1,
+          S2 = peak_decay, a2 = decay_scale, b2 = time_to_decay_mid
         ),
         algorithm = "port",
         lower = c(
@@ -371,51 +409,25 @@ fit_model <- function(data,
           S1 = upper_S1, a1 = upper_a1, b1 = upper_b1, 
           S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
         )
-      )
-    })
-
-    if(is.null(double_mod) & !is.null(single_mod)) {
-      try({
-        coefs <- coef(single_mod)
-        double_mod <- nls(
-          form2, data = data,
-          start = list(
-            S1 = coefs[1],
-            a1 = coefs[2],
-            b1 = coefs[3],
-            S2 = peak_decay,
-            a2 = decay_scale,
-            b2 = time_to_decay_mid
-          ),
-          algorithm = "port",
-          lower = c(
-            S1 = lower_S1, a1 = lower_a1, b1 = lower_b1, 
-            S2 = lower_S2, a2 = lower_a2, b2 = lower_b2
-          ),
-          upper = c(
-            S1 = upper_S1, a1 = upper_a1, b1 = upper_b1, 
-            S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
-          )
-        )
-      })
+      ) %>%
+        try()
     }
-      
-    if(is.null(double_mod)) return(single_mod)
-    return(double_mod)
+    return(mod)
   }
-
-  mod <- NULL
-  try(mod <- fit_single(), silent = TRUE)
-  try(mod <- fit_double(mod), silent = TRUE)
-  return(mod)
+  fit_double()
 }
 ```
 
 ## Results
-![](figures/example_fits.png)
-![](figures/deviants.png)
+
+### Residual Visualizations
 ![](figures/residual_vis.png)
-![](figures/pca.png)
+
+### Example Fits
+![](figures/example_fits.png)
+
+### Samples with the Highest Deviations from the Model
+![](figures/deviants.png)
 
 
 
