@@ -224,6 +224,7 @@ df_unmod %>%
     norm = mean(norm),
     .by = c(time, wells, assay, reaction)
   ) %>%
+  {
   ggplot(aes(time, norm)) +
   geom_line() +
   facet_wrap(vars(wells, assay, reaction)) +
@@ -231,6 +232,8 @@ df_unmod %>%
   theme(
     strip.text = element_blank(),
   )
+  } %>%
+  try(silent = TRUE)
 
 # Samples with greatest deviation from model
 df_long <- df_results %>%
