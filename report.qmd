@@ -208,7 +208,7 @@ The $b$ parameter affects the timing of the inflection point (i.e. when the curv
 ---
 
 ## The Training Data
-The data is a time series of fluorescence measurements from a single well in a single reaction. The data is normalized to the first time point, and the time points are evenly spaced between 0 and 48 hours. The data is also filtered for only positive control samples and $t>0$.
+The data is a time series of fluorescence measurements from a single positive sample over many reactions. Both RT-QuIC and Nano-QuIC data were included in this data. The data is normalized to the eighth time-point, and the time-points are evenly spaced by 15 min between 0 and 72 hours. Only time-points $t>0$ were included to account for the artificially increased fluorescence values before the reaction has reached thermal equillibrium.
 
 ```{r, eval=TRUE, echo=FALSE}
 raw_file <- "data/data.parquet"

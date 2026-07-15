@@ -269,7 +269,7 @@ f(t)=g_1(t)+g_2(t)
 </section>
 <section id="the-training-data" class="level2">
 <h2 class="anchored" data-anchor-id="the-training-data">The Training Data</h2>
-<p>The data is a time series of fluorescence measurements from a single well in a single reaction. The data is normalized to the first time point, and the time points are evenly spaced between 0 and 48 hours. The data is also filtered for only positive control samples and <span class="math inline">\(t&gt;0\)</span>.</p>
+<p>The data is a time series of fluorescence measurements from a single positive sample over many reactions. Both RT-QuIC and Nano-QuIC data were included in this data. The data is normalized to the eighth time-point, and the time-points are evenly spaced by 15 min between 0 and 72 hours. Only time-points <span class="math inline">\(t&gt;0\)</span> were included to account for the artificially increased fluorescence values before the reaction has reached thermal equillibrium.</p>
 <div class="cell">
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
