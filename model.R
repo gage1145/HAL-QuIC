@@ -8,14 +8,24 @@ library(skimr)
 library(ggpubr)
 library(patchwork)
 library(latex2exp)
+library(investr)
 
 
+single_only <- FALSE
+weighted <- TRUE
+
+# Noise model, sd^2 = s0^2 + (k * mu^theta)^2, estimated from the unweighted
+# residuals. Drives the IRLS weights in fit_model() and standardizes the
+# residuals when ranking fits below -- keep them a single source of truth.
+irls_s0 <- 0.072
+irls_k <- 0.0094
+irls_theta <- 1
 
 raw_file <- "data/data.parquet"
 
 group_list <- c("sample", "wells", "dilutions", "assay", "reaction", "mortem", "sample_type", "animal")
 
-norm_n_der <- function(df, x, y, norm_point, groups, window=3, smooth=10, zero=TRUE) {
+norm_n_der <- function(df, x, y, norm_point, groups, window = 3, smooth = 10, zero = TRUE) {
   df %>%
     mutate(
       norm   = rollmean(!!sym(y), smooth, na.pad=TRUE),
@@ -30,7 +40,11 @@ df_ <- raw_file %>%
   read_parquet() %>%
   mutate(across(all_of(group_list), as.factor)) %>%
   select(-c(norm, deriv)) %>%
-  filter(time <= 72, sample == "P") %>%
+  filter(
+    time <= 72,
+    sample == "P",
+    assay == "RT-QuIC"
+  ) %>%
   norm_n_der("time", "rfu", 8, group_list) %>%
   na.omit()
 
@@ -54,31 +68,38 @@ df_temp <- df_ %>%
     decay_scale          = abs(decay_slope),
     .by = group_list
   )
-  # filter(peak_norm > 4)
 
 df_combined <- df_ %>%
   nest(.by = group_list) %>%
   right_join(df_temp)
 
-fit_model <- function(data, 
-                      peak_norm, 
-                      time_to_growth_mid, 
-                      growth_scale, 
-                      peak_decay, 
-                      time_to_decay_mid, 
+fit_model <- function(data,
+                      peak_norm,
+                      time_to_growth_mid,
+                      growth_scale,
+                      peak_decay,
+                      time_to_decay_mid,
                       decay_scale,
                       max_time,
-                      ...) {
-  
+                      ...,
+                      single_only = FALSE,
+                      algorithm = "port",
+                      weighted = FALSE,
+                      irls_iter = 3,
+                      irls_s0 = 0.072,
+                      irls_k = 0.0094,
+                      irls_theta = 1) {
   form1 <- norm ~ (S1 / (1 + exp(a1 * (b1 - time))))
   form2 <- as.formula(paste(deparse(form1), "+ (S2 / (1 + exp(a2 * (b2 - time))))"))
 
-  fit_timeout   <- 10  # seconds per nls() call
-  fit_control   <- nls.control(maxiter = 100, warnOnly = TRUE)
+  data$w_vector <- 1
+
+  fit_timeout <- 10 # seconds per nls() call
+  fit_control <- nls.control(maxiter = 1000, warnOnly = TRUE)
   nls_bounded <- function(...) {
     setTimeLimit(elapsed = fit_timeout, transient = TRUE)
     on.exit(setTimeLimit(elapsed = Inf, transient = TRUE), add = TRUE)
-    nls(..., control = fit_control)
+    nls(..., control = fit_control, algorithm = algorithm, weights = w_vector)
   }
 
   peak_scalar <- 2
@@ -98,16 +119,20 @@ fit_model <- function(data,
   upper_a2 <- 10
   upper_b2 <- max_time
 
-  fit_single <- function(...) {
-    single_mod <- NULL
-    single_mod <- nls_bounded(
-      form1, data = data,
-      start = list(
+  fit_single <- function(start = NULL, ...) {
+    if (is.null(start)) {
+      start <- list(
         S1 = peak_norm,
         a1 = peak_norm,
         b1 = time_to_growth_mid
-      ),
-      algorithm = "port",
+      )
+    }
+
+    single_mod <- NULL
+    single_mod <- nls_bounded(
+      form1,
+      data = data,
+      start = start,
       lower = c(S1 = lower_S1, a1 = lower_a1, b1 = lower_b1),
       upper = c(S1 = upper_S1, a1 = upper_a1, b1 = upper_b1)
     ) %>%
@@ -116,64 +141,97 @@ fit_model <- function(data,
     return(single_mod)
   }
 
-  fit_double <- function(...) {
+  # Iteratively reweighted least squares against the variance model
+  irls <- function(fit_fun) {
+    mod <- fit_fun()
+    if (!weighted || !inherits(mod, "nls")) {
+      return(mod)
+    }
+
+    for (i in seq_len(irls_iter)) {
+      w <- 1 / (irls_s0^2 + (irls_k * abs(predict(mod))^irls_theta)^2)
+      if (!all(is.finite(w)) || any(w <= 0)) break
+      data$w_vector <<- w
+
+      new_mod <- fit_fun(start = as.list(coef(mod)))
+      if (!inherits(new_mod, "nls")) break # refit failed; keep last good fit
+      mod <- new_mod
+    }
+
+    return(mod)
+  }
+
+  if (single_only) {
+    return(irls(fit_single))
+  }
+
+  fit_double <- function(start = NULL, ...) {
+    if (is.null(start)) {
+      start <- list(
+        S1 = peak_norm,  a1 = growth_scale, b1 = time_to_growth_mid,
+        S2 = peak_decay, a2 = decay_scale,  b2 = time_to_decay_mid
+      )
+    }
 
     mod <- NULL
     mod <- nls_bounded(
-      form2, data = data,
-      start = list(
-        S1 = peak_norm,  a1 = growth_scale, b1 = time_to_growth_mid,
-        S2 = peak_decay, a2 = decay_scale,  b2 = time_to_decay_mid
-      ),
-      algorithm = "port",
+      form2,
+      data = data,
+      start = start,
       lower = c(
-        S1 = lower_S1, a1 = lower_a1, b1 = lower_b1, 
+        S1 = lower_S1, a1 = lower_a1, b1 = lower_b1,
         S2 = lower_S2, a2 = lower_a2, b2 = lower_b2
       ),
       upper = c(
-        S1 = upper_S1, a1 = upper_a1, b1 = upper_b1, 
+        S1 = upper_S1, a1 = upper_a1, b1 = upper_b1,
         S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
       )
     ) %>%
-      try()
+      try(silent = TRUE)
 
-    if(is.null(mod)) {
+    if (is.null(mod)) {
       mod <- try(fit_single())
-      
-      if(is.null(mod)) return(NULL)
-      
+
+      if (is.null(mod)) {
+        return(NULL)
+      }
+
       coefs <- coef(mod)
       S1 <- coefs[1]
       a1 <- coefs[2]
       b1 <- coefs[3]
 
       mod <- nls_bounded(
-        form2, data = data,
+        form2,
+        data = data,
         start = list(
           S1 = S1, a1 = a1, b1 = b1,
           S2 = peak_decay, a2 = decay_scale, b2 = time_to_decay_mid
         ),
-        algorithm = "port",
         lower = c(
-          S1 = lower_S1, a1 = lower_a1, b1 = lower_b1, 
+          S1 = lower_S1, a1 = lower_a1, b1 = lower_b1,
           S2 = lower_S2, a2 = lower_a2, b2 = lower_b2
         ),
         upper = c(
-          S1 = upper_S1, a1 = upper_a1, b1 = upper_b1, 
+          S1 = upper_S1, a1 = upper_a1, b1 = upper_b1,
           S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
         )
       ) %>%
-        try()
+        try(silent = TRUE)
     }
-      
+
     return(mod)
   }
 
-  fit_double()
+  irls(fit_double)
 }
 
 df_mod <- df_combined %>%
-  mutate(model = pmap(., fit_model, .progress = TRUE))
+  mutate(model = pmap(
+    ., fit_model,
+    single_only = single_only, weighted = weighted,
+    irls_s0 = irls_s0, irls_k = irls_k, irls_theta = irls_theta, .progress = TRUE
+  ))
 
 df_unmod <- df_mod %>%
   filter(map_lgl(model, is.null))
@@ -183,18 +241,23 @@ df_results <- df_mod %>%
   mutate(
     data = map2(model, data, ~ {
       cc <- coef(.x)
+      ci <- tryCatch(
+        predFit(.x, newdata = .y, interval = "confidence", level = 0.95),
+        error = function(e) NULL
+      )
       .y %>%
         add_predictions(.x) %>%
         add_residuals(.x) %>%
         mutate(
+          lower = if (is.null(ci)) NA_real_ else ci[, "lwr"],
+          upper = if (is.null(ci)) NA_real_ else ci[, "upr"],
           growth = cc[1] / (1 + exp(cc[2] * (cc[3] - time))),
-          decay  = cc[4] / (1 + exp(cc[5] * (cc[6] - time)))
+          decay  = cc[4] / (1 + exp(cc[5] * (cc[6] - time))),
         )
     }),
-    coefficients = map(model, coef)
+    coefficients = map(model, coef),
   ) %>%
   unnest_wider(coefficients)
-
 
 
 # Figures ----------------------------------------------------------------
@@ -220,69 +283,25 @@ df_unmod %>%
   ) %>%
   {
     ggplot(aes(time, norm)) +
-    geom_line() +
-    facet_wrap(vars(wells, assay, reaction)) +
-    main_theme +
-    theme(
-      strip.text = element_blank(),
-    ) 
+      geom_line() +
+      facet_wrap(vars(wells, assay, reaction)) +
+      main_theme +
+      theme(
+        strip.text = element_blank(),
+      )
   } %>%
   try(silent = TRUE)
 
-# Samples with greatest deviation from model
 df_long <- df_results %>%
   unnest(data)
-
-overall_deviation <- mean(df_long$resid, na.rm=TRUE)
-overall_sd <- sd(df_long$resid, na.rm=TRUE)
-threshold_scalar <- 0.2
-threshold <- abs(overall_deviation) + threshold_scalar * overall_sd
-
-deviants <- df_long %>%
-  summarize(
-    dev = mean(resid, na.rm=TRUE),
-    sd = sd(resid, na.rm=TRUE),
-    .by = group_list
-  ) %>%
-  filter(abs(dev) > threshold) %>%
-  arrange(desc(dev))
-
-df_long %>%
-  inner_join(select(deviants, -c(dev, sd))) %>%
-  pivot_longer(c(pred, growth, decay, norm), names_to = "series") %>%
-  mutate(series = factor(series, levels = c("norm", "pred", "growth", "decay"))) %>%
-  ggplot(aes(time, value, color = series, linetype = series, linewidth = series)) +
-  geom_line() +
-  # geom_vline(aes(xintercept = time_to_growth_max), linetype = "dashed", linewidth=0.5) +
-  # geom_vline(aes(xintercept = time_to_decay_mid), linetype = "dashed", color = "blue") +
-  # geom_vline(aes(xintercept = time_to_equillibrium), linetype = "dashed", color = "orange") +
-  scale_color_manual(values = c("black", "red", "orange", "blue")) +
-  scale_linetype_manual(values = c("solid", "dashed", "dashed", "dashed")) +
-  scale_linewidth_manual(values = c(1, 1.5, 1.5, 1.5)) +
-  facet_wrap(vars(reaction, assay, wells)) +
-  labs(x = "Time") +
-  main_theme +
-  theme(
-    axis.title.y = element_blank(),
-    strip.text = element_blank(),
-    legend.title = element_blank(),
-    legend.position = "inside",
-    legend.position.inside = c(0, .95),
-    legend.justification = c(0, 1),
-    legend.background = element_blank(),
-    legend.direction = "horizontal",
-  )
-ggsave("figures/deviants.png", width = 16, height = 12)
-
 
 # Residual Visualizations ------------------------------------------------
 
 
-# Plot histogram of residuals
-
+# Residual Histogram
 res_hist <- df_long %>%
-  ggplot(aes(resid, fill = assay)) +
-  geom_histogram(bins = 100, alpha = 0.5, position = "identity") +
+  ggplot(aes(resid)) +
+  geom_histogram(bins = 100, position = "identity", fill = "blue") +
   scale_x_continuous(limits = c(-1, 1)) +
   labs(x = "Residuals", y = "Count", title = "Histogram of Residuals") +
   main_theme +
@@ -297,8 +316,8 @@ res_hist <- df_long %>%
 
 # QQ Plot
 qqplot <- df_long %>%
-  ggplot(aes(sample = resid, color = assay)) +
-  geom_qq() +
+  ggplot(aes(sample = resid)) +
+  geom_qq(color = "blue") +
   geom_qq_line() +
   scale_x_continuous(limits = c(-4, 4)) +
   scale_y_continuous(limits = c(-4, 4)) +
@@ -315,17 +334,15 @@ qqplot <- df_long %>%
 
 # Residuals over time
 res_time <- df_long %>%
-  na.omit() %>%
-  mutate(diff = pred - norm) %>%
   summarize(
     .by = c(time, assay),
-    mean = mean(diff, na.rm = TRUE),
-    sd = sd(diff, na.rm = TRUE)
+    mean = mean(resid, na.rm = TRUE),
+    sd = sd(resid, na.rm = TRUE)
   ) %>%
-  ggplot(aes(time, mean, color = assay, fill = assay)) +
+  ggplot(aes(time, mean)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_line() +
-  geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd), alpha = 0.2) +
+  geom_line(color = "blue") +
+  geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd), color = "blue", fill = "blue", alpha = 0.2) +
   labs(
     x = "Time", y = "Residuals", title = "Residuals over Time",
   ) +
@@ -338,39 +355,97 @@ res_time <- df_long %>%
     legend.background = element_blank(),
     legend.direction = "horizontal",
   )
+res_time
 
 (res_hist | qqplot) / res_time
 ggsave("figures/residual_vis.png", width = 16, height = 12)
 
 
-# Example Fits -----------------------------------------------------------
+# Worst Fits -------------------------------------------------------------
 
 
-df_results %>%
-#   filter(peak_norm > 4) %>%
-  arrange(decay_slope) %>%
-  head(24) %>%
-  mutate(across(c(S1,a1,b1,S2,a2,b2), ~ signif(., 2))) %>%
-  unnest(data) %>%
+n_examples <- 12
+
+fit_quality <- df_results %>%
+  mutate(
+    converged = map_lgl(model, ~ isTRUE(.x$convInfo$isConv)),
+    srmse = map_dbl(data, ~ {
+      sd_hat <- sqrt(irls_s0^2 + (irls_k * abs(.x$pred)^irls_theta)^2)
+      sqrt(mean((.x$resid / sd_hat)^2, na.rm = TRUE))
+    }),
+    # Worst single point: catches localized misfit.
+    max_sres = map_dbl(data, ~ {
+      sd_hat <- sqrt(irls_s0^2 + (irls_k * abs(.x$pred)^irls_theta)^2)
+      max(abs(.x$resid / sd_hat), na.rm = TRUE)
+    })
+  )
+
+deviants <- fit_quality %>%
+  arrange(desc(srmse)) %>%
+  head(n_examples) %>%
+  select(all_of(group_list), srmse, max_sres, converged) %>%
+  left_join(df_long, by = group_list)
+
+df_pred <- deviants %>%
+  select(group_list, time, pred, growth, decay) %>%
+  pivot_longer(c(pred, growth, decay), names_to = "series") %>%
+  mutate(series = factor(series, levels = c("pred", "growth", "decay")))
+
+df_ci <- deviants %>%
+  select(group_list, time, norm, lower, upper)
+
+deviants %>%
+  ggplot(aes(time, norm)) +
+  geom_point(size = 0.5) +
+  geom_line(aes(y = value, color = series), data = df_pred, linewidth = 1.5, linetype = "dashed") +
+  geom_ribbon(aes(ymin = lower, ymax = upper), data = df_ci, alpha = 0.2) +
+  facet_wrap(vars(reaction, assay, wells)) +
+  labs(x = "Time") +
+  main_theme +
+  theme(
+    axis.title.y = element_blank(),
+    strip.text = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "top",
+    legend.position.inside = c(0, .95),
+    legend.background = element_blank(),
+    legend.direction = "horizontal",
+  )
+ggsave("figures/deviants.png", width = 8, height = 6)
+
+
+# Best Fits -----------------------------------------------------------
+
+
+fit_quality %>%
+  arrange(srmse) %>%
+  head(n_examples) %>%
+  select(all_of(group_list), srmse, max_sres, converged) %>%
+  left_join(df_long, by = group_list) %>%
+  mutate(across(matches("$[A-z]{1}\\d^"), ~ signif(., 2))) %>%
+  pivot_longer(c(pred, growth, decay), names_to = "series") %>%
+  mutate(series = factor(series, levels = c("pred", "growth", "decay"))) %>%
   ggplot(aes(time)) +
   geom_hline(yintercept = 0, linetype = "dotted") +
-  geom_line(aes(y=norm), linewidth=1, color="black") +
-  geom_line(aes(y=pred), linewidth=1.5, color="red", linetype="dashed") +
-  geom_line(aes(y=growth), linewidth=1.5, color="orange", linetype="dashed") +
-  geom_line(aes(y=decay), linewidth=1.5, color="blue", linetype="dashed") +
-  facet_wrap(vars(reaction, wells), ncol = 6, scales="free_y") +
-  # geom_text(aes(label = label), x = 0, y = 30, hjust = 0, inherit.aes = FALSE, size = 4, parse = TRUE) +
+  geom_point(aes(y = norm), size = 0.5, color = "black") +
+  geom_line(aes(y = value, color = series), linewidth = 1.5, linetype = "dashed") +
+  facet_wrap(vars(reaction, wells)) +
   labs(x = "Time (hr)", y = "Normalized Fluorescence") +
   main_theme +
   theme(
+    axis.title.y = element_blank(),
     strip.text = element_blank(),
-    axis.text = element_blank(),
-    axis.title = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "top",
+    legend.position.inside = c(0, .95),
+    legend.background = element_blank(),
+    legend.direction = "horizontal",
   )
 
-ggsave("figures/example_fits.png", width = 20, height = 12)
+ggsave("figures/best_fits.png", width = 8, height = 6)
 
 
 # Save Results to Parquet ------------------------------------------------
 
-write_parquet(select(df_results, -model), "data/results.parquet")
+
+write_parquet(select(fit_quality, -model), "data/results.parquet")
