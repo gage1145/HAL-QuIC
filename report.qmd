@@ -430,7 +430,7 @@ fit_model <- function(data, peak_norm, time_to_growth_mid, growth_scale, peak_de
 ![](figures/residual_vis.png)
 
 ### Example Fits
-![](figures/example_fits.png)
+![](figures/best_fits.png)
 
 ### Samples with the Highest Deviations from the Model
 ![](figures/deviants.png)

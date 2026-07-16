@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Gage Rowden">
-<meta name="dcterms.date" content="2026-07-15">
+<meta name="dcterms.date" content="2026-07-16">
 
 <title>Modeling RT-QuIC Kinetics</title>
 <style>
@@ -192,7 +192,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 15, 2026</p>
+      <p class="date">July 16, 2026</p>
     </div>
   </div>
   
@@ -466,12 +466,12 @@ f(t)=g_1(t)+g_2(t)
 <h2 class="anchored" data-anchor-id="normalizing-the-data">Normalizing the Data</h2>
 <p>The data is first smoothed using a rolling mean, and then normalized to the eighth time point. The first and second derivatives were then estimated from the normalized data which made finding time points of inflection easier.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>norm_n_der <span class="ot">&lt;-</span> <span class="cf">function</span>(df, x, y, norm_point, groups, <span class="at">window=</span><span class="dv">3</span>, <span class="at">smooth=</span><span class="dv">10</span>, <span class="at">zero=</span><span class="cn">TRUE</span>) {</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>norm_n_der <span class="ot">&lt;-</span> <span class="cf">function</span>(df, x, y, norm_point, groups, <span class="at">window =</span> <span class="dv">3</span>, <span class="at">smooth =</span> <span class="dv">10</span>, <span class="at">zero =</span> <span class="cn">TRUE</span>) {</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">%&gt;%</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">norm   =</span> <span class="fu">rollmean</span>(<span class="sc">!!</span><span class="fu">sym</span>(y), smooth, <span class="at">na.pad=</span><span class="cn">TRUE</span>),</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">norm   =</span> norm <span class="sc">/</span> norm[norm_point] <span class="sc">-</span> <span class="fu">ifelse</span>(zero, <span class="dv">1</span>, <span class="dv">0</span>),</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">deriv  =</span> (<span class="fu">lead</span>(norm, window) <span class="sc">-</span> <span class="fu">lag</span>(norm, window)) <span class="sc">/</span> (<span class="fu">lead</span>(<span class="sc">!!</span><span class="fu">sym</span>(x), window) <span class="sc">-</span> <span class="fu">lag</span>(<span class="sc">!!</span><span class="fu">sym</span>(x), window)),</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">norm =</span> <span class="fu">rollmean</span>(<span class="sc">!!</span><span class="fu">sym</span>(y), smooth, <span class="at">na.pad =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">norm =</span> norm <span class="sc">/</span> norm[norm_point] <span class="sc">-</span> <span class="fu">ifelse</span>(zero, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">deriv =</span> (<span class="fu">lead</span>(norm, window) <span class="sc">-</span> <span class="fu">lag</span>(norm, window)) <span class="sc">/</span> (<span class="fu">lead</span>(<span class="sc">!!</span><span class="fu">sym</span>(x), window) <span class="sc">-</span> <span class="fu">lag</span>(<span class="sc">!!</span><span class="fu">sym</span>(x), window)),</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">deriv2 =</span> (<span class="fu">lead</span>(deriv, window) <span class="sc">-</span> <span class="fu">lag</span>(deriv, window)) <span class="sc">/</span> (<span class="fu">lead</span>(<span class="sc">!!</span><span class="fu">sym</span>(x), window) <span class="sc">-</span> <span class="fu">lag</span>(<span class="sc">!!</span><span class="fu">sym</span>(x), window)),</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">.by =</span> <span class="fu">all_of</span>(groups)</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    )</span>
@@ -498,22 +498,22 @@ f(t)=g_1(t)+g_2(t)
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>df_test_sum <span class="ot">&lt;-</span> df_test <span class="sc">%&gt;%</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_time             =</span> <span class="fu">max</span>(time, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">growth_scale         =</span> <span class="fu">max</span>(deriv, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">peak_norm            =</span> norm[<span class="fu">which.min</span>(deriv2)],</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">time_to_growth_max   =</span> time[norm <span class="sc">==</span> peak_norm][<span class="dv">1</span>],</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">time_to_growth_mid   =</span> time[<span class="fu">which.max</span>(deriv)],</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_equillibrium     =</span> <span class="fu">max</span>(norm[time <span class="sc">&gt;</span> time_to_growth_max], <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_equillibrium     =</span> <span class="fu">min</span>(norm[time <span class="sc">&gt;</span> time_to_growth_max], <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_decay            =</span> max_equillibrium <span class="sc">-</span> peak_norm,</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_decay            =</span> min_equillibrium <span class="sc">-</span> peak_norm,</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">equillibrium         =</span> <span class="fu">ifelse</span>(<span class="fu">abs</span>(min_decay) <span class="sc">&gt;</span> max_decay, min_equillibrium, max_equillibrium),</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_time =</span> <span class="fu">max</span>(time, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">growth_scale =</span> <span class="fu">max</span>(deriv, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">peak_norm =</span> norm[<span class="fu">which.min</span>(deriv2)],</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">time_to_growth_max =</span> time[norm <span class="sc">==</span> peak_norm][<span class="dv">1</span>],</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">time_to_growth_mid =</span> time[<span class="fu">which.max</span>(deriv)],</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_equillibrium =</span> <span class="fu">max</span>(norm[time <span class="sc">&gt;</span> time_to_growth_max], <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_equillibrium =</span> <span class="fu">min</span>(norm[time <span class="sc">&gt;</span> time_to_growth_max], <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_decay =</span> max_equillibrium <span class="sc">-</span> peak_norm,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_decay =</span> min_equillibrium <span class="sc">-</span> peak_norm,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">equillibrium =</span> <span class="fu">ifelse</span>(<span class="fu">abs</span>(min_decay) <span class="sc">&gt;</span> max_decay, min_equillibrium, max_equillibrium),</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">time_to_equillibrium =</span> time[norm <span class="sc">==</span> equillibrium][<span class="dv">1</span>],</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">peak_decay           =</span> equillibrium <span class="sc">-</span> peak_norm,</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">time_to_decay        =</span> time_to_equillibrium <span class="sc">-</span> time_to_growth_max,</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">time_to_decay_mid    =</span> time_to_growth_max <span class="sc">+</span> time_to_decay <span class="sc">/</span> <span class="dv">2</span>,</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">decay_slope          =</span> <span class="fu">replace_na</span>(peak_decay <span class="sc">/</span> time_to_decay, <span class="dv">0</span>),</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">decay_scale          =</span> <span class="fu">abs</span>(decay_slope),</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">peak_decay =</span> equillibrium <span class="sc">-</span> peak_norm,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">time_to_decay =</span> time_to_equillibrium <span class="sc">-</span> time_to_growth_max,</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">time_to_decay_mid =</span> time_to_growth_max <span class="sc">+</span> time_to_decay <span class="sc">/</span> <span class="dv">2</span>,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">decay_slope =</span> <span class="fu">replace_na</span>(peak_decay <span class="sc">/</span> time_to_decay, <span class="dv">0</span>),</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">decay_scale =</span> <span class="fu">abs</span>(decay_slope),</span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">.by =</span> group_list</span>
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -522,12 +522,12 @@ f(t)=g_1(t)+g_2(t)
 <h2 class="anchored" data-anchor-id="fitting-the-model">Fitting the Model</h2>
 <p>The model first attempts to fit a double sigmoidal model to the data using the landmarks shown above. If this fails, the function then reverts to a single sigmoidal model. It then re-attempts the double sigmoidal fit using the coefficients generated from the single model. If that fails again, the model returns just the single sigmoidal model.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fit_model <span class="ot">&lt;-</span> <span class="cf">function</span>(data, peak_norm, time_to_growth_mid, growth_scale, peak_decay, time_to_decay_mid, decay_scale,max_time, ...) {</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fit_model <span class="ot">&lt;-</span> <span class="cf">function</span>(data, peak_norm, time_to_growth_mid, growth_scale, peak_decay, time_to_decay_mid, decay_scale, max_time, ...) {</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  form1 <span class="ot">&lt;-</span> norm <span class="sc">~</span> (S1 <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">exp</span>(a1 <span class="sc">*</span> (b1 <span class="sc">-</span> time))))</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  form2 <span class="ot">&lt;-</span> <span class="fu">as.formula</span>(<span class="fu">paste</span>(<span class="fu">deparse</span>(form1), <span class="st">"+ (S2 / (1 + exp(a2 * (b2 - time))))"</span>))</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  fit_timeout   <span class="ot">&lt;-</span> <span class="dv">10</span>  <span class="co"># seconds per nls() call</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  fit_control   <span class="ot">&lt;-</span> <span class="fu">nls.control</span>(<span class="at">maxiter =</span> <span class="dv">100</span>, <span class="at">warnOnly =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  fit_timeout <span class="ot">&lt;-</span> <span class="dv">10</span> <span class="co"># seconds per nls() call</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  fit_control <span class="ot">&lt;-</span> <span class="fu">nls.control</span>(<span class="at">maxiter =</span> <span class="dv">100</span>, <span class="at">warnOnly =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  nls_bounded <span class="ot">&lt;-</span> <span class="cf">function</span>(...) {</span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">setTimeLimit</span>(<span class="at">elapsed =</span> fit_timeout, <span class="at">transient =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">on.exit</span>(<span class="fu">setTimeLimit</span>(<span class="at">elapsed =</span> <span class="cn">Inf</span>, <span class="at">transient =</span> <span class="cn">TRUE</span>), <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
@@ -554,72 +554,77 @@ f(t)=g_1(t)+g_2(t)
 <span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>  fit_single <span class="ot">&lt;-</span> <span class="cf">function</span>(...) {</span>
 <span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    single_mod <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
 <span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    single_mod <span class="ot">&lt;-</span> <span class="fu">nls_bounded</span>(</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>      form1, <span class="at">data =</span> data,</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>      <span class="at">start =</span> <span class="fu">list</span>(</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>        <span class="at">S1 =</span> peak_norm,</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>        <span class="at">a1 =</span> peak_norm,</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">b1 =</span> time_to_growth_mid</span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>      ),</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>      <span class="at">algorithm =</span> <span class="st">"port"</span>,</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>      <span class="at">lower =</span> <span class="fu">c</span>(<span class="at">S1 =</span> lower_S1, <span class="at">a1 =</span> lower_a1, <span class="at">b1 =</span> lower_b1),</span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>      <span class="at">upper =</span> <span class="fu">c</span>(<span class="at">S1 =</span> upper_S1, <span class="at">a1 =</span> upper_a1, <span class="at">b1 =</span> upper_b1)</span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>      <span class="fu">try</span>(<span class="at">silent =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(single_mod)</span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>  fit_double <span class="ot">&lt;-</span> <span class="cf">function</span>(...) {</span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    mod <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    mod <span class="ot">&lt;-</span> <span class="fu">nls_bounded</span>(</span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>      form2, <span class="at">data =</span> data,</span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>      <span class="at">start =</span> <span class="fu">list</span>(</span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>        <span class="at">S1 =</span> peak_norm,  <span class="at">a1 =</span> growth_scale, <span class="at">b1 =</span> time_to_growth_mid,</span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>        <span class="at">S2 =</span> peak_decay, <span class="at">a2 =</span> decay_scale,  <span class="at">b2 =</span> time_to_decay_mid</span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>      ),</span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>      <span class="at">algorithm =</span> <span class="st">"port"</span>,</span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>      <span class="at">lower =</span> <span class="fu">c</span>(</span>
-<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>        <span class="at">S1 =</span> lower_S1, <span class="at">a1 =</span> lower_a1, <span class="at">b1 =</span> lower_b1, </span>
-<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>        <span class="at">S2 =</span> lower_S2, <span class="at">a2 =</span> lower_a2, <span class="at">b2 =</span> lower_b2</span>
-<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>      ),</span>
-<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>      <span class="at">upper =</span> <span class="fu">c</span>(</span>
-<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>        <span class="at">S1 =</span> upper_S1, <span class="at">a1 =</span> upper_a1, <span class="at">b1 =</span> upper_b1, </span>
-<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>        <span class="at">S2 =</span> upper_S2, <span class="at">a2 =</span> upper_a2, <span class="at">b2 =</span> upper_b2</span>
-<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>      <span class="fu">try</span>()</span>
-<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(<span class="fu">is.null</span>(mod)) {</span>
-<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>      mod <span class="ot">&lt;-</span> <span class="fu">try</span>(<span class="fu">fit_single</span>())</span>
-<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>      </span>
-<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span>(<span class="fu">is.null</span>(mod)) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>      </span>
-<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>      coefs <span class="ot">&lt;-</span> <span class="fu">coef</span>(mod)</span>
-<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>      S1 <span class="ot">&lt;-</span> coefs[<span class="dv">1</span>]</span>
-<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>      a1 <span class="ot">&lt;-</span> coefs[<span class="dv">2</span>]</span>
-<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>      b1 <span class="ot">&lt;-</span> coefs[<span class="dv">3</span>]</span>
-<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>      mod <span class="ot">&lt;-</span> <span class="fu">nls_bounded</span>(</span>
-<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>        form2, <span class="at">data =</span> data,</span>
-<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>        <span class="at">start =</span> <span class="fu">list</span>(</span>
-<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>          <span class="at">S1 =</span> S1, <span class="at">a1 =</span> a1, <span class="at">b1 =</span> b1,</span>
-<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>          <span class="at">S2 =</span> peak_decay, <span class="at">a2 =</span> decay_scale, <span class="at">b2 =</span> time_to_decay_mid</span>
-<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>        <span class="at">algorithm =</span> <span class="st">"port"</span>,</span>
-<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>        <span class="at">lower =</span> <span class="fu">c</span>(</span>
-<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>          <span class="at">S1 =</span> lower_S1, <span class="at">a1 =</span> lower_a1, <span class="at">b1 =</span> lower_b1, </span>
-<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>          <span class="at">S2 =</span> lower_S2, <span class="at">a2 =</span> lower_a2, <span class="at">b2 =</span> lower_b2</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>      form1,</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> data,</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>      <span class="at">start =</span> <span class="fu">list</span>(</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>        <span class="at">S1 =</span> peak_norm,</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">a1 =</span> peak_norm,</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>        <span class="at">b1 =</span> time_to_growth_mid</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>      <span class="at">algorithm =</span> <span class="st">"port"</span>,</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>      <span class="at">lower =</span> <span class="fu">c</span>(<span class="at">S1 =</span> lower_S1, <span class="at">a1 =</span> lower_a1, <span class="at">b1 =</span> lower_b1),</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>      <span class="at">upper =</span> <span class="fu">c</span>(<span class="at">S1 =</span> upper_S1, <span class="at">a1 =</span> upper_a1, <span class="at">b1 =</span> upper_b1)</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>      <span class="fu">try</span>(<span class="at">silent =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(single_mod)</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>  fit_double <span class="ot">&lt;-</span> <span class="cf">function</span>(...) {</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    mod <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>    mod <span class="ot">&lt;-</span> <span class="fu">nls_bounded</span>(</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>      form2,</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> data,</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>      <span class="at">start =</span> <span class="fu">list</span>(</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>        <span class="at">S1 =</span> peak_norm,  <span class="at">a1 =</span> growth_scale, <span class="at">b1 =</span> time_to_growth_mid,</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>        <span class="at">S2 =</span> peak_decay, <span class="at">a2 =</span> decay_scale,  <span class="at">b2 =</span> time_to_decay_mid</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>      <span class="at">algorithm =</span> <span class="st">"port"</span>,</span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>      <span class="at">lower =</span> <span class="fu">c</span>(</span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>        <span class="at">S1 =</span> lower_S1, <span class="at">a1 =</span> lower_a1, <span class="at">b1 =</span> lower_b1,</span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>        <span class="at">S2 =</span> lower_S2, <span class="at">a2 =</span> lower_a2, <span class="at">b2 =</span> lower_b2</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>      <span class="at">upper =</span> <span class="fu">c</span>(</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>        <span class="at">S1 =</span> upper_S1, <span class="at">a1 =</span> upper_a1, <span class="at">b1 =</span> upper_b1,</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>        <span class="at">S2 =</span> upper_S2, <span class="at">a2 =</span> upper_a2, <span class="at">b2 =</span> upper_b2</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>      <span class="fu">try</span>()</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.null</span>(mod)) {</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>      mod <span class="ot">&lt;-</span> <span class="fu">try</span>(<span class="fu">fit_single</span>())</span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (<span class="fu">is.null</span>(mod)) {</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>        <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>      coefs <span class="ot">&lt;-</span> <span class="fu">coef</span>(mod)</span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>      S1 <span class="ot">&lt;-</span> coefs[<span class="dv">1</span>]</span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>      a1 <span class="ot">&lt;-</span> coefs[<span class="dv">2</span>]</span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>      b1 <span class="ot">&lt;-</span> coefs[<span class="dv">3</span>]</span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>      mod <span class="ot">&lt;-</span> <span class="fu">nls_bounded</span>(</span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>        form2,</span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>        <span class="at">data =</span> data,</span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>        <span class="at">start =</span> <span class="fu">list</span>(</span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>          <span class="at">S1 =</span> S1, <span class="at">a1 =</span> a1, <span class="at">b1 =</span> b1,</span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>          <span class="at">S2 =</span> peak_decay, <span class="at">a2 =</span> decay_scale, <span class="at">b2 =</span> time_to_decay_mid</span>
 <span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>        <span class="at">upper =</span> <span class="fu">c</span>(</span>
-<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>          <span class="at">S1 =</span> upper_S1, <span class="at">a1 =</span> upper_a1, <span class="at">b1 =</span> upper_b1, </span>
-<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>          <span class="at">S2 =</span> upper_S2, <span class="at">a2 =</span> upper_a2, <span class="at">b2 =</span> upper_b2</span>
-<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
-<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>        <span class="fu">try</span>()</span>
-<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(mod)</span>
-<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit_double</span>()</span>
-<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>        <span class="at">algorithm =</span> <span class="st">"port"</span>,</span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>        <span class="at">lower =</span> <span class="fu">c</span>(</span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>          <span class="at">S1 =</span> lower_S1, <span class="at">a1 =</span> lower_a1, <span class="at">b1 =</span> lower_b1,</span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>          <span class="at">S2 =</span> lower_S2, <span class="at">a2 =</span> lower_a2, <span class="at">b2 =</span> lower_b2</span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>        <span class="at">upper =</span> <span class="fu">c</span>(</span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>          <span class="at">S1 =</span> upper_S1, <span class="at">a1 =</span> upper_a1, <span class="at">b1 =</span> upper_b1,</span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>          <span class="at">S2 =</span> upper_S2, <span class="at">a2 =</span> upper_a2, <span class="at">b2 =</span> upper_b2</span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>        <span class="fu">try</span>()</span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(mod)</span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit_double</span>()</span>
+<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="results" class="level2">
@@ -630,7 +635,7 @@ f(t)=g_1(t)+g_2(t)
 </section>
 <section id="example-fits" class="level3">
 <h3 class="anchored" data-anchor-id="example-fits">Example Fits</h3>
-<p><img src="figures/example_fits.png" class="img-fluid"></p>
+<p><img src="figures/best_fits.png" class="img-fluid"></p>
 </section>
 <section id="samples-with-the-highest-deviations-from-the-model" class="level3">
 <h3 class="anchored" data-anchor-id="samples-with-the-highest-deviations-from-the-model">Samples with the Highest Deviations from the Model</h3>
