@@ -32,7 +32,6 @@ df_ <- read_parquet(file) %>%
   )
 
 
-
 # PCA --------------------------------------------------------------------
 
 
@@ -42,7 +41,8 @@ cor_df <- df_ %>%
   cor(use = "pairwise.complete.obs")
 
 ggcorrplot(
-  cor_df, hc.order = F, type = "upper", outline.col = "white", lab = TRUE, 
+  cor_df,
+  hc.order = F, type = "upper", outline.col = "white", lab = TRUE,
   lab_size = 4, title = "Correlation Matrix", ggtheme = theme_minimal()
 )
 
@@ -67,8 +67,8 @@ df_pca <- df_ %>%
     Y1 = pca$Y[, 1],
     # Y2 = pca$Y[, 2],
   )
-  # bind_cols(pca$Y, names = "") 
-  # mutate(cluster = kms$cluster)
+# bind_cols(pca$Y, names = "")
+# mutate(cluster = kms$cluster)
 
 df_pca %>%
   arrange(mortem) %>%
@@ -82,7 +82,7 @@ df_pca %>%
   # scale_color_gradient(low="blue", high="red") +
   # coord_fixed() +
   guides(
-    color = guide_legend(override.aes = list(size = 6, alpha = 1)) 
+    color = guide_legend(override.aes = list(size = 6, alpha = 1))
   ) +
   main_theme +
   theme(
@@ -94,4 +94,3 @@ df_pca %>%
     legend.direction = "vertical",
   )
 ggsave("figures/pca.png", width = 16, height = 6)
-

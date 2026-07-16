@@ -68,7 +68,7 @@ a2 <- 0.5
 b1 <- 10
 b2 <- 16
 
-tex_label <- TeX(sprintf(r"($f(t)=\frac{%s}{1+e^{%s(%s - t)}} + \frac{%s}{1+e^{%s(%s - t)}}$)", S1,a1,b1,S2,a2,b2),output = "character")
+tex_label <- TeX(sprintf(r"($f(t)=\frac{%s}{1+e^{%s(%s - t)}} + \frac{%s}{1+e^{%s(%s - t)}}$)", S1, a1, b1, S2, a2, b2), output = "character")
 
 df_example <- tibble(time = seq(0, 48, 0.25)) %>%
   mutate(
@@ -85,7 +85,8 @@ df_example %>%
   geom_point(aes(y = raw), size = 0.5, color = "black") +
   geom_line(linewidth = 1.2) +
   annotate(
-    "text", x = 20, y = 5, hjust = 0, size = 6, parse = TRUE, 
+    "text",
+    x = 20, y = 5, hjust = 0, size = 6, parse = TRUE,
     label = tex_label
   ) +
   scale_color_manual(values = c("black", "red", "blue", "green")) +
@@ -104,7 +105,7 @@ df_example %>%
 ## How do the parameters affect the curves?
 ```{r, echo=FALSE}
 fit_single <- function(x, S, a, b) {
-  return(S / (1 + exp(a * (b- x))))
+  return(S / (1 + exp(a * (b - x))))
 }
 
 coefs <- tibble(
@@ -121,15 +122,15 @@ combos <- expand.grid(letters = c("S", "a", "b"), numbers = 1:3)
 df_coef <- tibble(
   coefficient = paste0(combos$letters, combos$numbers),
   x = c(
-    30, 30, coefs$b1 - 5, 
+    30, 30, coefs$b1 - 5,
     30, 30, coefs$b2 - 5,
     30, 30, coefs$b3 - 5
   ),
   y = c(
-    coefs$S1 - 1, coefs$S3 / 2 + 4, coefs$S3 / 2,  
+    coefs$S1 - 1, coefs$S3 / 2 + 4, coefs$S3 / 2,
     coefs$S2 - 1, coefs$S3 / 2, coefs$S3 / 2,
     coefs$S3 - 1, coefs$S3 / 2 - 4, coefs$S3 / 2
-  ), 
+  ),
 ) %>%
   left_join(coefs_long, by = "coefficient") %>%
   mutate(
@@ -152,12 +153,12 @@ df_ <- tibble(
 ) %>%
   pivot_longer(-time, names_to = "parameter", values_to = "value") %>%
   mutate(
-      coef = case_when(
-        str_detect(parameter, "S") ~ "S", 
-        str_detect(parameter, "a") ~ "a", 
-        str_detect(parameter, "b") ~ "b"
-      ),
-      mod_number = as.factor(str_extract(parameter, "[0-9]$"))
+    coef = case_when(
+      str_detect(parameter, "S") ~ "S",
+      str_detect(parameter, "a") ~ "a",
+      str_detect(parameter, "b") ~ "b"
+    ),
+    mod_number = as.factor(str_extract(parameter, "[0-9]$"))
   )
 
 make_param_plot <- function(coef) {
@@ -166,9 +167,9 @@ make_param_plot <- function(coef) {
 
   df_ %>%
     filter(coef == !!coef) %>%
-    ggplot(aes(time, value, color=mod_number)) +
-    geom_line(show.legend = FALSE, linewidth=1.2) +
-    geom_text(aes(x=x, y=y, label = label), data = df_c, size=6, show.legend = FALSE) +
+    ggplot(aes(time, value, color = mod_number)) +
+    geom_line(show.legend = FALSE, linewidth = 1.2) +
+    geom_text(aes(x = x, y = y, label = label), data = df_c, size = 6, show.legend = FALSE) +
     main_theme +
     theme(
       legend.position = "bottom",
@@ -233,12 +234,12 @@ skim(df_)
 The data is first smoothed using a rolling mean, and then normalized to the eighth time point. The first and second derivatives were then estimated from the normalized data which made finding time points of inflection easier.
 
 ```{r Normalize, eval=TRUE}
-norm_n_der <- function(df, x, y, norm_point, groups, window=3, smooth=10, zero=TRUE) {
+norm_n_der <- function(df, x, y, norm_point, groups, window = 3, smooth = 10, zero = TRUE) {
   df %>%
     mutate(
-      norm   = rollmean(!!sym(y), smooth, na.pad=TRUE),
-      norm   = norm / norm[norm_point] - ifelse(zero, 1, 0),
-      deriv  = (lead(norm, window) - lag(norm, window)) / (lead(!!sym(x), window) - lag(!!sym(x), window)),
+      norm = rollmean(!!sym(y), smooth, na.pad = TRUE),
+      norm = norm / norm[norm_point] - ifelse(zero, 1, 0),
+      deriv = (lead(norm, window) - lag(norm, window)) / (lead(!!sym(x), window) - lag(!!sym(x), window)),
       deriv2 = (lead(deriv, window) - lag(deriv, window)) / (lead(!!sym(x), window) - lag(!!sym(x), window)),
       .by = all_of(groups)
     )
@@ -268,8 +269,8 @@ df_raw %>%
   bind_rows(df_norm) %>%
   mutate(
     metric = factor(
-      metric, 
-      levels = c("raw", "norm", "deriv", "deriv2"), 
+      metric,
+      levels = c("raw", "norm", "deriv", "deriv2"),
       labels = c("Raw", "Normalized", "1st Derivative", "2nd Derivative")
     )
   ) %>%
@@ -277,7 +278,7 @@ df_raw %>%
   geom_line(linewidth = 1.2, show.legend = FALSE) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   facet_wrap(vars(fct_inorder(metric)), scales = "free_y", ncol = 2, strip.position = "right") +
-  scale_color_manual(values = c('#7b3294','#c2a5cf','#a6dba0','#008837')) +
+  scale_color_manual(values = c("#7b3294", "#c2a5cf", "#a6dba0", "#008837")) +
   main_theme +
   theme(
     axis.title = element_blank(),
@@ -295,22 +296,22 @@ The model uses the `nls()` function from the `stats` package. Because this is a 
 ```{r, eval=TRUE}
 df_test_sum <- df_test %>%
   summarize(
-    max_time             = max(time, na.rm=TRUE),
-    growth_scale         = max(deriv, na.rm=TRUE),
-    peak_norm            = norm[which.min(deriv2)],
-    time_to_growth_max   = time[norm == peak_norm][1],
-    time_to_growth_mid   = time[which.max(deriv)],
-    max_equillibrium     = max(norm[time > time_to_growth_max], na.rm=TRUE),
-    min_equillibrium     = min(norm[time > time_to_growth_max], na.rm=TRUE),
-    max_decay            = max_equillibrium - peak_norm,
-    min_decay            = min_equillibrium - peak_norm,
-    equillibrium         = ifelse(abs(min_decay) > max_decay, min_equillibrium, max_equillibrium),
+    max_time = max(time, na.rm = TRUE),
+    growth_scale = max(deriv, na.rm = TRUE),
+    peak_norm = norm[which.min(deriv2)],
+    time_to_growth_max = time[norm == peak_norm][1],
+    time_to_growth_mid = time[which.max(deriv)],
+    max_equillibrium = max(norm[time > time_to_growth_max], na.rm = TRUE),
+    min_equillibrium = min(norm[time > time_to_growth_max], na.rm = TRUE),
+    max_decay = max_equillibrium - peak_norm,
+    min_decay = min_equillibrium - peak_norm,
+    equillibrium = ifelse(abs(min_decay) > max_decay, min_equillibrium, max_equillibrium),
     time_to_equillibrium = time[norm == equillibrium][1],
-    peak_decay           = equillibrium - peak_norm,
-    time_to_decay        = time_to_equillibrium - time_to_growth_max,
-    time_to_decay_mid    = time_to_growth_max + time_to_decay / 2,
-    decay_slope          = replace_na(peak_decay / time_to_decay, 0),
-    decay_scale          = abs(decay_slope),
+    peak_decay = equillibrium - peak_norm,
+    time_to_decay = time_to_equillibrium - time_to_growth_max,
+    time_to_decay_mid = time_to_growth_max + time_to_decay / 2,
+    decay_slope = replace_na(peak_decay / time_to_decay, 0),
+    decay_scale = abs(decay_slope),
     .by = group_list
   )
 ```
@@ -318,12 +319,12 @@ df_test_sum <- df_test %>%
 ## Fitting the Model
 The model first attempts to fit a double sigmoidal model to the data using the landmarks shown above. If this fails, the function then reverts to a single sigmoidal model. It then re-attempts the double sigmoidal fit using the coefficients generated from the single model. If that fails again, the model returns just the single sigmoidal model.
 ```{r, eval=TRUE}
-fit_model <- function(data, peak_norm, time_to_growth_mid, growth_scale, peak_decay, time_to_decay_mid, decay_scale,max_time, ...) {
+fit_model <- function(data, peak_norm, time_to_growth_mid, growth_scale, peak_decay, time_to_decay_mid, decay_scale, max_time, ...) {
   form1 <- norm ~ (S1 / (1 + exp(a1 * (b1 - time))))
   form2 <- as.formula(paste(deparse(form1), "+ (S2 / (1 + exp(a2 * (b2 - time))))"))
 
-  fit_timeout   <- 10  # seconds per nls() call
-  fit_control   <- nls.control(maxiter = 100, warnOnly = TRUE)
+  fit_timeout <- 10 # seconds per nls() call
+  fit_control <- nls.control(maxiter = 100, warnOnly = TRUE)
   nls_bounded <- function(...) {
     setTimeLimit(elapsed = fit_timeout, transient = TRUE)
     on.exit(setTimeLimit(elapsed = Inf, transient = TRUE), add = TRUE)
@@ -350,7 +351,8 @@ fit_model <- function(data, peak_norm, time_to_growth_mid, growth_scale, peak_de
   fit_single <- function(...) {
     single_mod <- NULL
     single_mod <- nls_bounded(
-      form1, data = data,
+      form1,
+      data = data,
       start = list(
         S1 = peak_norm,
         a1 = peak_norm,
@@ -367,46 +369,50 @@ fit_model <- function(data, peak_norm, time_to_growth_mid, growth_scale, peak_de
   fit_double <- function(...) {
     mod <- NULL
     mod <- nls_bounded(
-      form2, data = data,
+      form2,
+      data = data,
       start = list(
         S1 = peak_norm,  a1 = growth_scale, b1 = time_to_growth_mid,
         S2 = peak_decay, a2 = decay_scale,  b2 = time_to_decay_mid
       ),
       algorithm = "port",
       lower = c(
-        S1 = lower_S1, a1 = lower_a1, b1 = lower_b1, 
+        S1 = lower_S1, a1 = lower_a1, b1 = lower_b1,
         S2 = lower_S2, a2 = lower_a2, b2 = lower_b2
       ),
       upper = c(
-        S1 = upper_S1, a1 = upper_a1, b1 = upper_b1, 
+        S1 = upper_S1, a1 = upper_a1, b1 = upper_b1,
         S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
       )
     ) %>%
       try()
 
-    if(is.null(mod)) {
+    if (is.null(mod)) {
       mod <- try(fit_single())
-      
-      if(is.null(mod)) return(NULL)
-      
+
+      if (is.null(mod)) {
+        return(NULL)
+      }
+
       coefs <- coef(mod)
       S1 <- coefs[1]
       a1 <- coefs[2]
       b1 <- coefs[3]
 
       mod <- nls_bounded(
-        form2, data = data,
+        form2,
+        data = data,
         start = list(
           S1 = S1, a1 = a1, b1 = b1,
           S2 = peak_decay, a2 = decay_scale, b2 = time_to_decay_mid
         ),
         algorithm = "port",
         lower = c(
-          S1 = lower_S1, a1 = lower_a1, b1 = lower_b1, 
+          S1 = lower_S1, a1 = lower_a1, b1 = lower_b1,
           S2 = lower_S2, a2 = lower_a2, b2 = lower_b2
         ),
         upper = c(
-          S1 = upper_S1, a1 = upper_a1, b1 = upper_b1, 
+          S1 = upper_S1, a1 = upper_a1, b1 = upper_b1,
           S2 = upper_S2, a2 = upper_a2, b2 = upper_b2
         )
       ) %>%
