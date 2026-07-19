@@ -12,6 +12,7 @@ library(investr)
 
 source("R/normalize.R")
 source("R/fit_model.R")
+source("R/estimate_params.R")
 
 
 single_only <- FALSE
@@ -30,47 +31,21 @@ group_list <- c("sample", "wells", "dilutions", "assay", "reaction", "mortem", "
 df_ <- raw_file %>%
   read_parquet() %>%
   mutate(across(all_of(group_list), as.factor)) %>%
-  select(-c(norm, deriv)) %>%
   filter(
     time <= 72,
     # sample == "P",
     assay == "RT-QuIC"
   ) %>%
   normalize("time", "rfu", 8, group_list) %>%
-  na.omit()
-
-df_temp <- df_ %>%
-  summarize(
-    max_time             = max(time, na.rm=TRUE),
-    growth_scale         = max(deriv, na.rm=TRUE),
-    peak_norm            = norm[which.min(deriv2)],
-    time_to_growth_max   = time[norm == peak_norm][1],
-    time_to_growth_mid   = time[which.max(deriv)],
-    max_equillibrium     = max(norm[time > time_to_growth_max], na.rm=TRUE),
-    min_equillibrium     = min(norm[time > time_to_growth_max], na.rm=TRUE),
-    max_decay            = max_equillibrium - peak_norm,
-    min_decay            = min_equillibrium - peak_norm,
-    equillibrium         = ifelse(abs(min_decay) > max_decay, min_equillibrium, max_equillibrium),
-    time_to_equillibrium = time[norm == equillibrium][1],
-    peak_decay           = equillibrium - peak_norm,
-    time_to_decay        = time_to_equillibrium - time_to_growth_max,
-    time_to_decay_mid    = time_to_growth_max + time_to_decay / 2,
-    decay_slope          = replace_na(peak_decay / time_to_decay, 0),
-    decay_scale          = abs(decay_slope),
-    .by = group_list
-  ) %>%
+  na.omit() %>%
+  nest(.by = group_list) %>%
+  estimate_params() %>%
   filter(
     peak_norm >= 3,
     time_to_growth_max < 50
   )
 
-df_combined <- df_ %>%
-  nest(.by = group_list) %>%
-  right_join(df_temp)
-
-rm(df_temp)
-
-df_mod <- df_combined %>%
+df_mod <- df_ %>%
   mutate(model = pmap(
     ., fit_model,
     single_only = single_only, weighted = weighted,
@@ -122,65 +97,65 @@ df_long <- df_results %>%
 
 
 # Residual Histogram
-# res_hist <- df_long %>%
-#   ggplot(aes(resid)) +
-#   geom_histogram(bins = 100, position = "identity", fill = "blue") +
-#   scale_x_continuous(limits = c(-1, 1)) +
-#   labs(x = "Residuals", y = "Count", title = "Histogram of Residuals") +
-#   main_theme +
-#   theme(
-#     legend.title = element_blank(),
-#     legend.position = "inside",
-#     legend.position.inside = c(0.1, .95),
-#     legend.justification = c(0, 1),
-#     legend.background = element_blank(),
-#     legend.direction = "horizontal",
-#   )
+res_hist <- df_long %>%
+  ggplot(aes(resid)) +
+  geom_histogram(bins = 100, position = "identity", fill = "blue") +
+  scale_x_continuous(limits = c(-1, 1)) +
+  labs(x = "Residuals", y = "Count", title = "Histogram of Residuals") +
+  main_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.1, .95),
+    legend.justification = c(0, 1),
+    legend.background = element_blank(),
+    legend.direction = "horizontal",
+  )
 
-# # QQ Plot
-# qqplot <- df_long %>%
-#   ggplot(aes(sample = resid)) +
-#   geom_qq(color = "blue") +
-#   geom_qq_line() +
-#   scale_x_continuous(limits = c(-4, 4)) +
-#   scale_y_continuous(limits = c(-4, 4)) +
-#   labs(x = "Theoretical Quantiles", y = "Sample Quantiles", title = "Normal Q-Q Plot") +
-#   main_theme +
-#   theme(
-#     legend.title = element_blank(),
-#     legend.position = "inside",
-#     legend.position.inside = c(0.1, .95),
-#     legend.justification = c(0, 1),
-#     legend.background = element_blank(),
-#     legend.direction = "horizontal",
-#   )
+# QQ Plot
+qqplot <- df_long %>%
+  ggplot(aes(sample = resid)) +
+  geom_qq(color = "blue") +
+  geom_qq_line() +
+  scale_x_continuous(limits = c(-4, 4)) +
+  scale_y_continuous(limits = c(-4, 4)) +
+  labs(x = "Theoretical Quantiles", y = "Sample Quantiles", title = "Normal Q-Q Plot") +
+  main_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.1, .95),
+    legend.justification = c(0, 1),
+    legend.background = element_blank(),
+    legend.direction = "horizontal",
+  )
 
-# # Residuals over time
-# res_time <- df_long %>%
-#   summarize(
-#     .by = c(time, assay),
-#     mean = mean(resid, na.rm = TRUE),
-#     sd = sd(resid, na.rm = TRUE)
-#   ) %>%
-#   ggplot(aes(time, mean)) +
-#   geom_hline(yintercept = 0, linetype = "dashed") +
-#   geom_line(color = "blue") +
-#   geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd), color = "blue", fill = "blue", alpha = 0.2) +
-#   labs(
-#     x = "Time", y = "Residuals", title = "Residuals over Time",
-#   ) +
-#   main_theme +
-#   theme(
-#     legend.title = element_blank(),
-#     legend.position = "inside",
-#     legend.position.inside = c(0.1, .95),
-#     legend.justification = c(0, 1),
-#     legend.background = element_blank(),
-#     legend.direction = "horizontal",
-#   )
+# Residuals over time
+res_time <- df_long %>%
+  summarize(
+    .by = c(time, assay),
+    mean = mean(resid, na.rm = TRUE),
+    sd = sd(resid, na.rm = TRUE)
+  ) %>%
+  ggplot(aes(time, mean)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_line(color = "blue") +
+  geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd), color = "blue", fill = "blue", alpha = 0.2) +
+  labs(
+    x = "Time", y = "Residuals", title = "Residuals over Time",
+  ) +
+  main_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.1, .95),
+    legend.justification = c(0, 1),
+    legend.background = element_blank(),
+    legend.direction = "horizontal",
+  )
 
-# (res_hist | qqplot) / res_time
-# ggsave("figures/residual_vis.png", width = 16, height = 12)
+(res_hist | qqplot) / res_time
+ggsave("figures/residual_vis.png", width = 16, height = 12)
 
 
 # Worst Fits -------------------------------------------------------------
