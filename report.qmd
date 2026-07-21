@@ -221,7 +221,6 @@ df_ <- raw_file %>%
   mutate(
     across(c(reaction, wells, dilutions, assay, mortem, sample_type, animal, sample), as.factor)
   ) %>%
-  select(-c(norm, deriv)) %>%
   filter(
     time != 0,
     sample %in% c("P"), time <= 72
@@ -429,8 +428,8 @@ fit_model <- function(data, peak_norm, time_to_growth_mid, growth_scale, peak_de
 ### Residual Visualizations
 ![](figures/residual_vis.png)
 
-### Example Fits
-![](figures/example_fits.png)
+### Samples with the Lowest Deviations from the Model
+![](figures/best_fits.png)
 
 ### Samples with the Highest Deviations from the Model
 ![](figures/deviants.png)

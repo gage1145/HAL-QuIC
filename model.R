@@ -9,14 +9,16 @@ library(ggpubr)
 library(patchwork)
 library(latex2exp)
 library(investr)
+library(quicR)
 
 source("R/normalize.R")
 source("R/fit_model.R")
 source("R/estimate_params.R")
+source("R/main_theme.R")
 
 
 single_only <- FALSE
-weighted <- TRUE
+weighted <- FALSE
 
 # Noise model, sd^2 = s0^2 + (k * mu^theta)^2, estimated from the unweighted residuals. 
 # Drives the IRLS weights in fit_model() and standardizes the residuals when ranking fits below.
@@ -28,7 +30,7 @@ raw_file <- "data/data.parquet"
 
 group_list <- c("sample", "wells", "dilutions", "assay", "reaction", "mortem", "sample_type", "animal")
 
-df_ <- raw_file %>%
+df_raw <- raw_file %>%
   read_parquet() %>%
   mutate(across(all_of(group_list), as.factor)) %>%
   filter(
@@ -37,22 +39,29 @@ df_ <- raw_file %>%
     assay == "RT-QuIC"
   ) %>%
   normalize("time", "rfu", 8, group_list) %>%
-  na.omit() %>%
+  na.omit()
+
+df_ <- df_raw %>%
   nest(.by = group_list) %>%
+  left_join(
+    calculate_metrics(
+      df_raw, group_list, threshold = 3,
+      time_col = "time", ttt_values = "norm", auc_values = "norm",
+      norm_col = "norm", deriv_col = "deriv"
+    ),
+    by = group_list
+  ) %>%
   estimate_params() %>%
-  filter(
-    peak_norm >= 3,
-    time_to_growth_max < 50
-  )
+  filter(MPR > 3 & time_to_growth_mid != max_time) %>%
+  na.omit()
 
 df_mod <- df_ %>%
   mutate(model = pmap(
     ., fit_model,
     single_only = single_only, weighted = weighted,
-    irls_s0 = irls_s0, irls_k = irls_k, irls_theta = irls_theta, .progress = TRUE
-  ))
-
-df_results <- df_mod %>%
+    # irls_s0 = irls_s0, irls_k = irls_k, irls_theta = irls_theta, 
+    .progress = TRUE
+  )) %>%
   filter(map_lgl(model, ~ inherits(.x, "nls"))) %>%
   mutate(
     data = map2(model, data, ~ {
@@ -72,34 +81,24 @@ df_results <- df_mod %>%
         )
     }),
     coefficients = map(model, coef),
+    rse = map_dbl(model, sigma),
+    aic = map_dbl(model, AIC),
+    bic = map_dbl(model, BIC),
+    pseudo_r2 = map_dbl(data, ~ cor(.x$pred, .x$norm)^2),
   ) %>%
   unnest_wider(coefficients)
 
-
-# Figures ----------------------------------------------------------------
-
-
-main_theme <- theme(
-  plot.title = element_text(size = 30, hjust = 0.5),
-  axis.title = element_text(size = 24),
-  axis.text = element_text(size = 20),
-  legend.title = element_text(size = 24),
-  legend.text = element_text(size = 20),
-  strip.text = element_text(size = 24),
-  panel.background = element_rect(fill = "white"),
-  panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
-)
-
-df_long <- df_results %>%
-  unnest(data)
 
 # Residual Visualizations ------------------------------------------------
 
 
 # Residual Histogram
-res_hist <- df_long %>%
+res_hist <- df_mod %>%
+  unnest(data) %>%
+  # summarize(resid = mean(resid), .by = c(reaction, wells)) %>%
   ggplot(aes(resid)) +
-  geom_histogram(bins = 100, position = "identity", fill = "blue") +
+  # geom_histogram(bins = 100, position = "identity", fill = "blue") +
+  geom_density(fill = "blue") +
   scale_x_continuous(limits = c(-1, 1)) +
   labs(x = "Residuals", y = "Count", title = "Histogram of Residuals") +
   main_theme +
@@ -111,14 +110,17 @@ res_hist <- df_long %>%
     legend.background = element_blank(),
     legend.direction = "horizontal",
   )
+# res_hist
 
 # QQ Plot
-qqplot <- df_long %>%
+qqplot <- df_mod %>%
+  unnest(data) %>%
+  summarize(resid = mean(resid), .by = c(reaction, wells)) %>%
   ggplot(aes(sample = resid)) +
   geom_qq(color = "blue") +
   geom_qq_line() +
-  scale_x_continuous(limits = c(-4, 4)) +
-  scale_y_continuous(limits = c(-4, 4)) +
+  scale_x_continuous(breaks = seq(-5, 5)) +
+  # scale_y_continuous(breaks = seq(-5, 5)) +
   labs(x = "Theoretical Quantiles", y = "Sample Quantiles", title = "Normal Q-Q Plot") +
   main_theme +
   theme(
@@ -129,11 +131,13 @@ qqplot <- df_long %>%
     legend.background = element_blank(),
     legend.direction = "horizontal",
   )
+# qqplot
 
 # Residuals over time
-res_time <- df_long %>%
+res_time <- df_mod %>%
+  unnest(data) %>%
   summarize(
-    .by = c(time, assay),
+    .by = c(time),
     mean = mean(resid, na.rm = TRUE),
     sd = sd(resid, na.rm = TRUE)
   ) %>%
@@ -142,7 +146,7 @@ res_time <- df_long %>%
   geom_line(color = "blue") +
   geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd), color = "blue", fill = "blue", alpha = 0.2) +
   labs(
-    x = "Time", y = "Residuals", title = "Residuals over Time",
+    x = "Time", y = "Mean Residual", title = "Residuals over Time",
   ) +
   main_theme +
   theme(
@@ -161,88 +165,73 @@ ggsave("figures/residual_vis.png", width = 16, height = 12)
 # Worst Fits -------------------------------------------------------------
 
 
-n_examples <- 12
+n_examples <- 24
 
-fit_quality <- df_results %>%
-  mutate(
-    converged = map_lgl(model, ~ isTRUE(.x$convInfo$isConv)),
-    srmse = map_dbl(data, ~ {
-      sd_hat <- sqrt(irls_s0^2 + (irls_k * abs(.x$pred)^irls_theta)^2)
-      sqrt(mean((.x$resid / sd_hat)^2, na.rm = TRUE))
-    }),
-    # Worst single point: catches localized misfit.
-    max_sres = map_dbl(data, ~ {
-      sd_hat <- sqrt(irls_s0^2 + (irls_k * abs(.x$pred)^irls_theta)^2)
-      max(abs(.x$resid / sd_hat), na.rm = TRUE)
-    })
-  )
-
-deviants <- fit_quality %>%
-  arrange(desc(srmse)) %>%
-  head(n_examples) %>%
-  select(all_of(group_list), srmse, max_sres, converged) %>%
-  left_join(df_long, by = group_list)
-
-df_pred <- deviants %>%
-  select(group_list, time, pred, growth, decay) %>%
-  pivot_longer(c(pred, growth, decay), names_to = "series") %>%
-  mutate(series = factor(series, levels = c("pred", "growth", "decay")))
-
-df_ci <- deviants %>%
-  select(group_list, time, norm, lower, upper)
+deviants <- df_mod %>%
+  arrange(pseudo_r2) %>%
+  slice_head(n = n_examples)
 
 deviants %>%
-  ggplot(aes(time, norm)) +
-  geom_point(size = 0.5) +
-  geom_line(aes(y = value, color = series), data = df_pred, linewidth = 1.5, linetype = "dashed") +
-  geom_ribbon(aes(ymin = lower, ymax = upper), data = df_ci, alpha = 0.2) +
-  facet_wrap(vars(reaction, assay, wells)) +
-  labs(x = "Time") +
+  unnest(data) %>%
+  pivot_longer(c(pred, growth, decay), names_to = "series") %>%
+  mutate(
+    series = factor(
+      series, 
+      levels = c("growth", "decay", "pred"),
+      labels = c("Growth", "Decay", "Prediction")
+    ),
+  ) %>%
+  ggplot(aes(time, value, color = series)) +
+  geom_point(aes(y = norm), size = 0.5, color = "black") +
+  geom_line(linewidth = 1) +
+  # geom_vline(aes(xintercept = time_to_growth_max), linetype = "dashed", linewidth = 1) +
+  facet_wrap(vars(reaction, wells), ncol = 4) +
+  scale_x_continuous(breaks = seq(0, 70, by = 8)) +
+  labs(x = "Time (hr)", y = "Normalized Fluorescence") +
   main_theme +
   theme(
-    axis.title.y = element_blank(),
     strip.text = element_blank(),
     legend.title = element_blank(),
-    legend.position = "top",
-    legend.position.inside = c(0, .95),
-    legend.background = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.01, 0.99),
+    legend.justification = c(0, 1),
     legend.direction = "horizontal",
   )
-ggsave("figures/deviants.png", width = 8, height = 6)
+ggsave("figures/deviants.png", width = 18, height = 24)
 
 
 # Best Fits -----------------------------------------------------------
 
 
-fit_quality %>%
-  arrange(srmse) %>%
+df_mod %>%
+  arrange(desc(pseudo_r2)) %>%
+  filter(time_to_growth_max < 36) %>%
   head(n_examples) %>%
-  select(all_of(group_list), srmse, max_sres, converged) %>%
-  left_join(df_long, by = group_list) %>%
   mutate(across(matches("$[A-z]{1}\\d^"), ~ signif(., 2))) %>%
+  unnest(data) %>%
   pivot_longer(c(pred, growth, decay), names_to = "series") %>%
   mutate(series = factor(series, levels = c("pred", "growth", "decay"))) %>%
   ggplot(aes(time)) +
   geom_hline(yintercept = 0, linetype = "dotted") +
   geom_point(aes(y = norm), size = 0.5, color = "black") +
-  geom_line(aes(y = value, color = series), linewidth = 1.5, linetype = "dashed") +
-  facet_wrap(vars(reaction, wells)) +
+  geom_line(aes(y = value, color = series), linewidth = 1) +
+  facet_wrap(vars(reaction, wells), ncol = 4) +
   labs(x = "Time (hr)", y = "Normalized Fluorescence") +
   main_theme +
   theme(
-    axis.title.y = element_blank(),
     strip.text = element_blank(),
     legend.title = element_blank(),
-    legend.position = "top",
-    legend.position.inside = c(0, .95),
-    legend.background = element_blank(),
+    legend.text = element_text(size = 16),
+    legend.position = "inside",
+    legend.position.inside = c(0.01, 0.99),
+    legend.justification = c(0, 1),
     legend.direction = "horizontal",
   )
 
-ggsave("figures/best_fits.png", width = 8, height = 6)
+ggsave("figures/best_fits.png", width = 18, height = 24)
 
 
 # Save Results to Parquet ------------------------------------------------
 
 
-write_parquet(select(fit_quality, -model), "data/results.parquet")
+write_parquet(select(df_mod, -model), "data/results.parquet")

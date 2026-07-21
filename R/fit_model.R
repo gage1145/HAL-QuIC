@@ -21,14 +21,14 @@ fit_model <- function(
   lower_S1 <- peak_norm
   lower_a1 <- 0.1
   lower_b1 <- 0
-  lower_S2 <- ifelse(is_negative_decay, -peak_norm * peak_scalar, 0)
+  lower_S2 <- ifelse(is_negative_decay, -peak_norm * peak_scalar / 2, 0)
   lower_a2 <- 0
   lower_b2 <- -time_to_decay_mid
 
   upper_S1 <- peak_norm * peak_scalar
   upper_a1 <- 20
   upper_b1 <- max_time
-  upper_S2 <- ifelse(is_negative_decay, 0, peak_norm * peak_scalar)
+  upper_S2 <- ifelse(is_negative_decay, 0, peak_norm * peak_scalar / 2)
   upper_a2 <- 10
   upper_b2 <- max_time
 

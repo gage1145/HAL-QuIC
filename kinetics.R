@@ -42,39 +42,19 @@ df_raw <- files %>%
   ) %>%
   na.omit()
 
-df_ <- 
+df_ <- df_raw %>%
   nest(.by = all_of(group_list)) %>%
   left_join(
     calculate_metrics(
-      df_, group_list, threshold = 3,
+      df_raw, group_list, threshold = 3,
       time_col = "time", ttt_values = "norm", auc_values = "norm",
       norm_col = "norm", deriv_col = "deriv"
     ),
     by = group_list
   ) %>%
   filter(MPR > 3) %>%
-  estimate_params()
-
-df_ %>%
-  unnest(data) %>%
-  # mutate(dilutions = as.factor(round(dilutions, 2))) %>%
-  # summarize(norm = median(norm), .by = all_of(c("time", "sample", "dilutions", "rxn"))) %>%
-  ggplot(aes(time, norm, color = dilutions, group = wells)) +
-  geom_line(alpha = 0.5, linewidth = 1.5) +
-  facet_grid(vars(rxn), scales = "free_y") +
-  scale_color_gradient(low = "#0072B2", high = "#D55E00") +
-  main_theme +
-  theme(
-    legend.position = "bottom"
-  )
-
-
-
-df_metrics %>%
-  # summarize(RAF = mean(RAF), .by = c(sample, dilutions, rxn)) %>%
-  ggplot(aes(dilutions, RAF)) +
-  geom_point(size = 1.2) +
-  stat_smooth(method = "lm", se = TRUE, color = "black", linewidth = 1.5)
+  estimate_params() %>%
+  na.omit()
 
 
 # Modeling ---------------------------------------------------------------
@@ -104,10 +84,14 @@ df_mod <- df_ %>%
         )
     }),
     coefficients = map(model, coef),
+    rse = map_dbl(model, sigma),
+    aic = map_dbl(model, AIC),
+    bic = map_dbl(model, BIC),
+    pseudo_r2 = map_dbl(data, ~ cor(.x$pred, .x$norm)^2),
   ) %>%
   unnest_wider(coefficients)
 
-
+# Residuals
 df_mod %>%
   unnest(data) %>%
   ggplot(aes(resid)) +
@@ -124,19 +108,57 @@ df_mod %>%
     legend.direction = "horizontal",
   )
 
-df_sample <- df_mod %>%
-  slice_sample(n = 12) %>%
+# Worst fits
+df_worst <- df_mod %>%
+  arrange(pseudo_r2) %>%
+  slice_head(n = 12)
+
+df_worst %>%
+  unnest(data) %>%
+  pivot_longer(c(pred, growth, decay), names_to = "series") %>%
   mutate(
+    series = factor(
+      series, 
+      levels = c("growth", "decay", "pred"),
+      labels = c("Growth", "Decay", "Prediction")
+    ),
+  ) %>%
+  ggplot(aes(time, value, color = series)) +
+  geom_point(aes(y = norm), size = 0.5, color = "black") +
+  geom_line(linewidth = 1) +
+  geom_vline(aes(xintercept = time_to_growth_max), linetype = "dashed", linewidth = 1) +
+  facet_wrap(vars(rxn, wells), ncol = 4) +
+  scale_x_continuous(breaks = seq(0, 70, by = 8)) +
+  labs(x = "Time (hr)", y = "Normalized Fluorescence") +
+  main_theme +
+  theme(
+    strip.text = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.01, 0.99),
+    legend.justification = c(0, 1),
+    legend.direction = "horizontal",
+  )
+
+
+
+# Highlighting tlag
+df_sample <- df_mod %>%
+  arrange(bic) %>%
+  filter(b1 < 48) %>%
+  slice_head(n = 12) %>%
+  mutate(
+    # dilutions = as.factor(round(dilutions, 2)),
     label = paste0("t<sub>lag</sub> = ", round(b1, 2), "h"),
     label_x = ifelse(b1 > 36, b1 - 2, b1 + 2),
     hjust = ifelse(b1 > 36, 1, 0),
     y = map2_dbl(model, b1, ~ unlist(predict(.x, newdata = tibble(time = .y)))),
     label_y = ifelse(b1 > 36, y + (peak_norm - y) / 2, y),
-    facet = as.factor(1:12)
+    facet = 1:12
   ) 
 
 df_sample %>% 
-  arrange(b1) %>%
+  # arrange(b1) %>%
   unnest(data) %>%
   pivot_longer(c(pred, growth, decay), names_to = "series") %>%
   mutate(
@@ -148,12 +170,14 @@ df_sample %>%
   geom_vline(aes(xintercept = b1), data = df_sample, linetype = "dashed") +
   geom_segment(aes(y = y, x = 0, xend = label_x), data = df_sample, linetype = "dashed", inherit.aes = FALSE) +
   geom_richtext(aes(label = label, x = label_x, y = label_y, hjust = hjust), data = df_sample, size = 8, label.size = NA, fill = NA, inherit.aes = FALSE) +
-  facet_wrap(vars(fct_inorder(facet)), ncol = 4) +
+  facet_wrap(vars(facet), ncol = 4) +
+  scale_x_continuous(breaks = seq(0, 70, by = 8)) +
   labs(x = "Time (hr)", y = "Normalized Fluorescence") +
   main_theme +
   theme(
     strip.text = element_blank(),
     legend.title = element_blank(),
+    legend.text = element_text(size = 16),
     legend.position = "inside",
     legend.position.inside = c(0.01, 0.99),
     legend.justification = c(0, 1),
