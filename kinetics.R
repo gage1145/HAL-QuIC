@@ -190,3 +190,54 @@ df_sample %>%
     legend.direction = "horizontal",
   )
 ggsave("figures/kinetics/sample.png", width = 18, height = 12)
+
+
+
+
+# Parameters vs. seed dilution ------------------------------------------
+
+
+df_mod %>%
+  pivot_longer(c(S1, a1, b1, S2, a2, b2), names_to = "parameter", values_to = "value") %>%
+  filter(
+    value >= (quantile(value, 0.25) - 1.5 * IQR(value)) &
+      value <= (quantile(value, 0.75) + 1.5 * IQR(value)),
+    .by = parameter
+  ) %>%
+  mutate(
+    hline = ifelse(parameter == "S2", 0, NA),
+    parameter = factor(
+      parameter, 
+      levels = c("S1", "a1", "b1", "S2", "a2", "b2"), 
+      labels = c(TeX("$S_1$"), TeX("$a_1$"), TeX("$b_1$"), TeX("$S_2$"), TeX("$a_2$"), TeX("$b_2$"))
+    ),
+  ) %>%
+  ggplot(aes(dilutions, value, color = dilutions)) +
+  geom_point(position = position_jitter(width = 0.05)) +
+  geom_rug(sides = "l") +
+  stat_smooth(method = "lm") +
+  geom_line(aes(dilutions, hline), linetype = "dashed", linewidth = 1, inherit.aes = FALSE) +
+  stat_cor(aes(label = paste(after_stat(rr.label), after_stat(p.label), sep = "~`,`~")), geom="label", size = 6, fill = "white") +
+  facet_wrap(vars(parameter), scales = "free_y", labeller = label_parsed) +
+  scale_color_gradient(low = "darkcyan", high = "darkorange") +
+  labs(
+    title = TeX(
+      r'(Predicted Parameters vs. Seed Dilution Using $f(t)=\frac{\textbf{S_1}}{1+e^{\textbf{a_1}(\textbf{b_1}-t)}}+\frac{\textbf{S_2}}{1+e^{\textbf{a_2}(\textbf{b_2}-t)}}$)'
+    ),
+    x = TeX(r'(Log$_{10}$ Seed Dilution Factor)'),
+    y = "Parameter Value",
+    color = "Dilution Factor"
+  ) +
+  main_theme +
+  theme(
+    # legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.99, 0.99),
+    legend.justification = c(1, 1),
+    legend.direction = "horizontal",
+    legend.title.position = "top",
+    legend.key.width = unit(1, "cm"),
+    legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = "cm"),
+    legend.background = element_blank()
+  )
+ggsave("figures/kinetics/seed_vs_parameters.png", width = 18, height = 12)
