@@ -4,21 +4,13 @@ library(janitor)
 library(zoo)
 library(modelr)
 library(ggtext)
+library(latex2exp)
+library(ggpubr)
 
 source("R/normalize.R")
 source("R/fit_model.R")
 source("R/estimate_params.R")
-
-main_theme <- theme(
-  plot.title = element_text(size = 30, hjust = 0.5),
-  axis.title = element_text(size = 24),
-  axis.text = element_text(size = 20),
-  legend.title = element_text(size = 24),
-  legend.text = element_text(size = 20),
-  strip.text = element_text(size = 24),
-  panel.background = element_rect(fill = "white"),
-  panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
-)
+source("R/main_theme.R")
 
 files <- list.files("raw/kinetics", pattern = "*.xlsx", full.names = TRUE)
 group_list <- c("sample", "wells", "dilutions", "rxn")
@@ -89,7 +81,14 @@ df_mod <- df_ %>%
     bic = map_dbl(model, BIC),
     pseudo_r2 = map_dbl(data, ~ cor(.x$pred, .x$norm)^2),
   ) %>%
-  unnest_wider(coefficients)
+  unnest_wider(coefficients) %>%
+  mutate(
+    Kapp = 1 / b1,
+    tlagprime = b1 - a1 / 2,
+    intercept = (S1 / 2) - a1 * b1,
+    # tlag = -intercept / a1,
+    tlag = b1 - (S1 / (2 * a1))
+  )
 
 # Residuals
 df_mod %>%
@@ -147,28 +146,35 @@ df_sample <- df_mod %>%
   arrange(bic) %>%
   filter(b1 < 48) %>%
   slice_head(n = 12) %>%
+  arrange(tlag) %>%
   mutate(
     # dilutions = as.factor(round(dilutions, 2)),
-    label = paste0("t<sub>lag</sub> = ", round(b1, 2), "h"),
-    label_x = ifelse(b1 > 36, b1 - 2, b1 + 2),
-    hjust = ifelse(b1 > 36, 1, 0),
-    y = map2_dbl(model, b1, ~ unlist(predict(.x, newdata = tibble(time = .y)))),
-    label_y = ifelse(b1 > 36, y + (peak_norm - y) / 2, y),
+    label = paste0("t<sub>lag</sub> = ", round(tlag, 2), "h"),
+    label_x = ifelse(tlag > 36, tlag - 2, tlag + 2),
+    hjust = ifelse(tlag > 36, 1, 0),
+    y = map2_dbl(model, tlag, ~ unlist(predict(.x, newdata = tibble(time = .y)))),
+    label_y = ifelse(tlag > 36, y + 0.5, y),
     facet = 1:12
   ) 
 
 df_sample %>% 
   # arrange(b1) %>%
   unnest(data) %>%
+  mutate(
+    tlag_curve = a1 * time + intercept,
+    tlag_curve = ifelse(tlag_curve < min(decay) | tlag_curve > max(norm), NA, tlag_curve),
+  ) %>%
   pivot_longer(c(pred, growth, decay), names_to = "series") %>%
   mutate(
     series = factor(series, levels = c("growth", "decay", "pred"), labels = c("Growth", "Decay", "Prediction")),
   ) %>%
   ggplot(aes(time, value, color = series)) +
-  geom_point(aes(y = norm), size = 2, color = "black") +
+  geom_point(aes(y = norm), size = 1, color = "black") +
   geom_line(linewidth = 1.5) +
-  geom_vline(aes(xintercept = b1), data = df_sample, linetype = "dashed") +
-  geom_segment(aes(y = y, x = 0, xend = label_x), data = df_sample, linetype = "dashed", inherit.aes = FALSE) +
+  geom_line(aes(y = tlag_curve), linetype = "dashed", linewidth = 1.2, color = "black") +
+  geom_segment(aes(y = 0, x = tlag, yend = y), data = df_sample, linetype = "dashed", linewidth = 1.2, inherit.aes = FALSE) +
+  geom_segment(aes(y = y, x = 0, xend = label_x), data = df_sample, linetype = "dashed", linewidth = 1.2, inherit.aes = FALSE) +
+  geom_hline(yintercept = 0, linewidth = 1) +
   geom_richtext(aes(label = label, x = label_x, y = label_y, hjust = hjust), data = df_sample, size = 8, label.size = NA, fill = NA, inherit.aes = FALSE) +
   facet_wrap(vars(facet), ncol = 4) +
   scale_x_continuous(breaks = seq(0, 70, by = 8)) +
