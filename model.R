@@ -18,13 +18,6 @@ source("R/main_theme.R")
 
 
 single_only <- FALSE
-weighted <- FALSE
-
-# Noise model, sd^2 = s0^2 + (k * mu^theta)^2, estimated from the unweighted residuals. 
-# Drives the IRLS weights in fit_model() and standardizes the residuals when ranking fits below.
-irls_s0 <- 0.072
-irls_k <- 0.0094
-irls_theta <- 1
 
 raw_file <- "data/data.parquet"
 
@@ -35,7 +28,8 @@ df_raw <- raw_file %>%
   mutate(across(all_of(group_list), as.factor)) %>%
   filter(
     time <= 72,
-    # sample == "P",
+    sample == "P",
+    dilutions == -3,
     assay == "RT-QuIC"
   ) %>%
   normalize("time", "rfu", 8, group_list) %>%
@@ -56,26 +50,15 @@ df_ <- df_raw %>%
   na.omit()
 
 df_mod <- df_ %>%
-  mutate(model = pmap(
-    ., fit_model,
-    single_only = single_only, weighted = weighted,
-    # irls_s0 = irls_s0, irls_k = irls_k, irls_theta = irls_theta, 
-    .progress = TRUE
-  )) %>%
+  mutate(model = pmap(., fit_model, single_only = single_only, .progress = TRUE)) %>%
   filter(map_lgl(model, ~ inherits(.x, "nls"))) %>%
   mutate(
     data = map2(model, data, ~ {
       cc <- coef(.x)
-      ci <- tryCatch(
-        predFit(.x, newdata = .y, interval = "confidence", level = 0.95),
-        error = function(e) NULL
-      )
       .y %>%
         add_predictions(.x) %>%
         add_residuals(.x) %>%
         mutate(
-          lower = if (is.null(ci)) NA_real_ else ci[, "lwr"],
-          upper = if (is.null(ci)) NA_real_ else ci[, "upr"],
           growth = cc[1] / (1 + exp(cc[2] * (cc[3] - time))),
           decay  = cc[4] / (1 + exp(cc[5] * (cc[6] - time))),
         )
@@ -86,7 +69,11 @@ df_mod <- df_ %>%
     bic = map_dbl(model, BIC),
     pseudo_r2 = map_dbl(data, ~ cor(.x$pred, .x$norm)^2),
   ) %>%
-  unnest_wider(coefficients)
+  unnest_wider(coefficients) %>%
+  mutate(
+    Kapp = 1 / b1,
+    tlag = b1 - a1 / 2
+  )
 
 
 # Residual Visualizations ------------------------------------------------
@@ -184,7 +171,7 @@ deviants %>%
   ggplot(aes(time, value, color = series)) +
   geom_point(aes(y = norm), size = 0.5, color = "black") +
   geom_line(linewidth = 1) +
-  # geom_vline(aes(xintercept = time_to_growth_max), linetype = "dashed", linewidth = 1) +
+  geom_vline(aes(xintercept = tlagprime), linetype = "dashed", linewidth = 1) +
   facet_wrap(vars(reaction, wells), ncol = 4) +
   scale_x_continuous(breaks = seq(0, 70, by = 8)) +
   labs(x = "Time (hr)", y = "Normalized Fluorescence") +
