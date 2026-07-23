@@ -27,11 +27,6 @@ source("model.R")
 source("kinetics.R")
 ```
 
-### Render the Quarto report
-```bash
-quarto render report.qmd
-```
-
 ### Restore R package environment
 ```r
 renv::restore()
@@ -40,6 +35,12 @@ renv::restore()
 ### Install a new package (then snapshot)
 ```r
 install.packages("pkg")
+renv::snapshot()
+```
+
+### Install quicR (GitHub-only package) and snapshot
+```r
+renv::install("gage1145/quicR")
 renv::snapshot()
 ```
 
@@ -84,3 +85,17 @@ The `quicR` package is a domain-specific package for QuIC assay data and is not 
 - `figures/kinetics/` — PNG plots from `kinetics.R`
 - `data/results.parquet` — fitted model results
 - `docs/` — rendered Quarto site (`_quarto.yml` sets `output-dir: docs`)
+
+### Website publishing
+
+The Quarto website is **not rendered locally**. It is built and deployed via GitHub Actions (`.github/workflows/publish.yml`) on every push to the `website` branch.
+
+The workflow:
+1. Installs R (version must match `renv.lock`, currently 4.6.1) and Quarto
+2. Restores R packages via `renv::restore()`
+3. Runs `quarto publish` targeting the `gh-pages` branch, which triggers `pre-render: model.R` from `_quarto.yml` before rendering the `.qmd` files
+
+Key constraints:
+- The R version in the workflow (`r-version`) must match the version in `renv.lock` — mismatches cause package install failures (e.g., MASS requires R >= 4.4.0)
+- `quicR` is a GitHub-only package (`gage1145/quicR`) and must be present in `renv.lock`; after installing it locally, run `renv::snapshot()` and commit the updated lockfile
+- `data/data.parquet` must be committed to the repo since `model.R` reads it at render time
