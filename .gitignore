@@ -8,3 +8,4 @@ results.parquet
 **/*.quarto_ipynb
 
 *.png
+docs/

@@ -1,8 +1,6 @@
 project:
   type: website
   output-dir: docs
-  pre-render:
-    - model.R
   render:
     - "*.qmd"
     - "!CLAUDE.md"

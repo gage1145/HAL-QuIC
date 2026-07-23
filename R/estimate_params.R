@@ -8,7 +8,6 @@ estimate_params <- function(df) {
       time_to_min_deriv2   = map_dbl(data, \(x) x$time[which.min(x$deriv2)][1]),
       time_to_growth_max   = map2_dbl(data, time_to_min_deriv2, \(x, ttmd2) x$time[x$time > ttmd2 & x$deriv2 > 0][1]),
       peak_norm            = map2_dbl(data, time_to_growth_max, \(x, ttgm) x$norm[x$time == ttgm][1]),
-      # time_to_growth_max   = map2_dbl(data, peak_norm, \(x, p) x$time[x$norm == p][1]),
       # Secondary Phase Estimations
       max_equillibrium     = map2_dbl(data, time_to_growth_max, \(x, ttgm) max(x$norm[x$time >= ttgm], na.rm=TRUE)),
       min_equillibrium     = map2_dbl(data, time_to_growth_max, \(x, ttgm) min(x$norm[x$time >= ttgm], na.rm=TRUE)),
