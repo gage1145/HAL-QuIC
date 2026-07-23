@@ -6,3 +6,5 @@ results.parquet
 /.quarto/
 
 **/*.quarto_ipynb
+
+*.png

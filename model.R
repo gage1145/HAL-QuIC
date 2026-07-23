@@ -11,10 +11,8 @@ library(latex2exp)
 library(investr)
 library(quicR)
 
-source("R/normalize.R")
-source("R/fit_model.R")
-source("R/estimate_params.R")
-source("R/main_theme.R")
+list.files("R", full.names = TRUE) %>%
+  walk(source)
 
 
 single_only <- FALSE
@@ -49,31 +47,7 @@ df_ <- df_raw %>%
   filter(MPR > 3 & time_to_growth_mid != max_time) %>%
   na.omit()
 
-df_mod <- df_ %>%
-  mutate(model = pmap(., fit_model, single_only = single_only, .progress = TRUE)) %>%
-  filter(map_lgl(model, ~ inherits(.x, "nls"))) %>%
-  mutate(
-    data = map2(model, data, ~ {
-      cc <- coef(.x)
-      .y %>%
-        add_predictions(.x) %>%
-        add_residuals(.x) %>%
-        mutate(
-          growth = cc[1] / (1 + exp(cc[2] * (cc[3] - time))),
-          decay  = cc[4] / (1 + exp(cc[5] * (cc[6] - time))),
-        )
-    }),
-    coefficients = map(model, coef),
-    rse = map_dbl(model, sigma),
-    aic = map_dbl(model, AIC),
-    bic = map_dbl(model, BIC),
-    pseudo_r2 = map_dbl(data, ~ cor(.x$pred, .x$norm)^2),
-  ) %>%
-  unnest_wider(coefficients) %>%
-  mutate(
-    Kapp = 1 / b1,
-    tlag = b1 - a1 / 2
-  )
+df_mod <- fit_model_dfr(df_)
 
 
 # Residual Visualizations ------------------------------------------------
@@ -85,10 +59,10 @@ res_hist <- df_mod %>%
   # summarize(resid = mean(resid), .by = c(reaction, wells)) %>%
   ggplot(aes(resid)) +
   # geom_histogram(bins = 100, position = "identity", fill = "blue") +
-  geom_density(fill = "blue") +
+  geom_density(fill = color_palette[1]) +
   scale_x_continuous(limits = c(-1, 1)) +
   labs(x = "Residuals", y = "Count", title = "Histogram of Residuals") +
-  main_theme +
+  dark_theme +
   theme(
     legend.title = element_blank(),
     legend.position = "inside",
@@ -104,12 +78,12 @@ qqplot <- df_mod %>%
   unnest(data) %>%
   summarize(resid = mean(resid), .by = c(reaction, wells)) %>%
   ggplot(aes(sample = resid)) +
-  geom_qq(color = "blue") +
-  geom_qq_line() +
+  geom_qq(color = color_palette[1]) +
+  geom_qq_line(color = "white") +
   scale_x_continuous(breaks = seq(-5, 5)) +
   # scale_y_continuous(breaks = seq(-5, 5)) +
   labs(x = "Theoretical Quantiles", y = "Sample Quantiles", title = "Normal Q-Q Plot") +
-  main_theme +
+  dark_theme +
   theme(
     legend.title = element_blank(),
     legend.position = "inside",
@@ -129,13 +103,13 @@ res_time <- df_mod %>%
     sd = sd(resid, na.rm = TRUE)
   ) %>%
   ggplot(aes(time, mean)) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_line(color = "blue") +
-  geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd), color = "blue", fill = "blue", alpha = 0.2) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "white") +
+  geom_line(color = color_palette[1]) +
+  geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd), color = color_palette[1], fill = color_palette[1], alpha = 0.2) +
   labs(
     x = "Time", y = "Mean Residual", title = "Residuals over Time",
   ) +
-  main_theme +
+  dark_theme +
   theme(
     legend.title = element_blank(),
     legend.position = "inside",
@@ -145,12 +119,25 @@ res_time <- df_mod %>%
     legend.direction = "horizontal",
   )
 
-(res_hist | qqplot) / res_time
+(res_hist | qqplot) / res_time & 
+  theme(
+    plot.background = element_rect(fill = "#060606", color = NA)
+  )
 ggsave("figures/residual_vis.png", width = 16, height = 12)
 
 
 # Worst Fits -------------------------------------------------------------
 
+fit_theme <- theme(
+  strip.text = element_blank(),
+  legend.title = element_blank(),
+  legend.text = element_text(size = 16),
+  legend.position = "inside",
+  legend.position.inside = c(0.01, 0.99),
+  legend.justification = c(0, 1),
+  legend.direction = "horizontal",
+  # legend.background = element_blank(),
+)
 
 n_examples <- 24
 
@@ -169,21 +156,15 @@ deviants %>%
     ),
   ) %>%
   ggplot(aes(time, value, color = series)) +
-  geom_point(aes(y = norm), size = 0.5, color = "black") +
+  geom_point(aes(y = norm), size = 1, color = "#adafae") +
   geom_line(linewidth = 1) +
-  geom_vline(aes(xintercept = tlagprime), linetype = "dashed", linewidth = 1) +
+  # geom_vline(aes(xintercept = tlag), color = "white", linetype = "dashed", linewidth = 1) +
   facet_wrap(vars(reaction, wells), ncol = 4) +
   scale_x_continuous(breaks = seq(0, 70, by = 8)) +
+  scale_color_manual(values = color_palette) +
   labs(x = "Time (hr)", y = "Normalized Fluorescence") +
-  main_theme +
-  theme(
-    strip.text = element_blank(),
-    legend.title = element_blank(),
-    legend.position = "inside",
-    legend.position.inside = c(0.01, 0.99),
-    legend.justification = c(0, 1),
-    legend.direction = "horizontal",
-  )
+  dark_theme +
+  fit_theme
 ggsave("figures/deviants.png", width = 18, height = 24)
 
 
@@ -197,23 +178,22 @@ df_mod %>%
   mutate(across(matches("$[A-z]{1}\\d^"), ~ signif(., 2))) %>%
   unnest(data) %>%
   pivot_longer(c(pred, growth, decay), names_to = "series") %>%
-  mutate(series = factor(series, levels = c("pred", "growth", "decay"))) %>%
+  mutate(
+    series = factor(
+      series, 
+      levels = c("growth", "decay", "pred"),
+      labels = c("Growth", "Decay", "Prediction")
+    ),
+  ) %>%
   ggplot(aes(time)) +
   geom_hline(yintercept = 0, linetype = "dotted") +
-  geom_point(aes(y = norm), size = 0.5, color = "black") +
+  geom_point(aes(y = norm), size = 0.5, color = "white") +
   geom_line(aes(y = value, color = series), linewidth = 1) +
+  scale_color_manual(values = color_palette) +
   facet_wrap(vars(reaction, wells), ncol = 4) +
   labs(x = "Time (hr)", y = "Normalized Fluorescence") +
-  main_theme +
-  theme(
-    strip.text = element_blank(),
-    legend.title = element_blank(),
-    legend.text = element_text(size = 16),
-    legend.position = "inside",
-    legend.position.inside = c(0.01, 0.99),
-    legend.justification = c(0, 1),
-    legend.direction = "horizontal",
-  )
+  dark_theme +
+  fit_theme
 
 ggsave("figures/best_fits.png", width = 18, height = 24)
 

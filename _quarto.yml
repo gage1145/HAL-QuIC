@@ -1,3 +1,25 @@
 project:
   type: website
   output-dir: docs
+  pre-render:
+    - model.R
+  render:
+    - "*.qmd"
+    - "!CLAUDE.md"
+
+website:
+  title: "RT-QuIC Kinetic Modeling"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: roadmap.qmd
+        text: Project Roadmap
+      - href: model.qmd
+        text: Model
+
+format:
+  html:
+    theme: cyborg
+    css: styles.css
+    toc: true
