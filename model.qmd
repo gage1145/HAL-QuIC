@@ -453,4 +453,22 @@ deviants %>%
 ```
 
 
+### Properly estimating a1
 
+```{r}
+df_mod %>%
+  head(6) %>%
+  unnest(data) %>%
+  mutate(
+    estimate_a1 = growth_scale / 3 * time + intercept,
+    actual_a1   = a1 * time + intercept
+  ) %>%
+  pivot_longer(c(estimate_a1, actual_a1), names_to = "curve") %>%
+  ggplot(aes(time, value, color = curve)) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(values = color_palette) +
+  facet_wrap(vars(reaction, wells), ncol = 4) +
+  labs(x = "Time (hr)", y = "Normalized Fluorescence") +
+  dark_theme +
+  fit_theme
+```

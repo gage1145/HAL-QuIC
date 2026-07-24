@@ -8,16 +8,16 @@ fit_model_dfr <- function(df, single_only = FALSE) {
   mutate(
     data = map2(model, data, ~ {
       cc <- coef(.x)
-      ci <- tryCatch(
-        predFit(.x, newdata = .y, interval = "confidence", level = 0.95),
-        error = function(e) NULL
-      )
+      # ci <- tryCatch(
+      #   predFit(.x, newdata = .y, interval = "confidence", level = 0.95),
+      #   error = function(e) NULL
+      # )
       .y %>%
         add_predictions(.x) %>%
         add_residuals(.x) %>%
         mutate(
-          lower = if (is.null(ci)) NA_real_ else ci[, "lwr"],
-          upper = if (is.null(ci)) NA_real_ else ci[, "upr"],
+          # lower = if (is.null(ci)) NA_real_ else ci[, "lwr"],
+          # upper = if (is.null(ci)) NA_real_ else ci[, "upr"],
           growth = cc[1] / (1 + exp(cc[2] * (cc[3] - time))),
           decay  = cc[4] / (1 + exp(cc[5] * (cc[6] - time))),
         )

@@ -3,9 +3,8 @@ fit_model <- function(
   time_to_decay_mid, decay_scale, max_time, ...,
   single_only = FALSE, algorithm = "port", peak_scalar = 3
 ) {
-  form1 <- norm ~ (S1 / (1 + exp(a1 * (b1 - time))))
-  form2 <- as.formula(paste(deparse(form1), "+ (S2 / (1 + exp(a2 * (b2 - time))))"))
 
+  # Set up timeout and control.
   fit_timeout <- 10
   fit_control <- nls.control(maxiter = 1000, warnOnly = TRUE)
   nls_bounded <- function(...) {
@@ -14,6 +13,19 @@ fit_model <- function(
     nls(..., control = fit_control, algorithm = algorithm)
   }
 
+  # Single sigmoid function.
+  fit <- function(form, start, lower, upper, ...) {
+    m <- NULL
+    m <- nls_bounded(
+      form, data = data, start = start, 
+      lower = lower, upper = upper
+    ) %>%
+      try(silent = TRUE)
+    return(m)
+  }
+
+  form1 <- norm ~ (S1 / (1 + exp(a1 * (b1 - time))))
+  form2 <- as.formula(paste(deparse(form1), "+ (S2 / (1 + exp(a2 * (b2 - time))))"))
   is_negative_decay <- peak_decay < 0
 
 
@@ -22,22 +34,13 @@ fit_model <- function(
 
   # Initial starting values and parameter bounds.
   start_single <- c(S1 = peak_norm, a1 = growth_scale, b1 = time_to_growth_mid)
-  lower_single <- c(lower_S1 = peak_norm, lower_a1 = 0.1, lower_b1 = 0)
-  upper_single <- c(upper_S1 = peak_norm * peak_scalar, upper_a1 = 20, upper_b1 = max_time)
-
-  # Single sigmoid function.
-  fit_single <- function(...) {
-    single_mod <- NULL
-    single_mod <- nls_bounded(
-      form1, data = data, start = start_single, 
-      lower = lower_single, upper = upper_single
-    ) %>%
-      try(silent = TRUE)
-    return(single_mod)
-  }
+  lower_single <- c(S1 = peak_norm, a1 = 0.1, b1 = 0)
+  upper_single <- c(S1 = peak_norm * peak_scalar, a1 = 20, b1 = max_time)
 
   # Avoid double sigmoid fit if only the single is desired.
-  if (single_only) return(fit_single())
+  if (single_only) {
+    return(fit(form1, start_single, lower_single, upper_single))
+  }
 
 
 # Double sigmoid fit -----------------------------------------------------
@@ -48,43 +51,27 @@ fit_model <- function(
     c(S2 = peak_decay, a2 = decay_scale, b2 = time_to_decay_mid)
   lower_double <- lower_single |>
     c(
-      lower_S2 = ifelse(is_negative_decay, -peak_norm * peak_scalar / 2, 0),
-      lower_a2 = 0,
-      lower_b2 = -time_to_decay_mid
+      S2 = ifelse(is_negative_decay, -peak_norm * peak_scalar / 2, 0),
+      a2 = 0,
+      b2 = -time_to_decay_mid
     )
   upper_double <- upper_single |>
     c(
-      upper_S2 = ifelse(is_negative_decay, 0, peak_norm * peak_scalar / 2),
-      upper_a2 = 5,
-      upper_b2 = max_time
+      S2 = ifelse(is_negative_decay, 0, peak_norm * peak_scalar / 2),
+      a2 = 5,
+      b2 = max_time
     )
 
-  # Double sigmoid function.
-  fit_double <- function(...) {
-    mod <- NULL
-    mod <- nls_bounded(
-      form2, data = data, start = start_double, 
-      lower = lower_double, upper = upper_double
-    ) %>%
-      try(silent = TRUE)
+  mod <- fit(form2, start_double, lower_double, upper_double)
 
-    if (is.null(mod)) mod <- fit_single()
-    
-    if (inherits(mod, "nls")) {
-      coefs <- coef(mod)
-      start = list(
-        S1 = coefs[1],   a1 = coefs[2],    b1 = coefs[3],
-        S2 = peak_decay, a2 = decay_scale, b2 = time_to_decay_mid
-      )
+  if (inherits(mod, "nls")) return(mod)
 
-      mod <- nls_bounded(
-        form2, data = data, start = start, 
-        lower = lower_double, upper = upper_double
-      ) %>%
-        try(silent = TRUE)
-    }
-    return(mod)
+  mod <- fit(form1, start_single, lower_single, upper_single)
+
+  if (inherits(mod, "nls")) {
+    start_double[1:3] <- coef(mod)
+    mod <- fit(form2, start_double, lower_double, upper_double)
   }
 
-  fit_double()
+  return(mod)
 }
