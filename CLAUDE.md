@@ -59,13 +59,12 @@ renv::snapshot()
 
 | File | Purpose |
 |------|---------|
-| `model.R` | Main pipeline: loads `data/data.parquet`, fits models, generates residual/best/worst-fit figures, saves `data/results.parquet`. This file is generally used to validate `model.R` for its use in downstream analyses. |
 | `kinetics.R` | Secondary analysis on raw `.xlsx` files from `raw/kinetics/`, parsed via `quicR::get_quic()`. Produces `figures/kinetics/` plots including parameter vs. seed dilution analysis |
 | `R/normalize.R` | `normalize()` function |
 | `R/fit_model.R` | `fit_model()` function |
 | `R/estimate_params.R` | `estimate_params()` function |
 | `R/main_theme.R` | Shared `ggplot2` theme (`main_theme`) for publication-quality figures |
-| `report.qmd` | Quarto document explaining the model, rendered to `docs/` |
+| `model.qmd` | Quarto document explaining the model, rendered to `docs/` |
 
 ### Key derived parameters
 
