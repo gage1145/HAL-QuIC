@@ -19,7 +19,7 @@ execute:
 ```{r, echo=FALSE}
 library(tidyverse)
 library(broom)
-library(arrow)
+library(jsonlite)
 library(magrittr)
 library(modelr)
 library(zoo)
@@ -220,20 +220,21 @@ The data is a time series of fluorescence measurements from a single positive sa
 ```{r Load & model data, eval=TRUE, echo=FALSE}
 single_only <- FALSE
 
-raw_file <- "data/data.parquet"
+raw_files <- list.files("data", pattern = "*.json", full.names = TRUE)
 
 group_list <- c("sample", "wells", "dilutions", "assay", "reaction", "mortem", "sample_type", "animal")
 
-df_raw <- raw_file %>%
-  read_parquet() %>%
+df_raw <- raw_files %>%
+  map_dfr(read_json, simplifyVector = TRUE) %>%
   mutate(across(all_of(group_list), as.factor)) %>%
+  unnest(data) %>%
   filter(
     time <= 72,
     # sample == "P",
-    assay == "RT-QuIC"
+    # assay == "RT-QuIC"
   ) %>%
   normalize("time", "rfu", 8, group_list) %>%
-  na.omit()
+  na.omit() 
 
 df_ <- df_raw %>%
   nest(.by = group_list) %>%
