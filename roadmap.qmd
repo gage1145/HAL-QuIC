@@ -77,7 +77,21 @@ Experiments in this tier require no additional materials beyond existing RT-QuIC
 
 ---
 
-### Experiment 3: Effect of Fragmentation on the Secondary Phase
+### Experiment 2: Effect of Substrate Concentration on Model Coefficients
+
+**Question:** Does substrate concentration modulate the amplitude, timing, or inflection of the secondary phase?
+
+**Rationale:** In classical enzyme kinetics, the v$_{\text{max}}$ is dependent on the substrate concentration. As the substrate increases, v$_{\text{max}}$ increases until it reaches a saturation point. At that point, v$_{\text{max}}$ can no longer increase because there is more substrate than the enzyme can process at its current concentration. We should be able to determine v$_{\text{max}}$ by running RT-QuIC with varying substrate concentrations.
+
+**Approach:**
+
+1. Run RT-QuIC with a fixed seed concentration and varying substrate concentrations.
+
+**Expected Outcome:** If the substrate concentration determines v$_{\text{max}}$, we should see a shift in the $b_1$ parameter up to a certain point. I expect this shift to be consistent with the classical enzyme kinetics model.
+
+---
+
+### Experiment 3: Effect of Fragmentation on the Model Coefficients
 
 **Question:** Does mechanical fragmentation drive or modulate the secondary phase?
 
