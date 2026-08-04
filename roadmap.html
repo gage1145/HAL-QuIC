@@ -75,6 +75,7 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<meta name="mermaid-theme" content="dark">
 <script src="site_libs/quarto-diagram/mermaid.min.js"></script>
 <script src="site_libs/quarto-diagram/mermaid-init.js"></script>
 <link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
@@ -139,7 +140,11 @@ window.Quarto = {
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./model.html"> 
-<span class="menu-text">Model</span></a>
+<span class="menu-text">Modeling</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./experiments.html"> 
+<span class="menu-text">Experiments</span></a>
   </li>  
 </ul>
           </div> <!-- /navcollapse -->
@@ -158,7 +163,23 @@ window.Quarto = {
    
   <ul>
   <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#roadmap-diagram" id="toc-roadmap-diagram" class="nav-link" data-scroll-target="#roadmap-diagram">Roadmap Diagram</a></li>
+  <li><a href="#planned-experiments" id="toc-planned-experiments" class="nav-link" data-scroll-target="#planned-experiments">Planned Experiments</a></li>
+  <li><a href="#tier-1-assay-parameter-exploration" id="toc-tier-1-assay-parameter-exploration" class="nav-link" data-scroll-target="#tier-1-assay-parameter-exploration">Tier 1 — Assay Parameter Exploration</a>
+  <ul class="collapse">
+  <li><a href="#experiment-1-effect-of-seed-concentration-on-the-secondary-phase" id="toc-experiment-1-effect-of-seed-concentration-on-the-secondary-phase" class="nav-link" data-scroll-target="#experiment-1-effect-of-seed-concentration-on-the-secondary-phase">Experiment 1: Effect of Seed Concentration on the Secondary Phase</a></li>
+  <li><a href="#experiment-2-effect-of-substrate-concentration-on-model-coefficients" id="toc-experiment-2-effect-of-substrate-concentration-on-model-coefficients" class="nav-link" data-scroll-target="#experiment-2-effect-of-substrate-concentration-on-model-coefficients">Experiment 2: Effect of Substrate Concentration on Model Coefficients</a></li>
+  <li><a href="#experiment-3-effect-of-fragmentation-on-the-model-coefficients" id="toc-experiment-3-effect-of-fragmentation-on-the-model-coefficients" class="nav-link" data-scroll-target="#experiment-3-effect-of-fragmentation-on-the-model-coefficients">Experiment 3: Effect of Fragmentation on the Model Coefficients</a></li>
+  </ul></li>
+  <li><a href="#tier-2-measurement-validation" id="toc-tier-2-measurement-validation" class="nav-link" data-scroll-target="#tier-2-measurement-validation">Tier 2 — Measurement Validation</a>
+  <ul class="collapse">
+  <li><a href="#experiment-4-concurrent-absorbance-and-fluorescence-measurement" id="toc-experiment-4-concurrent-absorbance-and-fluorescence-measurement" class="nav-link" data-scroll-target="#experiment-4-concurrent-absorbance-and-fluorescence-measurement">Experiment 4: Concurrent Absorbance and Fluorescence Measurement</a></li>
+  <li><a href="#experiment-5-fibril-and-soluble-protein-quantification" id="toc-experiment-5-fibril-and-soluble-protein-quantification" class="nav-link" data-scroll-target="#experiment-5-fibril-and-soluble-protein-quantification">Experiment 5: Fibril and Soluble Protein Quantification</a></li>
+  </ul></li>
+  <li><a href="#tier-3-generalizability" id="toc-tier-3-generalizability" class="nav-link" data-scroll-target="#tier-3-generalizability">Tier 3 — Generalizability</a>
+  <ul class="collapse">
+  <li><a href="#experiment-6-effects-of-prion-strain" id="toc-experiment-6-effects-of-prion-strain" class="nav-link" data-scroll-target="#experiment-6-effects-of-prion-strain">Experiment 6: Effects of Prion Strain</a></li>
+  <li><a href="#experiment-7-effects-of-substrate-species" id="toc-experiment-7-effects-of-substrate-species" class="nav-link" data-scroll-target="#experiment-7-effects-of-substrate-species">Experiment 7: Effects of Substrate Species</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -198,36 +219,41 @@ window.Quarto = {
 
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>This roadmap outlines planned experiments to characterize the secondary phase of RT-QuIC kinetics — specifically, whether the post-growth dampening observed in normalized fluorescence traces is a genuine biological phenomenon or a spectroscopic artifact. Experiments are organized in ascending order of required labor, from simple protocol variations on existing infrastructure to broad cross-strain and cross-species comparisons.</p>
+<p>This roadmap outlines planned experiments to characterize the experimental parameters that contribute to the coefficients calculated by the (model)[model.qmd]; specifically, whether the post-growth dampening observed in normalized fluorescence traces is a genuine kinetic phenomenon or an artifact of the assay. Experiments are organized in ascending order of required labor, from simple protocol variations on existing infrastructure to broad cross-strain and cross-species comparisons.</p>
 </section>
-<section id="roadmap-diagram" class="level2">
-<h2 class="anchored" data-anchor-id="roadmap-diagram">Roadmap Diagram</h2>
+<section id="planned-experiments" class="level2">
+<h2 class="anchored" data-anchor-id="planned-experiments">Planned Experiments</h2>
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div>
 <p></p><figure class="figure"><p></p>
 <div>
-<pre class="mermaid mermaid-js">flowchart TD
-    Start([Project Start])
+<pre class="mermaid mermaid-js">flowchart LR
+  subgraph T1["Tier 1 — Assay Parameter Exploration"]
+    direction TB
+    E1(["Seed Concentration"])
+    E2(["Fragmentation Dynamics"])
+    E7(["Substrate Concentration"])
+    E1--&gt;E7
+    E7--&gt;E2
+  end
 
-    subgraph T1["Tier 1 — Protocol Exploration"]
-        E1["Exp 1: Seed Concentration"]
-        E2["Exp 2: Fragmentation Dynamics"]
-    end
+  subgraph T2["Tier 2 — Measurement Validation"]
+    direction TB
+    E3(["Absorbance &amp; Fluorescence"])
+    E4(["Fibril/Soluble Protein Quantification"])
+    E3--&gt;E4
+  end
 
-    subgraph T2["Tier 2 — Measurement Validation"]
-        E3["Exp 3: Absorbance &amp; Fluorescence"]
-        E4["Exp 4: Fibril/Soluble Protein Quantification"]
-    end
+  subgraph T3["Tier 3 — Generalizability"]
+    direction TB
+    E5(["Prion Strain Effects"])
+    E6(["Substrate Species Effects"])
+    E5--&gt;E6
+  end
 
-    subgraph T3["Tier 3 — Generalizability"]
-        E5["Exp 5: Prion Strain Effects"]
-        E6["Exp 6: Substrate Species Effects"]
-    end
-
-    Start --&gt; T1
-    T1 --&gt; T2
-    T2 --&gt; T3
+  T1 --&gt; T2
+  T2 --&gt; T3
 </pre>
 </div>
 <p></p></figure><p></p>
@@ -235,14 +261,14 @@ window.Quarto = {
 </div>
 </div>
 <hr>
-<div class="tabset-margin-container"></div><div class="panel-tabset">
-<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Tier 1 — Protocol Exploration</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Tier 2 — Measurement Validation</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false" href="">Tier 3 — Generalizability</a></li></ul>
-<div class="tab-content">
-<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<!-- ::: {.panel-tabset} -->
+</section>
+<section id="tier-1-assay-parameter-exploration" class="level2">
+<h2 class="anchored" data-anchor-id="tier-1-assay-parameter-exploration">Tier 1 — Assay Parameter Exploration</h2>
 <p>Experiments in this tier require no additional materials beyond existing RT-QuIC infrastructure. They ask whether the secondary phase can be modulated by adjusting standard protocol parameters.</p>
 <section id="experiment-1-effect-of-seed-concentration-on-the-secondary-phase" class="level3">
 <h3 class="anchored" data-anchor-id="experiment-1-effect-of-seed-concentration-on-the-secondary-phase">Experiment 1: Effect of Seed Concentration on the Secondary Phase</h3>
-<p><strong>Question:</strong> Does seed concentration modulate the amplitude or timing of the secondary phase?</p>
+<p><strong>Question:</strong> Does seed concentration modulate the amplitude, timing, or inflection of the secondary phase?</p>
 <p><strong>Rationale:</strong> Serial dilution of seed is an established approach for probing reaction sensitivity and kinetics. If the secondary phase is seeding-dependent, its timing (<span class="math inline">\(b_2\)</span>) or amplitude (<span class="math inline">\(S_2\)</span>) should vary systematically with seed concentration. This experiment is partially underway — see <a href="kinetics.R">kinetics.R</a> and <a href="figures/kinetics/seed_vs_parameters.png">this image</a>.</p>
 <p><strong>Approach:</strong></p>
 <ol type="1">
@@ -255,8 +281,19 @@ window.Quarto = {
 <p><strong>Expected Outcome:</strong> If the secondary phase is seeding-dependent, <span class="math inline">\(b_2\)</span> and/or <span class="math inline">\(S_2\)</span> should correlate with seed dilution factor. If the secondary phase parameters are independent of dilution while <span class="math inline">\(b_1\)</span> shifts as expected, this implicates a seed-independent mechanism (e.g., substrate depletion or fibril maturation dynamics).</p>
 <hr>
 </section>
-<section id="experiment-2-effect-of-fragmentation-on-the-secondary-phase" class="level3">
-<h3 class="anchored" data-anchor-id="experiment-2-effect-of-fragmentation-on-the-secondary-phase">Experiment 2: Effect of Fragmentation on the Secondary Phase</h3>
+<section id="experiment-2-effect-of-substrate-concentration-on-model-coefficients" class="level3">
+<h3 class="anchored" data-anchor-id="experiment-2-effect-of-substrate-concentration-on-model-coefficients">Experiment 2: Effect of Substrate Concentration on Model Coefficients</h3>
+<p><strong>Question:</strong> Does substrate concentration modulate the amplitude, timing, or inflection of the secondary phase?</p>
+<p><strong>Rationale:</strong> In classical enzyme kinetics, the v<span class="math inline">\(_{\text{max}}\)</span> is dependent on the substrate concentration. As the substrate increases, v<span class="math inline">\(_{\text{max}}\)</span> increases until it reaches a saturation point. At that point, v<span class="math inline">\(_{\text{max}}\)</span> can no longer increase because there is more substrate than the enzyme can process at its current concentration. We should be able to determine v<span class="math inline">\(_{\text{max}}\)</span> by running RT-QuIC with varying substrate concentrations.</p>
+<p><strong>Approach:</strong></p>
+<ol type="1">
+<li>Run RT-QuIC with a fixed seed concentration and varying substrate concentrations.</li>
+</ol>
+<p><strong>Expected Outcome:</strong> If the substrate concentration determines v<span class="math inline">\(_{\text{max}}\)</span>, we should see a shift in the <span class="math inline">\(b_1\)</span> parameter up to a certain point. I expect this shift to be consistent with the classical enzyme kinetics model.</p>
+<hr>
+</section>
+<section id="experiment-3-effect-of-fragmentation-on-the-model-coefficients" class="level3">
+<h3 class="anchored" data-anchor-id="experiment-3-effect-of-fragmentation-on-the-model-coefficients">Experiment 3: Effect of Fragmentation on the Model Coefficients</h3>
 <p><strong>Question:</strong> Does mechanical fragmentation drive or modulate the secondary phase?</p>
 <p><strong>Rationale:</strong> RT-QuIC uses cyclic shaking to fragment growing fibrils, exposing new ends that act as seeds. Altering shaking intensity or temperature modifies fragmentation rate. If fragmentation is the proximal driver of the secondary phase, these perturbations should shift its kinetic parameters.</p>
 <p><strong>Approach:</strong></p>
@@ -273,11 +310,12 @@ window.Quarto = {
 <p><strong>Expected Outcome:</strong> If fragmentation drives the secondary phase, harsher shaking should accelerate <span class="math inline">\(b_2\)</span> or increase <span class="math inline">\(|S_2|\)</span>. A null result would indicate that the secondary phase arises independently of fragmentation rate — pointing instead toward a substrate-level mechanism.</p>
 <hr>
 </section>
-</div>
-<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+</section>
+<section id="tier-2-measurement-validation" class="level2">
+<h2 class="anchored" data-anchor-id="tier-2-measurement-validation">Tier 2 — Measurement Validation</h2>
 <p>These experiments introduce orthogonal measurement modalities to determine whether the fluorescence-derived secondary phase corresponds to real changes in protein state or is a dye-specific artifact.</p>
-<section id="experiment-3-concurrent-absorbance-and-fluorescence-measurement" class="level3">
-<h3 class="anchored" data-anchor-id="experiment-3-concurrent-absorbance-and-fluorescence-measurement">Experiment 3: Concurrent Absorbance and Fluorescence Measurement</h3>
+<section id="experiment-4-concurrent-absorbance-and-fluorescence-measurement" class="level3">
+<h3 class="anchored" data-anchor-id="experiment-4-concurrent-absorbance-and-fluorescence-measurement">Experiment 4: Concurrent Absorbance and Fluorescence Measurement</h3>
 <p><strong>Question:</strong> Do absorbance and fluorescence agree over the course of the reaction? Does fluorescence intensity correlate with substrate concentration?</p>
 <p><strong>Rationale:</strong> ThT (or equivalent) fluorescence is the standard readout for RT-QuIC, but it reflects dye-fibril interactions, not protein concentration directly. Turbidity (A600) provides an independent, dye-free proxy for fibril mass. Agreement between the two would validate the fluorescence-based kinetic model; disagreement would suggest the secondary phase is a spectroscopic artifact.</p>
 <p><strong>Approach:</strong></p>
@@ -291,8 +329,8 @@ window.Quarto = {
 <p><strong>Expected Outcome:</strong> Concordant biphasic profiles in both fluorescence and absorbance would confirm the secondary phase is a real change in fibril state. Fluorescence biphasic behavior with a monotonic absorbance signal would indicate the dye interaction changes (e.g., ThT displacement) rather than fibril mass are driving the secondary fluorescence phase.</p>
 <hr>
 </section>
-<section id="experiment-4-fibril-and-soluble-protein-quantification" class="level3">
-<h3 class="anchored" data-anchor-id="experiment-4-fibril-and-soluble-protein-quantification">Experiment 4: Fibril and Soluble Protein Quantification</h3>
+<section id="experiment-5-fibril-and-soluble-protein-quantification" class="level3">
+<h3 class="anchored" data-anchor-id="experiment-5-fibril-and-soluble-protein-quantification">Experiment 5: Fibril and Soluble Protein Quantification</h3>
 <p><strong>Question:</strong> Is the secondary phase associated with a measurable change in the fibril-to-soluble protein ratio, or is it a fluorescence artifact?</p>
 <p><strong>Rationale:</strong> SyproOrange (SyO) fluorescence is sensitive to hydrophobic surface exposure, which differs between soluble and fibrillar forms of prion protein. A280 measures total protein content, and Bradford quantifies soluble protein. Together, these orthogonal methods can independently track fibril and soluble protein concentrations across the reaction time course and be compared against the model output.</p>
 <p><strong>Approach:</strong></p>
@@ -312,11 +350,12 @@ window.Quarto = {
 <p><strong>Expected Outcome:</strong> A true secondary phase should correspond to a detectable shift in fibril/soluble protein ratio at the time coinciding with <span class="math inline">\(b_2\)</span>. A fluorescence-only artifact would show no corresponding signal in dye-independent measurements, which would motivate reconsidering the model’s physical interpretation.</p>
 <hr>
 </section>
-</div>
-<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+</section>
+<section id="tier-3-generalizability" class="level2">
+<h2 class="anchored" data-anchor-id="tier-3-generalizability">Tier 3 — Generalizability</h2>
 <p>These experiments extend the kinetic model to different biological contexts. They require sourcing additional biological materials and replicating the full experimental workflow, making them the most labor-intensive.</p>
-<section id="experiment-5-effects-of-prion-strain" class="level3">
-<h3 class="anchored" data-anchor-id="experiment-5-effects-of-prion-strain">Experiment 5: Effects of Prion Strain</h3>
+<section id="experiment-6-effects-of-prion-strain" class="level3">
+<h3 class="anchored" data-anchor-id="experiment-6-effects-of-prion-strain">Experiment 6: Effects of Prion Strain</h3>
 <p><strong>Question:</strong> Is the biphasic kinetic profile consistent across prion strains, and do strain-specific differences map to the secondary phase parameters?</p>
 <p><strong>Rationale:</strong> Prion strains differ in fibril conformation, seeding efficiency, and incubation period. If the secondary phase is a conserved feature of RT-QuIC amplification, it should appear across strains — but its parameters may vary in strain-specific ways. Identifying strain-linked differences in <span class="math inline">\(b_2\)</span> or <span class="math inline">\(S_2\)</span> could link fibril structure to post-growth dynamics and potentially aid strain discrimination.</p>
 <p><strong>Approach:</strong></p>
@@ -330,8 +369,8 @@ window.Quarto = {
 <p><strong>Expected Outcome:</strong> Strain-specific differences in <span class="math inline">\(b_1\)</span> and <span class="math inline">\(t_{lag}\)</span> are expected based on known seeding kinetics. The key novel question is whether <span class="math inline">\(b_2\)</span>, <span class="math inline">\(a_2\)</span>, and <span class="math inline">\(S_2\)</span> also cluster by strain — which would implicate fibril conformation in determining post-growth behavior and suggest the secondary phase parameters as potential strain biomarkers.</p>
 <hr>
 </section>
-<section id="experiment-6-effects-of-substrate-species" class="level3">
-<h3 class="anchored" data-anchor-id="experiment-6-effects-of-substrate-species">Experiment 6: Effects of Substrate Species</h3>
+<section id="experiment-7-effects-of-substrate-species" class="level3">
+<h3 class="anchored" data-anchor-id="experiment-7-effects-of-substrate-species">Experiment 7: Effects of Substrate Species</h3>
 <p><strong>Question:</strong> Does the biphasic kinetic model generalize across recombinant substrate species, and does substrate species affect the secondary phase independently of the primary growth phase?</p>
 <p><strong>Rationale:</strong> RT-QuIC can be run with recombinant PrP (rPrP) from multiple species (hamster, bank vole, deer, etc.), each with different seeding compatibility and reaction efficiency. Understanding whether the secondary phase is species-dependent informs both the generalizability of the kinetic model and the mechanism underlying post-growth dynamics.</p>
 <p><strong>Approach:</strong></p>
@@ -343,12 +382,10 @@ window.Quarto = {
 </ol>
 <p><strong>Measurements:</strong> Normalized fluorescence over time; model parameters stratified by substrate species.</p>
 <p><strong>Expected Outcome:</strong> Species-specific differences in primary-phase parameters (<span class="math inline">\(b_1\)</span>, <span class="math inline">\(a_1\)</span>) are expected from the literature. The experiment will determine whether <span class="math inline">\(S_2\)</span>, <span class="math inline">\(a_2\)</span>, and <span class="math inline">\(b_2\)</span> also vary with substrate species — and whether any species-specific trends in <span class="math inline">\(t_{lag}\)</span> and <span class="math inline">\(K_{app}\)</span> are consistent with known seeding compatibility biology.</p>
+<!-- ::: -->
+
+
 </section>
-</div>
-</div>
-</div>
-
-
 </section>
 
 </main> <!-- /main -->
