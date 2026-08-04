@@ -32,9 +32,6 @@ library(quicR)
 
 list.files("R", full.names = TRUE) %>%
   walk(source)
-# library(thematic)
-
-# thematic::thematic_rmd()
 ```
 
 ## Introduction

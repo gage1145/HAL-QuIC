@@ -1,5 +1,6 @@
 project:
   type: website
+  execute-dir: project
   output-dir: docs
   render:
     - "*.qmd"
@@ -14,10 +15,14 @@ website:
       - href: roadmap.qmd
         text: Project Roadmap
       - href: model.qmd
-        text: Model
+        text: Modeling
+      - href: experiments.qmd
+        text: Experiments
 
 format:
   html:
     theme: cyborg
     css: styles.css
     toc: true
+    mermaid:
+      theme: dark

@@ -9,7 +9,6 @@ format:
     toc: true
     toc-depth: 3
     toc-title: "Contents"
-    # embed-resources: true
     fig-align: center
 execute:
   warning: false
@@ -18,45 +17,50 @@ execute:
 
 ## Overview
 
-This roadmap outlines planned experiments to characterize the secondary phase of RT-QuIC kinetics — specifically, whether the post-growth dampening observed in normalized fluorescence traces is a genuine biological phenomenon or a spectroscopic artifact. Experiments are organized in ascending order of required labor, from simple protocol variations on existing infrastructure to broad cross-strain and cross-species comparisons.
+This roadmap outlines planned experiments to characterize the experimental parameters that contribute to the coefficients calculated by the (model)[model.qmd]; specifically, whether the post-growth dampening observed in normalized fluorescence traces is a genuine kinetic phenomenon or an artifact of the assay. Experiments are organized in ascending order of required labor, from simple protocol variations on existing infrastructure to broad cross-strain and cross-species comparisons.
 
-## Roadmap Diagram
+## Planned Experiments
 
 ```{mermaid}
-flowchart TD
-    Start([Project Start])
+flowchart LR
+  subgraph T1["Tier 1 — Assay Parameter Exploration"]
+    direction TB
+    E1(["Seed Concentration"])
+    E2(["Fragmentation Dynamics"])
+    E7(["Substrate Concentration"])
+    E1-->E7
+    E7-->E2
+  end
 
-    subgraph T1["Tier 1 — Protocol Exploration"]
-        E1["Exp 1: Seed Concentration"]
-        E2["Exp 2: Fragmentation Dynamics"]
-    end
+  subgraph T2["Tier 2 — Measurement Validation"]
+    direction TB
+    E3(["Absorbance & Fluorescence"])
+    E4(["Fibril/Soluble Protein Quantification"])
+    E3-->E4
+  end
 
-    subgraph T2["Tier 2 — Measurement Validation"]
-        E3["Exp 3: Absorbance & Fluorescence"]
-        E4["Exp 4: Fibril/Soluble Protein Quantification"]
-    end
+  subgraph T3["Tier 3 — Generalizability"]
+    direction TB
+    E5(["Prion Strain Effects"])
+    E6(["Substrate Species Effects"])
+    E5-->E6
+  end
 
-    subgraph T3["Tier 3 — Generalizability"]
-        E5["Exp 5: Prion Strain Effects"]
-        E6["Exp 6: Substrate Species Effects"]
-    end
-
-    Start --> T1
-    T1 --> T2
-    T2 --> T3
+  T1 --> T2
+  T2 --> T3
 ```
 
 ---
 
-::: {.panel-tabset}
+<!-- ::: {.panel-tabset} -->
 
-## Tier 1 — Protocol Exploration
+## Tier 1 — Assay Parameter Exploration
 
 Experiments in this tier require no additional materials beyond existing RT-QuIC infrastructure. They ask whether the secondary phase can be modulated by adjusting standard protocol parameters.
 
 ### Experiment 1: Effect of Seed Concentration on the Secondary Phase
 
-**Question:** Does seed concentration modulate the amplitude or timing of the secondary phase?
+**Question:** Does seed concentration modulate the amplitude, timing, or inflection of the secondary phase?
 
 **Rationale:** Serial dilution of seed is an established approach for probing reaction sensitivity and kinetics. If the secondary phase is seeding-dependent, its timing ($b_2$) or amplitude ($S_2$) should vary systematically with seed concentration. This experiment is partially underway — see [kinetics.R](kinetics.R) and [this image](figures/kinetics/seed_vs_parameters.png).
 
@@ -73,7 +77,7 @@ Experiments in this tier require no additional materials beyond existing RT-QuIC
 
 ---
 
-### Experiment 2: Effect of Fragmentation on the Secondary Phase
+### Experiment 3: Effect of Fragmentation on the Secondary Phase
 
 **Question:** Does mechanical fragmentation drive or modulate the secondary phase?
 
@@ -97,7 +101,7 @@ Experiments in this tier require no additional materials beyond existing RT-QuIC
 
 These experiments introduce orthogonal measurement modalities to determine whether the fluorescence-derived secondary phase corresponds to real changes in protein state or is a dye-specific artifact.
 
-### Experiment 3: Concurrent Absorbance and Fluorescence Measurement
+### Experiment 4: Concurrent Absorbance and Fluorescence Measurement
 
 **Question:** Do absorbance and fluorescence agree over the course of the reaction? Does fluorescence intensity correlate with substrate concentration?
 
@@ -116,7 +120,7 @@ These experiments introduce orthogonal measurement modalities to determine wheth
 
 ---
 
-### Experiment 4: Fibril and Soluble Protein Quantification
+### Experiment 5: Fibril and Soluble Protein Quantification
 
 **Question:** Is the secondary phase associated with a measurable change in the fibril-to-soluble protein ratio, or is it a fluorescence artifact?
 
@@ -143,7 +147,7 @@ These experiments introduce orthogonal measurement modalities to determine wheth
 
 These experiments extend the kinetic model to different biological contexts. They require sourcing additional biological materials and replicating the full experimental workflow, making them the most labor-intensive.
 
-### Experiment 5: Effects of Prion Strain
+### Experiment 6: Effects of Prion Strain
 
 **Question:** Is the biphasic kinetic profile consistent across prion strains, and do strain-specific differences map to the secondary phase parameters?
 
@@ -162,7 +166,7 @@ These experiments extend the kinetic model to different biological contexts. The
 
 ---
 
-### Experiment 6: Effects of Substrate Species
+### Experiment 7: Effects of Substrate Species
 
 **Question:** Does the biphasic kinetic model generalize across recombinant substrate species, and does substrate species affect the secondary phase independently of the primary growth phase?
 
@@ -179,4 +183,4 @@ These experiments extend the kinetic model to different biological contexts. The
 
 **Expected Outcome:** Species-specific differences in primary-phase parameters ($b_1$, $a_1$) are expected from the literature. The experiment will determine whether $S_2$, $a_2$, and $b_2$ also vary with substrate species — and whether any species-specific trends in $t_{lag}$ and $K_{app}$ are consistent with known seeding compatibility biology.
 
-:::
+<!-- ::: -->

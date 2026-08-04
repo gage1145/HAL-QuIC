@@ -1,0 +1,271 @@
+---
+title: Positive Seed Dilution Series
+date: 2026-07-15
+author: Gage Rowden
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+execute:
+  warning: false
+  message: false
+---
+
+## Purpose
+In order to determine the effect of seed concentration on the kinetics of RT-QuIC, I performed a series of 10-fold dilutions of the positive control lymph node sample. After fitting the curves, I should be able to see if any of the coefficients are affected. 
+
+```{r Initialize, echo=FALSE}
+library(tidyverse)
+library(quicR)
+library(janitor)
+library(zoo)
+library(modelr)
+library(ggtext)
+library(latex2exp)
+library(ggpubr)
+library(skimr)
+
+list.files("./R", full.names = TRUE) %>%
+  walk(source)
+```
+
+```{r Load raw data, echo=FALSE}
+
+files <- list.files("./raw/seed_effects", pattern = "*.xlsx", full.names = TRUE)
+group_list <- c("sample", "wells", "dilutions", "rxn")
+
+get_raw <- function(file) {
+  file %>%
+    get_quic() %>%
+    mutate(
+      rxn = str_extract(file, "2026\\d{4}_r\\d+_[A-Z]+_\\D+\\."),
+      rxn = str_remove(rxn, "\\.")
+    )
+}
+
+df_raw <- files %>%
+  map_dfr(get_raw) %>%
+  clean_names(replace = c("Sample IDs" = "sample")) %>%
+  filter(time > 0) %>%
+  normalize("time", "rfu", 8, group_list, 3) %>%
+  mutate(
+    across(c(sample, wells, rxn), as.factor),
+    dilutions = -log10(as.integer(dilutions)),
+  ) %>%
+  na.omit()
+
+df_ <- df_raw %>%
+  nest(.by = all_of(group_list)) %>%
+  left_join(
+    calculate_metrics(
+      df_raw, group_list, threshold = 3,
+      time_col = "time", ttt_values = "norm", auc_values = "norm",
+      norm_col = "norm", deriv_col = "deriv"
+    ),
+    by = group_list
+  ) %>%
+  filter(MPR > 3) %>%
+  estimate_params() %>%
+  na.omit()
+```
+
+```{r Modeling, echo=FALSE}
+df_mod <- df_ %>%
+  mutate(model = pmap(
+    ., fit_model,
+    single_only = FALSE, weighted = TRUE, .progress = TRUE
+  )) %>%
+  filter(map_lgl(model, ~ inherits(.x, "nls"))) %>%
+  mutate(
+    data = map2(model, data, ~ {
+      cc <- coef(.x)
+      ci <- tryCatch(
+        predFit(.x, newdata = .y, interval = "confidence", level = 0.95),
+        error = function(e) NULL
+      )
+      .y %>%
+        add_predictions(.x) %>%
+        add_residuals(.x) %>%
+        mutate(
+          lower = if (is.null(ci)) NA_real_ else ci[, "lwr"],
+          upper = if (is.null(ci)) NA_real_ else ci[, "upr"],
+          growth = cc[1] / (1 + exp(cc[2] * (cc[3] - time))),
+          decay  = cc[4] / (1 + exp(cc[5] * (cc[6] - time))),
+        )
+    }),
+    coefficients = map(model, coef),
+    rse = map_dbl(model, sigma),
+    aic = map_dbl(model, AIC),
+    bic = map_dbl(model, BIC),
+    pseudo_r2 = map_dbl(data, ~ cor(.x$pred, .x$norm)^2),
+  ) %>%
+  unnest_wider(coefficients) %>%
+  mutate(
+    Kapp = 1 / b1,
+    tlagprime = b1 - a1 / 2,
+    intercept = (S1 / 2) - a1 * b1,
+    # tlag = -intercept / a1,
+    tlag = b1 - (S1 / (2 * a1))
+  )
+```
+
+## Design
+- **Log$_{10}$ seed dilution factors**: 
+    - `{r} paste(round(unique(df_$dilutions), 2), collapse = ", ")`
+- **Temperature**: 42°C
+- **Shaking speed**: 700rpm
+- **Reaction time**: 72 hr
+- **Substrate concentration**: 0.1 mg/mL
+- **Substrate**: HaPrP(90-231)
+
+### Data
+`{r} skim(df_)`
+
+## Results
+### Residuals
+```{r Residuals, echo=FALSE}
+#| fig-height: 12
+#| fig-width: 20
+df_mod %>%
+  unnest(data) %>%
+  ggplot(aes(resid)) +
+  geom_histogram(bins = 100, position = "identity", fill = "blue") +
+  scale_x_continuous(limits = c(-1, 1)) +
+  labs(x = "Residuals", y = "Count", title = "Histogram of Residuals") +
+  dark_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.1, .95),
+    legend.justification = c(0, 1),
+    legend.background = element_blank(),
+    legend.direction = "horizontal",
+  )
+```
+
+### Worst fits
+These fits represent the 12 worst fits based on the pseudo-R$^2$ metric. They aren't necessarily bad fits, but are those that least resemble the emperical data.
+```{r Worst fits, echo=FALSE}
+#| fig-height: 12
+#| fig-width: 20
+df_worst <- df_mod %>%
+  arrange(pseudo_r2) %>%
+  slice_head(n = 12)
+
+df_worst %>%
+  unnest(data) %>%
+  pivot_longer(c(pred, growth, decay), names_to = "series") %>%
+  mutate(
+    series = factor(
+      series, 
+      levels = c("growth", "decay", "pred"),
+      labels = c("Growth", "Decay", "Prediction")
+    ),
+  ) %>%
+  ggplot(aes(time, value, color = series)) +
+  geom_point(aes(y = norm), size = 0.5, color = "white") +
+  geom_line(linewidth = 1) +
+  geom_vline(aes(xintercept = time_to_growth_max), linetype = "dashed", linewidth = 1) +
+  facet_wrap(vars(rxn, wells), ncol = 4) +
+  scale_x_continuous(breaks = seq(0, 70, by = 8)) +
+  labs(x = "Time (hr)", y = "Normalized Fluorescence") +
+  dark_theme +
+  theme(
+    strip.text = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.01, 0.99),
+    legend.justification = c(0, 1),
+    legend.direction = "horizontal",
+  )
+```
+
+### Best fits
+These fits represent the 12 best fits based on the pseudo-R$^2$ metric.
+```{r Best fits, echo=FALSE}
+#| fig-height: 12
+#| fig-width: 20
+df_worst <- df_mod %>%
+  arrange(desc(pseudo_r2)) %>%
+  slice_head(n = 12)
+
+df_worst %>%
+  unnest(data) %>%
+  pivot_longer(c(pred, growth, decay), names_to = "series") %>%
+  mutate(
+    series = factor(
+      series, 
+      levels = c("growth", "decay", "pred"),
+      labels = c("Growth", "Decay", "Prediction")
+    ),
+  ) %>%
+  ggplot(aes(time, value, color = series)) +
+  geom_point(aes(y = norm), size = 0.5, color = "white") +
+  geom_line(linewidth = 1) +
+  geom_vline(aes(xintercept = time_to_growth_max), linetype = "dashed", linewidth = 1) +
+  facet_wrap(vars(rxn, wells), ncol = 4) +
+  scale_x_continuous(breaks = seq(0, 70, by = 8)) +
+  labs(x = "Time (hr)", y = "Normalized Fluorescence") +
+  dark_theme +
+  theme(
+    strip.text = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.01, 0.99),
+    legend.justification = c(0, 1),
+    legend.direction = "horizontal",
+  )
+```
+
+### Effect of seed dilution on model coefficients
+I plotted the parameters as a function of initial seed concentration. The initial seed concentration really has an effect on $b_1$ (basically t$_\text{lag}$) which is expected, and to some extent S1 (~ maximum fluorescence). Interestingly, S2 becomes more negative as the seed concentration increases (i.e. more seed = more dampening effect). Also interestingly, there seems to be no effect on either a1 or a2 (i.e. the steepness of the inflection point).
+
+```{r Parameters vs. seed dilution, echo=FALSE}
+#| fig-height: 12
+#| fig-width: 20
+df_mod %>%
+  pivot_longer(c(S1, a1, b1, S2, a2, b2), names_to = "parameter", values_to = "value") %>%
+  filter(
+    value >= (quantile(value, 0.25) - 1.5 * IQR(value)) &
+      value <= (quantile(value, 0.75) + 1.5 * IQR(value)),
+    .by = parameter
+  ) %>%
+  mutate(
+    hline = ifelse(parameter == "S2", 0, NA),
+    parameter = factor(
+      parameter, 
+      levels = c("S1", "a1", "b1", "S2", "a2", "b2"), 
+      labels = c(TeX("$S_1$"), TeX("$a_1$"), TeX("$b_1$"), TeX("$S_2$"), TeX("$a_2$"), TeX("$b_2$"))
+    ),
+  ) %>%
+  ggplot(aes(dilutions, value, color = dilutions)) +
+  geom_point(position = position_jitter(width = 0.05)) +
+  geom_rug(sides = "l") +
+  stat_smooth(method = "lm") +
+  geom_line(aes(dilutions, hline), linetype = "dashed", color="white", linewidth = 1, inherit.aes = FALSE) +
+  stat_cor(aes(label = paste(after_stat(rr.label), after_stat(p.label), sep = "~`,`~")), geom="label", size = 6, fill = "black", color = "white") +
+  facet_wrap(vars(parameter), scales = "free_y", labeller = label_parsed) +
+  scale_color_gradient(low = "darkcyan", high = "darkorange") +
+  labs(
+    title = TeX(
+      r'(Predicted Parameters vs. Seed Dilution Using $f(t)=\frac{\textbf{S_1}}{1+e^{\textbf{a_1}(\textbf{b_1}-t)}}+\frac{\textbf{S_2}}{1+e^{\textbf{a_2}(\textbf{b_2}-t)}}$)'
+    ),
+    x = TeX(r'(Log$_{10}$ Seed Dilution Factor)'),
+    y = "Coefficient Value",
+    color = "Dilution Factor"
+  ) +
+  dark_theme +
+  theme(
+    # legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.99, 0.99),
+    legend.justification = c(1, 1),
+    legend.direction = "horizontal",
+    legend.title.position = "top",
+    legend.key.width = unit(1, "cm"),
+    legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = "cm"),
+    legend.background = element_blank()
+  )
+# ggsave("figures/kinetics/seed_vs_parameters.png", width = 18, height = 12)
+```
