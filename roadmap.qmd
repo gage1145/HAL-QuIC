@@ -2,17 +2,6 @@
 title: "Project Roadmap"
 date: today
 author: "Gage Rowden"
-format:
-  html:
-    grid:
-      body-width: 1000px
-    toc: true
-    toc-depth: 3
-    toc-title: "Contents"
-    fig-align: center
-execute:
-  warning: false
-  message: false
 ---
 
 ## Overview

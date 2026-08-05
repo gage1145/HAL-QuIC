@@ -2,17 +2,6 @@
 title: "Experiments"
 date: today
 author: "Gage Rowden"
-format:
-  html:
-    grid:
-      body-width: 1000px
-    toc: true
-    toc-depth: 3
-    toc-title: "Contents"
-    fig-align: center
-execute:
-  warning: false
-  message: false
 ---
 ## Tier 1 — Assay Parameter Exploration
 - [Experiment 1: Seed Concentration](experiments/20260715_pos_dil_series.qmd)
