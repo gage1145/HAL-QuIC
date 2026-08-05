@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Welcome to the HAL-QuIC Project – RT-QuIC Kinetic Modeling</title>
+<title>Codename: HAL-QuIC – HAL-QuIC</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -115,7 +115,7 @@ window.Quarto = {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">RT-QuIC Kinetic Modeling</span>
+    <span class="navbar-title">HAL-QuIC</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -141,6 +141,12 @@ window.Quarto = {
 <span class="menu-text">Experiments</span></a>
   </li>  
 </ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://gagerowden.com"> 
+<span class="menu-text">GageRowden.com</span></a>
+  </li>  
+</ul>
           </div> <!-- /navcollapse -->
             <div class="quarto-navbar-tools">
 </div>
@@ -156,7 +162,10 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#what-is-rt-quic" id="toc-what-is-rt-quic" class="nav-link active" data-scroll-target="#what-is-rt-quic">What is RT-QuIC?</a></li>
+  <li><a href="#rt-quic-kinetics" id="toc-rt-quic-kinetics" class="nav-link" data-scroll-target="#rt-quic-kinetics">RT-QuIC kinetics</a></li>
+  <li><a href="#the-model" id="toc-the-model" class="nav-link" data-scroll-target="#the-model">The Model</a></li>
+  <li><a href="#site-navigation" id="toc-site-navigation" class="nav-link" data-scroll-target="#site-navigation">Site Navigation</a></li>
   </ul>
 </nav>
     </div>
@@ -165,7 +174,8 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Welcome to the HAL-QuIC Project</h1>
+<h1 class="title">Codename: HAL-QuIC</h1>
+<p class="subtitle lead">An R project for the kinetic modeling of the RT-QuIC assay</p>
 </div>
 
 
@@ -182,12 +192,79 @@ window.Quarto = {
 </header>
 
 
-<section id="overview" class="level2">
-<h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>In an attempt to better understand the kinetics of the real-time quaking induced conversion assay (RT-QuIC), I have developed a model that can be used to estimate the coefficients of the reaction. This model uses an equation which takes the sum of two sigmoid curves, each with three parameters. In total, I propose that any RT-QuIC assay can be kintically described by these six coefficients. For a more detailed description of the model, see the <img src="model.qmd" class="img-fluid" alt="modeling"> page. Briefly, the model fits data to the following equation:</p>
+<div class="cell" data-fig-caption="Example Graph highlighting the sum of the two components. The blue line is the combined component, the red line is the growth component, and the green line is the decay component.">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/Example Graph-1.png" class="img-fluid figure-img" width="1152"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="what-is-rt-quic" class="level2">
+<h2 class="anchored" data-anchor-id="what-is-rt-quic">What is RT-QuIC?</h2>
+<p>Real-Time Quaking-Induced Conversion (RT-QuIC) is a highly sensitive assay used to detect misfolded prion proteins. A small amount of seed material — typically brain or lymph node homogenate — is incubated with a recombinant substrate prion protein under semi-continuous agitation. When prion seeds are present, they template the misfolding of the substrate, forming amyloid aggregates. These aggregates are measured in real time via thioflavin T (ThT) fluorescence, producing a characteristic <strong>sigmoidal growth curve</strong>.</p>
+</section>
+<section id="rt-quic-kinetics" class="level2">
+<h2 class="anchored" data-anchor-id="rt-quic-kinetics">RT-QuIC kinetics</h2>
+<p>RT-QuIC has been validated repeatedly for its ability to detect prions, however, the shape of the curve may offer further insight into the characteristics of the original prion seed as well as the mechanism of the prion-substrate interaction. It is well-known that generally, higher concentrations of initial seed material lead to a faster reaction, but the overall signal intensity or the steepness of the inflection point may be influenced by other factors.</p>
+</section>
+<section id="the-model" class="level2">
+<h2 class="anchored" data-anchor-id="the-model">The Model</h2>
+<p>Standard RT-QuIC analysis focuses on a single kinetic metric, the lag time to threshold (i.e.&nbsp;rate of amyloid formation, RAF). However, normalized fluorescence traces frequently exhibit a <strong>second kinetic phase</strong> — a dampening effect following the initial growth phase — that is poorly captured by single-sigmoidal models. The underlying function is named <a href="R/fit_model.R"><code>fit_model()</code></a> and is described in more detail in the <a href="./model.html">model</a> page.</p>
+<p>HAL-QuIC proposes that the full kinetic behavior of an RT-QuIC reaction can be better described by the <strong>sum of two logistic functions</strong>:</p>
 <p><span class="math display">\[
-  f(t)=\frac{S_1}{1+e^{a_1(b_1-\text{t})}}+\frac{S_2}{1+e^{a_2(b_2-\text{t})}}
+f(t)=\frac{S_1}{1+e^{a_1(b_1-t)}}+\frac{S_2}{1+e^{a_2(b_2-t)}}
 \]</span></p>
+<p>Each sigmoid has three parameters:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Parameter</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(S\)</span></td>
+<td>Asymptote</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(a\)</span></td>
+<td>Steepness of the inflection point</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(b\)</span></td>
+<td>Time to inflection point</td>
+</tr>
+</tbody>
+</table>
+<p>Together, these six coefficients <span class="math inline">\((S_1, a_1, b_1, S_2, a_2, b_2)\)</span> provide a compact kinetic fingerprint for any RT-QuIC reaction.</p>
+</section>
+<section id="site-navigation" class="level2">
+<h2 class="anchored" data-anchor-id="site-navigation">Site Navigation</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Page</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="./model.html">Model</a></td>
+<td>Full derivation of the double sigmoidal model, fitting procedure, and derived parameters (<span class="math inline">\(K_{app}\)</span>, <span class="math inline">\(t_{lag}\)</span>)</td>
+</tr>
+<tr class="even">
+<td><a href="./roadmap.html">Project Roadmap</a></td>
+<td>Planned experiments and research priorities</td>
+</tr>
+<tr class="odd">
+<td><a href="./experiments.html">Experiments</a></td>
+<td>Individual experiments organized by priority tier</td>
+</tr>
+</tbody>
+</table>
 
 
 </section>
