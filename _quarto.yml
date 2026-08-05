@@ -7,7 +7,7 @@ project:
     - "!CLAUDE.md"
 
 website:
-  title: "RT-QuIC Kinetic Modeling"
+  title: "HAL-QuIC"
   navbar:
     left:
       - href: index.qmd
@@ -18,11 +18,20 @@ website:
         text: Modeling
       - href: experiments.qmd
         text: Experiments
+    right:
+      - href: https://gagerowden.com
+        text: "GageRowden.com"
 
 format:
   html:
     theme: cyborg
     css: styles.css
     toc: true
+    toc-depth: 3
+    fig-align: center
     mermaid:
       theme: dark
+
+execute:
+  warning: false
+  message: false

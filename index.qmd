@@ -1,10 +1,51 @@
 ---
-title: "Welcome to the HAL-QuIC Project"
+title: "Codename: HAL-QuIC"
+subtitle: "An R project for the kinetic modeling of the RT-QuIC assay"
 ---
 
-## Overview
-In an attempt to better understand the kinetics of the real-time quaking induced conversion assay (RT-QuIC), I have developed a model that can be used to estimate the coefficients of the reaction. This model uses an equation which takes the sum of two sigmoid curves, each with three parameters. In total, I propose that any RT-QuIC assay can be kintically described by these six coefficients. For a more detailed description of the model, see the ![modeling](model.qmd) page. Briefly, the model fits data to the following equation:
+```{r Example Graph, echo=FALSE}
+#| fig-caption: "Example Graph highlighting the sum of the two components. The blue line is the combined component, the red line is the growth component, and the green line is the decay component."
+#| fig-height: 6
+#| fig-width: 12
+
+source("R/example_graph.R")
+example_graph(S1 <- 25, S2 = -12.5, a1 = 1.5, a2 = 0.5, b1 = 10, b2 = 16)
+```
+
+## What is RT-QuIC?
+
+Real-Time Quaking-Induced Conversion (RT-QuIC) is a highly sensitive assay used to detect misfolded prion proteins. A small amount of seed material — typically brain or lymph node homogenate — is incubated with a recombinant substrate prion protein under semi-continuous agitation. When prion seeds are present, they template the misfolding of the substrate, forming amyloid aggregates. These aggregates are measured in real time via thioflavin T (ThT) fluorescence, producing a characteristic **sigmoidal growth curve**.
+
+## RT-QuIC kinetics
+
+RT-QuIC has been validated repeatedly for its ability to detect prions, however, the shape of the curve may offer further insight into the characteristics of the original prion seed as well as the mechanism of the prion-substrate interaction. It is well-known that generally, higher concentrations of initial seed material lead to a faster reaction, but the overall signal intensity or the steepness of the inflection point may be influenced by other factors.
+
+## The Model
+
+Standard RT-QuIC analysis focuses on a single kinetic metric, the lag time to threshold (i.e. rate of amyloid formation, RAF). However, normalized fluorescence traces frequently exhibit a **second kinetic phase** — a dampening effect following the initial growth phase — that is poorly captured by single-sigmoidal models. The underlying function is named [`fit_model()`](R/fit_model.R) and is described in more detail in the [model](model.qmd) page.
+
+HAL-QuIC proposes that the full kinetic behavior of an RT-QuIC reaction can be better described by the **sum of two logistic functions**:
 
 $$
-  f(t)=\frac{S_1}{1+e^{a_1(b_1-\text{t})}}+\frac{S_2}{1+e^{a_2(b_2-\text{t})}}
+f(t)=\frac{S_1}{1+e^{a_1(b_1-t)}}+\frac{S_2}{1+e^{a_2(b_2-t)}}
 $$
+
+Each sigmoid has three parameters:
+
+| Parameter | Meaning |
+|-----------|---------|
+| $S$ | Asymptote |
+| $a$ | Steepness of the inflection point |
+| $b$ | Time to inflection point |
+
+Together, these six coefficients $(S_1, a_1, b_1, S_2, a_2, b_2)$ provide a compact kinetic fingerprint for any RT-QuIC reaction.
+
+
+
+## Site Navigation
+
+| Page | Description |
+|------|-------------|
+| [Model](model.qmd) | Full derivation of the double sigmoidal model, fitting procedure, and derived parameters ($K_{app}$, $t_{lag}$) |
+| [Project Roadmap](roadmap.qmd) | Planned experiments and research priorities |
+| [Experiments](experiments.qmd) | Individual experiments organized by priority tier |
