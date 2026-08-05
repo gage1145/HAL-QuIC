@@ -44,16 +44,16 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "Home",
+    "title": "Welcome to the HAL-QuIC Project",
     "section": "",
-    "text": "In an attempt to better understand the kinetics of the real-time quaking induced conversion assay (RT-QuIC), I have developed a model that can be used to estimate the coefficients of the reaction. This model uses an equation which takes the sum of two sigmoid curves, each with three parameters. In total, I propose that any RT-QuIC assay can be kintically described by these six coefficients. For a more detailed description of the model, see the modeling page. Briefly, the model fits data to the following equation:\n\\[\n  f(t)=\\frac{S_1}{1+e^{a_1(b_1-\\text{t})}}+\\frac{S_2}{1+e^{a_2(b_2-\\text{t})}}\n\\]"
+    "text": "In an attempt to better understand the kinetics of the real-time quaking induced conversion assay (RT-QuIC), I have developed a model that can be used to estimate the coefficients of the reaction. This model uses an equation which takes the sum of two sigmoid curves, each with three parameters. In total, I propose that any RT-QuIC assay can be kintically described by these six coefficients. For a more detailed description of the model, see the  page. Briefly, the model fits data to the following equation:\n\\[\n  f(t)=\\frac{S_1}{1+e^{a_1(b_1-\\text{t})}}+\\frac{S_2}{1+e^{a_2(b_2-\\text{t})}}\n\\]"
   },
   {
-    "objectID": "index.html#welcome-to-the-hal-quic-project",
-    "href": "index.html#welcome-to-the-hal-quic-project",
-    "title": "Home",
+    "objectID": "index.html#overview",
+    "href": "index.html#overview",
+    "title": "Welcome to the HAL-QuIC Project",
     "section": "",
-    "text": "In an attempt to better understand the kinetics of the real-time quaking induced conversion assay (RT-QuIC), I have developed a model that can be used to estimate the coefficients of the reaction. This model uses an equation which takes the sum of two sigmoid curves, each with three parameters. In total, I propose that any RT-QuIC assay can be kintically described by these six coefficients. For a more detailed description of the model, see the modeling page. Briefly, the model fits data to the following equation:\n\\[\n  f(t)=\\frac{S_1}{1+e^{a_1(b_1-\\text{t})}}+\\frac{S_2}{1+e^{a_2(b_2-\\text{t})}}\n\\]"
+    "text": "In an attempt to better understand the kinetics of the real-time quaking induced conversion assay (RT-QuIC), I have developed a model that can be used to estimate the coefficients of the reaction. This model uses an equation which takes the sum of two sigmoid curves, each with three parameters. In total, I propose that any RT-QuIC assay can be kintically described by these six coefficients. For a more detailed description of the model, see the  page. Briefly, the model fits data to the following equation:\n\\[\n  f(t)=\\frac{S_1}{1+e^{a_1(b_1-\\text{t})}}+\\frac{S_2}{1+e^{a_2(b_2-\\text{t})}}\n\\]"
   },
   {
     "objectID": "experiments.html",
@@ -88,14 +88,14 @@
     "href": "experiments/20260715_pos_dil_series.html",
     "title": "Positive Seed Dilution Series",
     "section": "",
-    "text": "In order to determine the effect of seed concentration on the kinetics of RT-QuIC, I performed a series of 10-fold dilutions of the positive control lymph node sample. After fitting the curves, I should be able to see if any of the coefficients are affected."
+    "text": "In order to determine the effect of seed concentration on the kinetics of RT-QuIC, I performed a series of 10-fold dilutions of a known CWD-positive lymph node sample. After fitting the curves, I should be able to see if any of the coefficients are affected."
   },
   {
     "objectID": "experiments/20260715_pos_dil_series.html#purpose",
     "href": "experiments/20260715_pos_dil_series.html#purpose",
     "title": "Positive Seed Dilution Series",
     "section": "",
-    "text": "In order to determine the effect of seed concentration on the kinetics of RT-QuIC, I performed a series of 10-fold dilutions of the positive control lymph node sample. After fitting the curves, I should be able to see if any of the coefficients are affected."
+    "text": "In order to determine the effect of seed concentration on the kinetics of RT-QuIC, I performed a series of 10-fold dilutions of a known CWD-positive lymph node sample. After fitting the curves, I should be able to see if any of the coefficients are affected."
   },
   {
     "objectID": "experiments/20260715_pos_dil_series.html#design",

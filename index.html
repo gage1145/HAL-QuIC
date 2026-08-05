@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Home – RT-QuIC Kinetic Modeling</title>
+<title>Welcome to the HAL-QuIC Project – RT-QuIC Kinetic Modeling</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -156,7 +156,7 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#welcome-to-the-hal-quic-project" id="toc-welcome-to-the-hal-quic-project" class="nav-link active" data-scroll-target="#welcome-to-the-hal-quic-project">Welcome to the HAL-QuIC Project</a></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
   </ul>
 </nav>
     </div>
@@ -165,7 +165,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Home</h1>
+<h1 class="title">Welcome to the HAL-QuIC Project</h1>
 </div>
 
 
@@ -182,9 +182,9 @@ window.Quarto = {
 </header>
 
 
-<section id="welcome-to-the-hal-quic-project" class="level2">
-<h2 class="anchored" data-anchor-id="welcome-to-the-hal-quic-project">Welcome to the HAL-QuIC Project</h2>
-<p>In an attempt to better understand the kinetics of the real-time quaking induced conversion assay (RT-QuIC), I have developed a model that can be used to estimate the coefficients of the reaction. This model uses an equation which takes the sum of two sigmoid curves, each with three parameters. In total, I propose that any RT-QuIC assay can be kintically described by these six coefficients. For a more detailed description of the model, see the <a href="./model.html">modeling</a> page. Briefly, the model fits data to the following equation:</p>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>In an attempt to better understand the kinetics of the real-time quaking induced conversion assay (RT-QuIC), I have developed a model that can be used to estimate the coefficients of the reaction. This model uses an equation which takes the sum of two sigmoid curves, each with three parameters. In total, I propose that any RT-QuIC assay can be kintically described by these six coefficients. For a more detailed description of the model, see the <img src="model.qmd" class="img-fluid" alt="modeling"> page. Briefly, the model fits data to the following equation:</p>
 <p><span class="math display">\[
   f(t)=\frac{S_1}{1+e^{a_1(b_1-\text{t})}}+\frac{S_2}{1+e^{a_2(b_2-\text{t})}}
 \]</span></p>

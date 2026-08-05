@@ -1,0 +1,472 @@
+---
+title: "Modeling RT-QuIC Kinetics"
+date: today
+author: "Gage Rowden"
+format:
+  html:
+    grid: 
+      body-width: 1000px
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+    # embed-resources: true
+    fig-align: center
+execute:
+  warning: false
+  message: false
+---
+
+```{r, echo=FALSE}
+library(tidyverse)
+library(broom)
+library(jsonlite)
+library(magrittr)
+library(modelr)
+library(zoo)
+library(skimr)
+library(ggpubr)
+library(patchwork)
+library(latex2exp)
+library(investr)
+library(quicR)
+
+list.files("R", full.names = TRUE) %>%
+  walk(source)
+```
+
+## Introduction
+This R project contains code for modeling the kinetics of the prion protein misfolding in the RT-QuIC assay. This misfolding is modeled using a two-component model, with the primary and secondary phases of the reaction being modeled separately.
+
+The model is described by the following function, $g_1$ and $g_2$:
+
+$$
+  g_1(t)=\frac{S_1}{1+e^{a_1(b_1-\text{t})}} \hspace{3em} g_2(t)=\frac{S_2}{1+e^{a_2(b_2-\text{t})}}
+$$
+
+where $S_1$ and $S_2$ represent the primary and secondary phase asymptotes, respectively. Parameters $a_1$ and $a_2$, modulate the steepness of the inflection point; $b_1$ and $b_2$ represent the midpoint of the inflection point of the curves. The model can be described as the sum of these two logistic functions.
+
+$$
+f(t)=g_1(t)+g_2(t)
+$$
+
+## Example Graph
+
+```{r Example Graph, echo=FALSE}
+#| fig-caption: "Example Graph highlighting the sum of the two components. The blue line is the combined component, the red line is the growth component, and the green line is the decay component."
+#| fig-height: 6
+#| fig-width: 12
+
+S1 <- 25
+S2 <- -12.5
+a1 <- 1.5
+a2 <- 0.5
+b1 <- 10
+b2 <- 16
+
+tex_label <- TeX(sprintf(r"($f(t)=\frac{%s}{1+e^{%s(%s - t)}} + \frac{%s}{1+e^{%s(%s - t)}}$)", S1, a1, b1, S2, a2, b2), output = "character")
+
+df_example <- tibble(time = seq(0, 48, 0.25)) %>%
+  mutate(
+    growth = S1 / (1 + exp(a1 * (b1 - time))),
+    decay = S2 / (1 + exp(a2 * (b2 - time))),
+    combined = growth + decay,
+    raw = combined + rnorm(length(time), 0, 0.6)
+  )
+
+df_example %>%
+  pivot_longer(c(growth, decay, combined), names_to = "type", values_to = "value") %>%
+  mutate(type = factor(type, levels = c("growth", "decay", "combined"), labels = c("Growth", "Decay", "Combined"))) %>%
+  ggplot(aes(time, value, color = type)) +
+  geom_point(aes(y = raw), size = 0.5, color = "#adafae") +
+  geom_line(linewidth = 1.2) +
+  scale_color_manual(values = color_palette) +
+  annotate(
+    "text",
+    x = 20, y = 5, hjust = 0, size = 6, parse = TRUE,
+    label = tex_label, color = "#adafae"
+  ) +
+#   scale_color_manual(values = c("black", "red", "blue", "green")) +
+  labs(x = "Time (hr)", y = "Normalized Fluorescence") +
+  dark_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0, .95),
+    legend.justification = c(0, 1),
+    legend.background = element_blank(),
+  )
+```
+
+## How do the parameters affect the curves?
+```{r, echo=FALSE}
+fit_single <- function(x, S, a, b) {
+  return(S / (1 + exp(a * (b - x))))
+}
+
+coefs <- tibble(
+  S1 = -5, S2 = 10, S3 = 15,
+  a1 = 1, a2 = 0.5, a3 = 0.25,
+  b1 = 20, b2 = 30, b3 = 40
+)
+
+coefs_long <- coefs %>%
+  pivot_longer(everything(), names_to = "coefficient", values_to = "value")
+
+combos <- expand.grid(letters = c("S", "a", "b"), numbers = 1:3)
+
+df_coef <- tibble(
+  coefficient = paste0(combos$letters, combos$numbers),
+  x = c(
+    30, 30, coefs$b1 - 5,
+    30, 30, coefs$b2 - 5,
+    30, 30, coefs$b3 - 5
+  ),
+  y = c(
+    coefs$S1 - 1, coefs$S3 / 2 + 4, coefs$S3 / 2,
+    coefs$S2 - 1, coefs$S3 / 2, coefs$S3 / 2,
+    coefs$S3 - 1, coefs$S3 / 2 - 4, coefs$S3 / 2
+  ),
+) %>%
+  left_join(coefs_long, by = "coefficient") %>%
+  mutate(
+    coef = str_extract(coefficient, "^[A-z]"),
+    mod_number = as.factor(str_extract(coefficient, "[0-9]$")),
+    label = paste(coef, "=", value)
+  )
+
+df_ <- tibble(
+  time = seq(0, 48, 0.25),
+  S1 = fit_single(time, coefs$S1, coefs$a1, coefs$b1),
+  S2 = fit_single(time, coefs$S2, coefs$a1, coefs$b1),
+  S3 = fit_single(time, coefs$S3, coefs$a1, coefs$b1),
+  a1 = fit_single(time, coefs$S3, coefs$a1, coefs$b1),
+  a2 = fit_single(time, coefs$S3, coefs$a2, coefs$b1),
+  a3 = fit_single(time, coefs$S3, coefs$a3, coefs$b1),
+  b1 = fit_single(time, coefs$S3, coefs$a1, coefs$b1),
+  b2 = fit_single(time, coefs$S3, coefs$a1, coefs$b2),
+  b3 = fit_single(time, coefs$S3, coefs$a1, coefs$b3)
+) %>%
+  pivot_longer(-time, names_to = "parameter", values_to = "value") %>%
+  mutate(
+    coef = case_when(
+      str_detect(parameter, "S") ~ "S",
+      str_detect(parameter, "a") ~ "a",
+      str_detect(parameter, "b") ~ "b"
+    ),
+    mod_number = as.factor(str_extract(parameter, "[0-9]$"))
+  )
+
+make_param_plot <- function(coef) {
+  df_c <- df_coef %>%
+    filter(coef == !!coef)
+
+  label <- TeX(r"($f(t)=\frac{S}{1+e^{a(b - t)}}$)")
+
+  df_ %>%
+    filter(coef == !!coef) %>%
+    ggplot(aes(time, value, color = mod_number)) +
+    geom_line(show.legend = FALSE, linewidth = 1.2) +
+    geom_text(aes(x = x, y = y, label = label), data = df_c, size = 6, show.legend = FALSE) +
+    annotate(
+        "text",
+        x = 2, y = 10, hjust = 0, size = 12, parse = TRUE,
+        label = label, color = "white"
+    ) +
+    scale_color_manual(values = color_palette) +
+    dark_theme +
+    theme(
+      legend.position = "bottom",
+      axis.title = element_blank(),
+    )
+}
+```
+
+```{r S Param Plot, echo=FALSE}
+#| fig-height: 6
+#| fig-width: 12
+make_param_plot("S")
+```
+
+The $S$ parameter affects the height of the asymptote. For example, if $S=10$, the curve will approach 10 in the equillibrium phase as $t\rightarrow\infty$. If $S=0$, the other parameters will not affect the curve, and therefore become redundant.
+
+---
+
+```{r a Param Plot, echo=FALSE}
+#| fig-height: 6
+#| fig-width: 12
+make_param_plot("a")
+```
+
+The $a$ parameter affects the steepness of the inflection point. A lower value of $a$ will result in a smoother curve, and as $a\rightarrow0$, the curve will approach a constant value at $S/2$. Alternatively, as $a\rightarrow\infty$, the curve will approach $S$ instantaneously at when $t=b$.
+
+---
+
+```{r b Param Plot, echo=FALSE}
+#| fig-height: 6
+#| fig-width: 12
+make_param_plot("b")
+```
+
+The $b$ parameter affects the timing of the inflection point (i.e. when the curve reaches $S/2$). This value can range from $-\infty\rightarrow\infty$, but for the purpose of this analysis, $b$ is constrained to positive values.
+
+---
+
+## The Training Data
+The data is a time series of fluorescence measurements from a single positive sample over many reactions. Both RT-QuIC and Nano-QuIC data were included in this data. The data is normalized to the eighth time-point, and the time-points are evenly spaced by 15 min between 0 and 72 hours. Only time-points $t>0$ were included to account for the artificially increased fluorescence values before the reaction has reached thermal equillibrium.
+
+```{r Load & model data, eval=TRUE, echo=FALSE}
+single_only <- FALSE
+
+raw_files <- list.files("data", pattern = "*.json", full.names = TRUE)
+
+group_list <- c("sample", "wells", "dilutions", "assay", "reaction", "mortem", "sample_type", "animal")
+
+df_raw <- raw_files %>%
+  map_dfr(read_json, simplifyVector = TRUE) %>%
+  mutate(across(all_of(group_list), as.factor)) %>%
+  unnest(data) %>%
+  filter(
+    time <= 72,
+    # sample == "P",
+    # assay == "RT-QuIC"
+  ) %>%
+  normalize("time", "rfu", 8, group_list) %>%
+  na.omit() 
+
+df_ <- df_raw %>%
+  nest(.by = group_list) %>%
+  left_join(
+    calculate_metrics(
+      df_raw, group_list, threshold = 3,
+      time_col = "time", ttt_values = "norm", auc_values = "norm",
+      norm_col = "norm", deriv_col = "deriv"
+    ),
+    by = group_list
+  ) %>%
+  estimate_params() %>%
+  filter(MPR > 3 & time_to_growth_mid != max_time) %>%
+  na.omit()
+
+df_mod <- fit_model_dfr(df_)
+```
+
+## Normalizing the Data
+The data is first smoothed using a rolling mean, and then normalized to the eighth time point. The first and second derivatives were then estimated from the normalized data which made finding time points of inflection easier.
+
+```{r Normalize, eval=FALSE}
+#| file: "R/normalize.R"
+```
+
+### Example of Normalized Data
+```{r Normalize Plot, echo=FALSE}
+#| fig-height: 6
+#| fig-width: 12
+rxn <- unique(df_$reaction)[3]
+well <- unique(df_$wells)[1]
+
+df_raw %>%
+  filter(reaction == rxn, wells == well) %>%
+  rename(raw = rfu) %>%
+  pivot_longer(c(raw, norm, deriv, deriv2), names_to = "metric") %>%
+  mutate(
+    metric = factor(
+      metric,
+      levels = c("raw", "norm", "deriv", "deriv2"),
+      labels = c("Raw", "Normalized", "1st Derivative", "2nd Derivative")
+    )
+  ) %>%
+  ggplot(aes(time, value, color = metric)) +
+  geom_line(linewidth = 1.2, show.legend = FALSE) +
+  geom_hline(yintercept = 0, color = "white", linetype = "dashed") +
+  facet_wrap(vars(fct_inorder(metric)), scales = "free_y", ncol = 2, strip.position = "right") +
+  scale_color_manual(values = color_palette) +
+  dark_theme +
+  theme(
+    axis.title = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0, .85),
+    legend.justification = c(0, 1),
+    legend.background = element_blank()
+  )
+```
+
+## Estimating Starting Values
+The model uses the `nls()` function from the `stats` package. Because this is a parametric model, coefficients are first estimated using certain landmarks of the raw data.
+
+```{r, eval=TRUE}
+#| file: "R/estimate_params.R"
+```
+
+## Fitting the Model
+The model first attempts to fit a double sigmoidal model to the data using the landmarks shown above. If this fails, the function then reverts to a single sigmoidal model. It then re-attempts the double sigmoidal fit using the coefficients generated from the single model. If that fails again, the model returns just the single sigmoidal model.
+```{r, eval=TRUE}
+#| file: "R/fit_model.R"
+```
+
+## Results
+
+### Residual Visualizations
+```{r, echo=FALSE}
+#| fig-height: 10
+#| fig-width: 12
+
+# Residual Histogram
+res_hist <- df_mod %>%
+  unnest(data) %>%
+  ggplot(aes(resid)) +
+  geom_density(fill = color_palette[1]) +
+  scale_x_continuous(limits = c(-1, 1)) +
+  labs(x = "Residuals", y = "Count", title = "Histogram of Residuals") +
+  dark_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.1, .95),
+    legend.justification = c(0, 1),
+    legend.background = element_blank(),
+    legend.direction = "horizontal",
+  )
+
+# QQ Plot
+qqplot <- df_mod %>%
+  unnest(data) %>%
+  summarize(resid = mean(resid), .by = c(reaction, wells)) %>%
+  ggplot(aes(sample = resid)) +
+  geom_qq(color = color_palette[1]) +
+  geom_qq_line(color = "white") +
+  scale_x_continuous(breaks = seq(-5, 5)) +
+  labs(x = "Theoretical Quantiles", y = "Sample Quantiles", title = "Normal Q-Q Plot") +
+  dark_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.1, .95),
+    legend.justification = c(0, 1),
+    legend.background = element_blank(),
+    legend.direction = "horizontal",
+  )
+
+# Residuals over time
+res_time <- df_mod %>%
+  unnest(data) %>%
+  summarize(
+    mean = mean(resid, na.rm = TRUE),
+    sd = sd(resid, na.rm = TRUE),
+    .by = c(time)
+  ) %>%
+  ggplot(aes(time, mean)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "white") +
+  geom_line(color = color_palette[1]) +
+  geom_ribbon(aes(ymin = mean - sd, ymax = mean + sd), color = color_palette[1], fill = color_palette[1], alpha = 0.2) +
+  labs(
+    x = "Time", y = "Mean Residual", title = "Residuals over Time",
+  ) +
+  dark_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.1, .95),
+    legend.justification = c(0, 1),
+    legend.background = element_blank(),
+    legend.direction = "horizontal",
+  )
+
+(res_hist | qqplot) / res_time & 
+  theme(
+    plot.background = element_rect(fill = "#060606", color = NA)
+  )
+```
+
+### Samples with the Lowest Deviations from the Model
+```{r, echo=FALSE}
+#| fig-height: 24
+#| fig-width: 12
+
+fit_theme <- theme(
+  strip.text = element_blank(),
+  legend.title = element_blank(),
+  legend.text = element_text(size = 16),
+  legend.position = "inside",
+  legend.position.inside = c(0.01, 0.99),
+  legend.justification = c(0, 1),
+  legend.direction = "horizontal",
+)
+
+n_examples <- 24
+
+df_mod %>%
+  arrange(desc(pseudo_r2)) %>%
+  filter(time_to_growth_max < 36) %>%
+  head(n_examples) %>%
+  mutate(across(matches("$[A-z]{1}\\d^"), ~ signif(., 2))) %>%
+  unnest(data) %>%
+  pivot_longer(c(pred, growth, decay), names_to = "series") %>%
+  mutate(
+    series = factor(
+      series, 
+      levels = c("growth", "decay", "pred"),
+      labels = c("Growth", "Decay", "Prediction")
+    ),
+  ) %>%
+  ggplot(aes(time)) +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  geom_point(aes(y = norm), size = 0.5, color = "white") +
+  geom_line(aes(y = value, color = series), linewidth = 1) +
+  scale_color_manual(values = color_palette) +
+  facet_wrap(vars(reaction, wells), ncol = 4) +
+  labs(x = "Time (hr)", y = "Normalized Fluorescence") +
+  dark_theme +
+  fit_theme
+```
+
+### Samples with the Highest Deviations from the Model
+```{r, echo=FALSE}
+#| fig-height: 24
+#| fig-width: 12
+
+deviants <- df_mod %>%
+  arrange(pseudo_r2) %>%
+  slice_head(n = n_examples)
+
+deviants %>%
+  unnest(data) %>%
+  pivot_longer(c(pred, growth, decay), names_to = "series") %>%
+  mutate(
+    series = factor(
+      series, 
+      levels = c("growth", "decay", "pred"),
+      labels = c("Growth", "Decay", "Prediction")
+    ),
+  ) %>%
+  ggplot(aes(time, value, color = series)) +
+  geom_point(aes(y = norm), size = 1, color = "#adafae") +
+  geom_line(linewidth = 1) +
+  facet_wrap(vars(reaction, wells), ncol = 4) +
+  scale_x_continuous(breaks = seq(0, 70, by = 8)) +
+  scale_color_manual(values = color_palette) +
+  labs(x = "Time (hr)", y = "Normalized Fluorescence") +
+  dark_theme +
+  fit_theme
+```
+
+
+### Properly estimating a1
+
+```{r}
+df_mod %>%
+  head(6) %>%
+  unnest(data) %>%
+  mutate(
+    estimate_a1 = growth_scale / 3 * time + intercept,
+    actual_a1   = a1 * time + intercept
+  ) %>%
+  pivot_longer(c(estimate_a1, actual_a1), names_to = "curve") %>%
+  ggplot(aes(time, value, color = curve)) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(values = color_palette) +
+  facet_wrap(vars(reaction, wells), ncol = 4) +
+  labs(x = "Time (hr)", y = "Normalized Fluorescence") +
+  dark_theme +
+  fit_theme
+```
