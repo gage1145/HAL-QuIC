@@ -1,9 +1,9 @@
 ---
-title: "Home"
+title: "Welcome to the HAL-QuIC Project"
 ---
 
-## Welcome to the HAL-QuIC Project
-In an attempt to better understand the kinetics of the real-time quaking induced conversion assay (RT-QuIC), I have developed a model that can be used to estimate the coefficients of the reaction. This model uses an equation which takes the sum of two sigmoid curves, each with three parameters. In total, I propose that any RT-QuIC assay can be kintically described by these six coefficients. For a more detailed description of the model, see the [modeling](model.qmd) page. Briefly, the model fits data to the following equation:
+## Overview
+In an attempt to better understand the kinetics of the real-time quaking induced conversion assay (RT-QuIC), I have developed a model that can be used to estimate the coefficients of the reaction. This model uses an equation which takes the sum of two sigmoid curves, each with three parameters. In total, I propose that any RT-QuIC assay can be kintically described by these six coefficients. For a more detailed description of the model, see the ![modeling](model.qmd) page. Briefly, the model fits data to the following equation:
 
 $$
   f(t)=\frac{S_1}{1+e^{a_1(b_1-\text{t})}}+\frac{S_2}{1+e^{a_2(b_2-\text{t})}}

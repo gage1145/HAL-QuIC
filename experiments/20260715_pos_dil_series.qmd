@@ -13,7 +13,7 @@ execute:
 ---
 
 ## Purpose
-In order to determine the effect of seed concentration on the kinetics of RT-QuIC, I performed a series of 10-fold dilutions of the positive control lymph node sample. After fitting the curves, I should be able to see if any of the coefficients are affected. 
+In order to determine the effect of seed concentration on the kinetics of RT-QuIC, I performed a series of 10-fold dilutions of a known CWD-positive lymph node sample. After fitting the curves, I should be able to see if any of the coefficients are affected. 
 
 ```{r Initialize, echo=FALSE}
 library(tidyverse)
