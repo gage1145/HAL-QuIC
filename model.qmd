@@ -163,7 +163,7 @@ The $b$ parameter affects the timing of the inflection point (i.e. when the curv
 ---
 
 ## The Training Data
-The data is a time series of fluorescence measurements from a single positive sample over many reactions. Both RT-QuIC and Nano-QuIC data were included in this data. The data is normalized to the eighth time-point, and the time-points are evenly spaced by 15 min between 0 and 72 hours. Only time-points $t>0$ were included to account for the artificially increased fluorescence values before the reaction has reached thermal equillibrium.
+The data is a time series of fluorescence measurements from a single positive sample over many reactions. The data is normalized to the eighth time-point, and the time-points are evenly spaced by 15 min between 0 and 72 hours. Only time-points $t>0$ were included to account for the artificially increased fluorescence values before the reaction has reached thermal equillibrium.
 
 ```{r Load & model data, eval=TRUE, echo=FALSE}
 single_only <- FALSE
@@ -178,8 +178,8 @@ df_raw <- raw_files %>%
   unnest(data) %>%
   filter(
     time <= 72,
-    # sample == "P",
-    # assay == "RT-QuIC"
+    sample == "P",
+    assay == "RT-QuIC"
   ) %>%
   normalize("time", "rfu", 8, group_list) %>%
   na.omit() 
