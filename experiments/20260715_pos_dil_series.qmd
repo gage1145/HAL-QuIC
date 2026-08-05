@@ -119,9 +119,6 @@ df_mod <- df_ %>%
 - **Substrate concentration**: 0.1 mg/mL
 - **Substrate**: HaPrP(90-231)
 
-### Data
-`{r} skim(df_)`
-
 ## Results
 ### Residuals
 ```{r Residuals, echo=FALSE}
