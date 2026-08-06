@@ -1,0 +1,268 @@
+---
+title: "Model Explorer"
+subtitle: "An interactive tool for exploring the double sigmoidal RT-QuIC model. Drag the sliders to see how each parameter shapes the growth and decay phases of the reaction in real time."
+date: today
+author: "Gage Rowden"
+format:
+  html:
+    page-layout: full
+    echo: false
+    toc: false
+---
+
+```{=html}
+<style>
+  :root {
+    --primary-color: #c4ff4f;
+    --secondary-color: #ff54a4;
+  }
+
+  input[type="range"] { width: 100%; }
+  input[type="number"] { display: none; }
+
+  /* form:has(button) {
+    display: flex;
+    justify-content: center;
+  } */
+  
+  .primary-slider { 
+    display: grid !important;
+    grid-template-columns: 20px auto !important;
+    width: 100% !important;
+    accent-color: var(--primary-color); 
+    :webkit-slider-runnable-track { background: var(--primary-color); }
+    :moz-range-track { background: var(--primary-color); }
+    :webkit-slider-thumb { background: var(--primary-color); }
+    :moz-range-thumb { background: var(--primary-color); }
+    label { color: var(--primary-color); }
+  }
+  .secondary-slider { 
+    display: grid !important;
+    grid-template-columns: 20px auto !important;
+    width: 100% !important;
+    accent-color: var(--secondary-color); 
+    :webkit-slider-runnable-track { background: var(--secondary-color); }
+    :moz-range-track { background: var(--secondary-color); }
+    :webkit-slider-thumb { background: var(--secondary-color); }
+    :moz-range-thumb { background: var(--secondary-color); }
+    label { color: var(--secondary-color); }
+  }
+</style>
+```
+
+```{ojs}
+tex`f(t)=\frac{${S1.toFixed(2)}}{1+e^{${a1.toFixed(2)}(${b1.toFixed(2)}-t)}}+\frac{${S2.toFixed(2)}}{1+e^{${a2.toFixed(2)}(${b2.toFixed(2)}-t)}}`
+```
+
+```{ojs}
+d3 = require("d3-random");
+maxTime = 72;
+nPoints = Math.floor(maxTime / 0.25);
+S1Range = [0, 20];
+S2Range = [-15, 5];
+a1Range = [0.1, 10];
+a2Range = [0, 10];
+b1Range = [5, maxTime];
+b2Range = [-20, maxTime];
+
+function getRandom(min, max) {
+  return Math.random() * (max - min + 1) + min;
+}
+
+function generateRawData() {
+  const S1 = +getRandom(10, 20).toFixed(2);
+  const S2 = +getRandom(-5, 0).toFixed(2);
+  const a1 = +getRandom(0.15, 10).toFixed(2);
+  const a2 = +getRandom(0, 0.7).toFixed(2);
+  const b1 = +getRandom(10, 60).toFixed(2);
+  const b2 = +getRandom(0.9 * b1, 1.1 * b1).toFixed(2);
+  const points = Array.from({length: nPoints}, (_, i) => {
+    const t = i * maxTime / (nPoints - 1);
+    return (S1 / (1 + Math.exp(a1 * (b1 - t)))) +
+           (S2 / (1 + Math.exp(a2 * (b2 - t)))) +
+           d3.randomNormal(0, 0.1)();
+  });
+  return {params: {S1, S2, a1, a2, b1, b2}, points};
+}
+
+mutable rawData = generateRawData()
+mutable showAnswer = false
+```
+
+::: {.grid}
+
+:::: {.g-col-sm-5}
+
+## Primary Parameters {style="color: var(--primary-color);"}
+```{ojs}
+viewof S1 = {
+  const input = Inputs.range(S1Range, {value: 10, step: 0.01, label: "S₁", attributes: {class: "primary-slider"}});
+  input.classList.add("primary-slider");
+  return input;
+}
+viewof a1 = {
+  const input = Inputs.range(a1Range, {value: 0.5, step: 0.01, label: "a₁", attributes: {class: "primary-slider"}});
+  input.classList.add("primary-slider");
+  return input;
+}
+viewof b1 = {
+  const input = Inputs.range(b1Range, {value: 30, step: 0.01, label: "b₁", attributes: {class: "primary-slider"}});
+  input.classList.add("primary-slider");
+  return input;
+}
+```
+
+<div style="display: flex; flex-direction: row; justify-content: space-between;">
+S₁: `{ojs} S1`
+
+a₁: `{ojs} a1`
+
+b₁: `{ojs} b1`
+</div>
+
+## Secondary Parameters {style="color: var(--secondary-color);"}
+```{ojs}
+viewof S2 = {
+  const input = Inputs.range(S2Range, {value: 0, step: 0.01, label: "S₂", attributes: {class: "secondary-slider"}});
+  input.classList.add("secondary-slider");
+  return input;
+}
+viewof a2 = {
+  const input = Inputs.range(a2Range, {value: 0, step: 0.01, label: "a₂", attributes: {class: "secondary-slider"}});
+  input.classList.add("secondary-slider");
+  return input;
+}
+viewof b2 = {
+  const input = Inputs.range(b2Range, {value: 0, step: 0.01, label: "b₂", attributes: {class: "secondary-slider"}});
+  input.classList.add("secondary-slider");
+  return input;
+}
+```
+
+<div style="display: flex; flex-direction: row; justify-content: space-between;">
+S₂: `{ojs} S2` 
+
+a₂: `{ojs} a2` 
+
+b₂: `{ojs} b2`
+</div>
+
+```{ojs}
+{
+  const reset = Inputs.button("Reset Plot", {
+    reduce: () => { mutable rawData = generateRawData(); mutable showAnswer = false; }
+  });
+  const reveal = Inputs.button("Reveal Answer", {
+    reduce: () => (mutable showAnswer = !showAnswer)
+  });
+  return html`<div style="display:flex;gap:8px;">
+    ${reset}
+    ${reveal}
+  </div>`;
+}
+
+showAnswer ? html`<div style="margin-top:12px;padding:10px;border:1px solid #282828;border-radius:4px;font-size:13px;">
+  <div style="color:var(--primary-color);margin-bottom:6px;">
+    S₁ = <strong>${rawData.params.S1}</strong> &emsp;
+    a₁ = <strong>${rawData.params.a1}</strong> &emsp;
+    b₁ = <strong>${rawData.params.b1}</strong>
+  </div>
+  <div style="color:var(--secondary-color);">
+    S₂ = <strong>${rawData.params.S2}</strong> &emsp;
+    a₂ = <strong>${rawData.params.a2}</strong> &emsp;
+    b₂ = <strong>${rawData.params.b2}</strong>
+  </div>
+</div>` : html``
+```
+
+::::
+
+:::: {.g-col-sm-7}
+
+## Attempt to fit the data
+
+```{ojs}
+curve = Array.from({length: nPoints}, (_, i) => {
+  const t = i * maxTime / (nPoints - 1);
+  const g1 = S1 / (1 + Math.exp(a1 * (b1 - t)));
+  const g2 = S2 / (1 + Math.exp(a2 * (b2 - t)));
+  const f = g1 + g2;
+  const raw = rawData.points[i];
+  return {t, g1, g2, f, raw, resid: f - raw};
+})
+
+sidebarHeight = Generators.observe(notify => {
+  const el = document.querySelector(".g-col-sm-5");
+  if (!el) { notify(500); return () => {}; }
+  notify(el.clientHeight);
+  const ro = new ResizeObserver(() => notify(el.clientHeight));
+  ro.observe(el);
+  return () => ro.disconnect();
+})
+
+{
+  const legend = html`<div style="display:flex;gap:1.5rem;margin-bottom:8px;font-size:13px;color:#adafae;align-items:center;">
+    <span style="display:flex;align-items:center;gap:6px;">
+      <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="var(--primary-color)" stroke-width="1.5" stroke-dasharray="6,3"/></svg>
+      g₁(t)
+    </span>
+    <span style="display:flex;align-items:center;gap:6px;">
+      <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="var(--secondary-color)" stroke-width="1.5" stroke-dasharray="6,3"/></svg>
+      g₂(t)
+    </span>
+    <span style="display:flex;align-items:center;gap:6px;">
+      <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#2a9fd6" stroke-width="2.5"/></svg>
+      f(t)
+    </span>
+    <span style="display:flex;align-items:center;gap:6px;">
+      <svg width="28" height="12"><circle cx="14" cy="6" r="4" fill="#ffffff"/></svg>
+      Raw data
+    </span>
+    <span style="display:flex;align-items:center;gap:6px;">
+      <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#92ff84" stroke-width="2.5"/></svg>
+      Residual
+    </span>
+  </div>`;
+
+  const rawMean = curve.reduce((s, d) => s + d.raw, 0) / curve.length;
+  const ssTot = curve.reduce((s, d) => s + (d.raw - rawMean) ** 2, 0);
+  const ssRes = curve.reduce((s, d) => s + d.resid ** 2, 0);
+  const r2 = 1 - ssRes / ssTot;
+
+  const plot = Plot.plot({
+    width: width,
+    height: Math.max(sidebarHeight, 700),
+    style: {background: "#060606", color: "#adafae", overflow: "visible"},
+    // marginLeft: 60,
+    // marginBottom: 44,
+    x: {label: "Time (h)"},
+    y: {label: "Normalized RFU"},
+    marks: [
+      Plot.gridX({stroke: "#282828"}),
+      Plot.gridY({stroke: "#282828"}),
+      Plot.frame({stroke: "#282828"}),
+      Plot.ruleY([0], {stroke: "#adafae", strokeOpacity: 0.3}),
+      Plot.dot(curve, {x: "t", y: "raw", fill: "#ffffff", stroke: "#ffffff", strokeWidth: 0.5}),
+      Plot.line(curve, {x: "t", y: "resid", stroke: "#92ff84", strokeWidth: 1}),
+      Plot.line(curve, {x: "t", y: "g1", stroke: "#77b300", strokeWidth: 2.5, strokeDasharray: "6,3"}),
+      Plot.line(curve, {x: "t", y: "g2", stroke: "#e83e8c", strokeWidth: 2.5, strokeDasharray: "6,3"}),
+      Plot.line(curve, {x: "t", y: "f", stroke: "#2a9fd6", strokeWidth: 5}),
+      Plot.text([{label: `R² = ${r2.toFixed(4)}`}], {
+        text: "label",
+        frameAnchor: "top-left",
+        fill: r2 >= 0.9 ? "#77b300" : r2 >= 0.7 ? "#f80" : "#c00",
+        fontSize: 30,
+        fontWeight: "bold",
+        dx: 5,
+        dy: -5
+      }),
+    ]
+  });
+
+  return html`<div>${legend}${plot}</div>`;
+}
+```
+
+::::
+
+:::

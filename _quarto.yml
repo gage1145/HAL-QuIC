@@ -16,6 +16,8 @@ website:
         text: Project Roadmap
       - href: model.qmd
         text: Modeling
+      - href: explorer.qmd
+        text: Explorer
       - href: experiments.qmd
         text: Experiments
     right:

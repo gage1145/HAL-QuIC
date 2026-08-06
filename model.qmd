@@ -135,30 +135,34 @@ make_param_plot <- function(coef) {
 ```{r S Param Plot, echo=FALSE}
 #| fig-height: 6
 #| fig-width: 12
+#| label: fig-S-param
+#| fig-cap: "The $S$ parameter affects the height of the asymptote. For example, if $S=10$, the curve will approach 10 in the equillibrium phase as $t\\rightarrow\\infty$. If $S=0$, the other parameters will not affect the curve, and therefore become redundant."
 make_param_plot("S")
 ```
-
-The $S$ parameter affects the height of the asymptote. For example, if $S=10$, the curve will approach 10 in the equillibrium phase as $t\rightarrow\infty$. If $S=0$, the other parameters will not affect the curve, and therefore become redundant.
 
 ---
 
 ```{r a Param Plot, echo=FALSE}
 #| fig-height: 6
 #| fig-width: 12
+#| label: fig-a-param
+#| fig-cap: "The $a$ parameter affects the steepness of the inflection point. A lower value of $a$ will result in a smoother curve, and as $a\\rightarrow0$, the curve will approach a constant value at $S/2$. Alternatively, as $a\\rightarrow\\infty$, the curve will approach $S$ instantaneously at when $t=b$."
 make_param_plot("a")
 ```
 
-The $a$ parameter affects the steepness of the inflection point. A lower value of $a$ will result in a smoother curve, and as $a\rightarrow0$, the curve will approach a constant value at $S/2$. Alternatively, as $a\rightarrow\infty$, the curve will approach $S$ instantaneously at when $t=b$.
+
 
 ---
 
 ```{r b Param Plot, echo=FALSE}
 #| fig-height: 6
 #| fig-width: 12
+#| label: fig-b-param
+#| fig-cap: "The $b$ parameter affects the timing of the inflection point (i.e. when the curve reaches $S/2$). This value can range from $-\\infty\\rightarrow\\infty$, but for the purpose of this analysis, $b$ is constrained to positive values."
 make_param_plot("b")
 ```
 
-The $b$ parameter affects the timing of the inflection point (i.e. when the curve reaches $S/2$). This value can range from $-\infty\rightarrow\infty$, but for the purpose of this analysis, $b$ is constrained to positive values.
+
 
 ---
 
