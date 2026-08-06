@@ -70,34 +70,6 @@
     "text": "Site Navigation\n\n\n\nPage\nDescription\n\n\n\n\nModel\nFull derivation of the double sigmoidal model, fitting procedure, and derived parameters (\\(K_{app}\\), \\(t_{lag}\\))\n\n\nProject Roadmap\nPlanned experiments and research priorities\n\n\nExperiments\nIndividual experiments organized by priority tier"
   },
   {
-    "objectID": "experiments.html",
-    "href": "experiments.html",
-    "title": "Experiments",
-    "section": "",
-    "text": "Experiment 1: Seed Concentration"
-  },
-  {
-    "objectID": "experiments.html#tier-1-assay-parameter-exploration",
-    "href": "experiments.html#tier-1-assay-parameter-exploration",
-    "title": "Experiments",
-    "section": "",
-    "text": "Experiment 1: Seed Concentration"
-  },
-  {
-    "objectID": "experiments.html#tier-2-measurement-validation",
-    "href": "experiments.html#tier-2-measurement-validation",
-    "title": "Experiments",
-    "section": "Tier 2 — Measurement Validation",
-    "text": "Tier 2 — Measurement Validation"
-  },
-  {
-    "objectID": "experiments.html#tier-3-generalizability",
-    "href": "experiments.html#tier-3-generalizability",
-    "title": "Experiments",
-    "section": "Tier 3 — Generalizability",
-    "text": "Tier 3 — Generalizability"
-  },
-  {
     "objectID": "experiments/20260715_pos_dil_series.html",
     "href": "experiments/20260715_pos_dil_series.html",
     "title": "Positive Seed Dilution Series",
@@ -126,6 +98,62 @@
     "text": "Results\n\nResiduals\n\n\n\n\n\n\n\n\n\n\n\nWorst fits\nThese fits represent the 12 worst fits based on the pseudo-R\\(^2\\) metric. They aren’t necessarily bad fits, but are those that least resemble the emperical data.\n\n\n\n\n\n\n\n\n\n\n\nBest fits\nThese fits represent the 12 best fits based on the pseudo-R\\(^2\\) metric.\n\n\n\n\n\n\n\n\n\n\n\nEffect of seed dilution on model coefficients\nI plotted the parameters as a function of initial seed concentration. The initial seed concentration really has an effect on \\(b_1\\) (basically t\\(_\\text{lag}\\)) which is expected, and to some extent S1 (~ maximum fluorescence). Interestingly, S2 becomes more negative as the seed concentration increases (i.e. more seed = more dampening effect). Also interestingly, there seems to be no effect on either a1 or a2 (i.e. the steepness of the inflection point)."
   },
   {
+    "objectID": "experiments.html",
+    "href": "experiments.html",
+    "title": "Experiments",
+    "section": "",
+    "text": "Experiment 1: Seed Concentration"
+  },
+  {
+    "objectID": "experiments.html#tier-1-assay-parameter-exploration",
+    "href": "experiments.html#tier-1-assay-parameter-exploration",
+    "title": "Experiments",
+    "section": "",
+    "text": "Experiment 1: Seed Concentration"
+  },
+  {
+    "objectID": "experiments.html#tier-2-measurement-validation",
+    "href": "experiments.html#tier-2-measurement-validation",
+    "title": "Experiments",
+    "section": "Tier 2 — Measurement Validation",
+    "text": "Tier 2 — Measurement Validation"
+  },
+  {
+    "objectID": "experiments.html#tier-3-generalizability",
+    "href": "experiments.html#tier-3-generalizability",
+    "title": "Experiments",
+    "section": "Tier 3 — Generalizability",
+    "text": "Tier 3 — Generalizability"
+  },
+  {
+    "objectID": "explorer.html",
+    "href": "explorer.html",
+    "title": "Model Explorer",
+    "section": "",
+    "text": "tex`f(t)=\\frac{${S1.toFixed(2)}}{1+e^{${a1.toFixed(2)}(${b1.toFixed(2)}-t)}}+\\frac{${S2.toFixed(2)}}{1+e^{${a2.toFixed(2)}(${b2.toFixed(2)}-t)}}`\nd3 = require(\"d3-random\");\nmaxTime = 72;\nnPoints = Math.floor(maxTime / 0.25);\nS1Range = [0, 20];\nS2Range = [-15, 5];\na1Range = [0.1, 10];\na2Range = [0, 10];\nb1Range = [5, maxTime];\nb2Range = [-20, maxTime];\n\nfunction getRandom(min, max) {\n  return Math.random() * (max - min + 1) + min;\n}\n\nfunction generateRawData() {\n  const S1 = +getRandom(10, 20).toFixed(2);\n  const S2 = +getRandom(-5, 0).toFixed(2);\n  const a1 = +getRandom(0.15, 10).toFixed(2);\n  const a2 = +getRandom(0, 0.7).toFixed(2);\n  const b1 = +getRandom(10, 60).toFixed(2);\n  const b2 = +getRandom(0.9 * b1, 1.1 * b1).toFixed(2);\n  const points = Array.from({length: nPoints}, (_, i) =&gt; {\n    const t = i * maxTime / (nPoints - 1);\n    return (S1 / (1 + Math.exp(a1 * (b1 - t)))) +\n           (S2 / (1 + Math.exp(a2 * (b2 - t)))) +\n           d3.randomNormal(0, 0.1)();\n  });\n  return {params: {S1, S2, a1, a2, b1, b2}, points};\n}\n\nmutable rawData = generateRawData()\nmutable showAnswer = false"
+  },
+  {
+    "objectID": "explorer.html#primary-parameters",
+    "href": "explorer.html#primary-parameters",
+    "title": "Model Explorer",
+    "section": "Primary Parameters",
+    "text": "Primary Parameters\n\nviewof S1 = {\n  const input = Inputs.range(S1Range, {value: 10, step: 0.01, label: \"S₁\", attributes: {class: \"primary-slider\"}});\n  input.classList.add(\"primary-slider\");\n  return input;\n}\nviewof a1 = {\n  const input = Inputs.range(a1Range, {value: 0.5, step: 0.01, label: \"a₁\", attributes: {class: \"primary-slider\"}});\n  input.classList.add(\"primary-slider\");\n  return input;\n}\nviewof b1 = {\n  const input = Inputs.range(b1Range, {value: 30, step: 0.01, label: \"b₁\", attributes: {class: \"primary-slider\"}});\n  input.classList.add(\"primary-slider\");\n  return input;\n}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nS₁: \na₁: \nb₁:"
+  },
+  {
+    "objectID": "explorer.html#secondary-parameters",
+    "href": "explorer.html#secondary-parameters",
+    "title": "Model Explorer",
+    "section": "Secondary Parameters",
+    "text": "Secondary Parameters\n\nviewof S2 = {\n  const input = Inputs.range(S2Range, {value: 0, step: 0.01, label: \"S₂\", attributes: {class: \"secondary-slider\"}});\n  input.classList.add(\"secondary-slider\");\n  return input;\n}\nviewof a2 = {\n  const input = Inputs.range(a2Range, {value: 0, step: 0.01, label: \"a₂\", attributes: {class: \"secondary-slider\"}});\n  input.classList.add(\"secondary-slider\");\n  return input;\n}\nviewof b2 = {\n  const input = Inputs.range(b2Range, {value: 0, step: 0.01, label: \"b₂\", attributes: {class: \"secondary-slider\"}});\n  input.classList.add(\"secondary-slider\");\n  return input;\n}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nS₂: \na₂: \nb₂: \n\n\n{\n  const reset = Inputs.button(\"Reset Plot\", {\n    reduce: () =&gt; { mutable rawData = generateRawData(); mutable showAnswer = false; }\n  });\n  const reveal = Inputs.button(\"Reveal Answer\", {\n    reduce: () =&gt; (mutable showAnswer = !showAnswer)\n  });\n  return html`&lt;div style=\"display:flex;gap:8px;\"&gt;\n    ${reset}\n    ${reveal}\n  &lt;/div&gt;`;\n}\n\n\n\n\n\n\n\nshowAnswer ? html`&lt;div style=\"margin-top:12px;padding:10px;border:1px solid #282828;border-radius:4px;font-size:13px;\"&gt;\n  &lt;div style=\"color:var(--primary-color);margin-bottom:6px;\"&gt;\n    S₁ = &lt;strong&gt;${rawData.params.S1}&lt;/strong&gt; &emsp;\n    a₁ = &lt;strong&gt;${rawData.params.a1}&lt;/strong&gt; &emsp;\n    b₁ = &lt;strong&gt;${rawData.params.b1}&lt;/strong&gt;\n  &lt;/div&gt;\n  &lt;div style=\"color:var(--secondary-color);\"&gt;\n    S₂ = &lt;strong&gt;${rawData.params.S2}&lt;/strong&gt; &emsp;\n    a₂ = &lt;strong&gt;${rawData.params.a2}&lt;/strong&gt; &emsp;\n    b₂ = &lt;strong&gt;${rawData.params.b2}&lt;/strong&gt;\n  &lt;/div&gt;\n&lt;/div&gt;` : html``"
+  },
+  {
+    "objectID": "explorer.html#attempt-to-fit-the-data",
+    "href": "explorer.html#attempt-to-fit-the-data",
+    "title": "Model Explorer",
+    "section": "Attempt to fit the data",
+    "text": "Attempt to fit the data\n\ncurve = Array.from({length: nPoints}, (_, i) =&gt; {\n  const t = i * maxTime / (nPoints - 1);\n  const g1 = S1 / (1 + Math.exp(a1 * (b1 - t)));\n  const g2 = S2 / (1 + Math.exp(a2 * (b2 - t)));\n  const f = g1 + g2;\n  const raw = rawData.points[i];\n  return {t, g1, g2, f, raw, resid: f - raw};\n})\n\nsidebarHeight = Generators.observe(notify =&gt; {\n  const el = document.querySelector(\".g-col-sm-5\");\n  if (!el) { notify(500); return () =&gt; {}; }\n  notify(el.clientHeight);\n  const ro = new ResizeObserver(() =&gt; notify(el.clientHeight));\n  ro.observe(el);\n  return () =&gt; ro.disconnect();\n})\n\n{\n  const legend = html`&lt;div style=\"display:flex;gap:1.5rem;margin-bottom:8px;font-size:13px;color:#adafae;align-items:center;\"&gt;\n    &lt;span style=\"display:flex;align-items:center;gap:6px;\"&gt;\n      &lt;svg width=\"28\" height=\"12\"&gt;&lt;line x1=\"0\" y1=\"6\" x2=\"28\" y2=\"6\" stroke=\"var(--primary-color)\" stroke-width=\"1.5\" stroke-dasharray=\"6,3\"/&gt;&lt;/svg&gt;\n      g₁(t)\n    &lt;/span&gt;\n    &lt;span style=\"display:flex;align-items:center;gap:6px;\"&gt;\n      &lt;svg width=\"28\" height=\"12\"&gt;&lt;line x1=\"0\" y1=\"6\" x2=\"28\" y2=\"6\" stroke=\"var(--secondary-color)\" stroke-width=\"1.5\" stroke-dasharray=\"6,3\"/&gt;&lt;/svg&gt;\n      g₂(t)\n    &lt;/span&gt;\n    &lt;span style=\"display:flex;align-items:center;gap:6px;\"&gt;\n      &lt;svg width=\"28\" height=\"12\"&gt;&lt;line x1=\"0\" y1=\"6\" x2=\"28\" y2=\"6\" stroke=\"#2a9fd6\" stroke-width=\"2.5\"/&gt;&lt;/svg&gt;\n      f(t)\n    &lt;/span&gt;\n    &lt;span style=\"display:flex;align-items:center;gap:6px;\"&gt;\n      &lt;svg width=\"28\" height=\"12\"&gt;&lt;circle cx=\"14\" cy=\"6\" r=\"4\" fill=\"#ffffff\"/&gt;&lt;/svg&gt;\n      Raw data\n    &lt;/span&gt;\n    &lt;span style=\"display:flex;align-items:center;gap:6px;\"&gt;\n      &lt;svg width=\"28\" height=\"12\"&gt;&lt;line x1=\"0\" y1=\"6\" x2=\"28\" y2=\"6\" stroke=\"#92ff84\" stroke-width=\"2.5\"/&gt;&lt;/svg&gt;\n      Residual\n    &lt;/span&gt;\n  &lt;/div&gt;`;\n\n  const rawMean = curve.reduce((s, d) =&gt; s + d.raw, 0) / curve.length;\n  const ssTot = curve.reduce((s, d) =&gt; s + (d.raw - rawMean) ** 2, 0);\n  const ssRes = curve.reduce((s, d) =&gt; s + d.resid ** 2, 0);\n  const r2 = 1 - ssRes / ssTot;\n\n  const plot = Plot.plot({\n    width: width,\n    height: Math.max(sidebarHeight, 700),\n    style: {background: \"#060606\", color: \"#adafae\", overflow: \"visible\"},\n    // marginLeft: 60,\n    // marginBottom: 44,\n    x: {label: \"Time (h)\"},\n    y: {label: \"Normalized RFU\"},\n    marks: [\n      Plot.gridX({stroke: \"#282828\"}),\n      Plot.gridY({stroke: \"#282828\"}),\n      Plot.frame({stroke: \"#282828\"}),\n      Plot.ruleY([0], {stroke: \"#adafae\", strokeOpacity: 0.3}),\n      Plot.dot(curve, {x: \"t\", y: \"raw\", fill: \"#ffffff\", stroke: \"#ffffff\", strokeWidth: 0.5}),\n      Plot.line(curve, {x: \"t\", y: \"resid\", stroke: \"#92ff84\", strokeWidth: 1}),\n      Plot.line(curve, {x: \"t\", y: \"g1\", stroke: \"#77b300\", strokeWidth: 2.5, strokeDasharray: \"6,3\"}),\n      Plot.line(curve, {x: \"t\", y: \"g2\", stroke: \"#e83e8c\", strokeWidth: 2.5, strokeDasharray: \"6,3\"}),\n      Plot.line(curve, {x: \"t\", y: \"f\", stroke: \"#2a9fd6\", strokeWidth: 5}),\n      Plot.text([{label: `R² = ${r2.toFixed(4)}`}], {\n        text: \"label\",\n        frameAnchor: \"top-left\",\n        fill: r2 &gt;= 0.9 ? \"#77b300\" : r2 &gt;= 0.7 ? \"#f80\" : \"#c00\",\n        fontSize: 30,\n        fontWeight: \"bold\",\n        dx: 5,\n        dy: -5\n      }),\n    ]\n  });\n\n  return html`&lt;div&gt;${legend}${plot}&lt;/div&gt;`;\n}"
+  },
+  {
     "objectID": "model.html",
     "href": "model.html",
     "title": "Modeling RT-QuIC Kinetics",
@@ -151,7 +179,7 @@
     "href": "model.html#how-do-the-parameters-affect-the-curves",
     "title": "Modeling RT-QuIC Kinetics",
     "section": "How do the parameters affect the curves?",
-    "text": "How do the parameters affect the curves?\n\n\n\n\n\n\n\n\n\nThe \\(S\\) parameter affects the height of the asymptote. For example, if \\(S=10\\), the curve will approach 10 in the equillibrium phase as \\(t\\rightarrow\\infty\\). If \\(S=0\\), the other parameters will not affect the curve, and therefore become redundant.\n\n\n\n\n\n\n\n\n\n\nThe \\(a\\) parameter affects the steepness of the inflection point. A lower value of \\(a\\) will result in a smoother curve, and as \\(a\\rightarrow0\\), the curve will approach a constant value at \\(S/2\\). Alternatively, as \\(a\\rightarrow\\infty\\), the curve will approach \\(S\\) instantaneously at when \\(t=b\\).\n\n\n\n\n\n\n\n\n\n\nThe \\(b\\) parameter affects the timing of the inflection point (i.e. when the curve reaches \\(S/2\\)). This value can range from \\(-\\infty\\rightarrow\\infty\\), but for the purpose of this analysis, \\(b\\) is constrained to positive values."
+    "text": "How do the parameters affect the curves?\n\n\n\n\n\n\n\n\nFigure 1: The \\(S\\) parameter affects the height of the asymptote. For example, if \\(S=10\\), the curve will approach 10 in the equillibrium phase as \\(t\\rightarrow\\infty\\). If \\(S=0\\), the other parameters will not affect the curve, and therefore become redundant.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFigure 2: The \\(a\\) parameter affects the steepness of the inflection point. A lower value of \\(a\\) will result in a smoother curve, and as \\(a\\rightarrow0\\), the curve will approach a constant value at \\(S/2\\). Alternatively, as \\(a\\rightarrow\\infty\\), the curve will approach \\(S\\) instantaneously at when \\(t=b\\).\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFigure 3: The \\(b\\) parameter affects the timing of the inflection point (i.e. when the curve reaches \\(S/2\\)). This value can range from \\(-\\infty\\rightarrow\\infty\\), but for the purpose of this analysis, \\(b\\) is constrained to positive values."
   },
   {
     "objectID": "model.html#the-training-data",
