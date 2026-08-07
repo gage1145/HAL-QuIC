@@ -20,11 +20,49 @@ format:
   input[type="range"] { width: 100%; }
   input[type="number"] { display: none; }
 
-  /* form:has(button) {
+  .app-container {
     display: flex;
-    justify-content: center;
-  } */
-  
+    flex-direction: row;
+    gap: 16px;
+    align-items: stretch;
+    @media (max-width: 768px) {
+      flex-direction: column-reverse;
+    }
+  }
+
+  .params {
+    width: 30%;
+    flex: 0 0 auto;
+    @media (max-width: 768px) {
+      width: 100%;
+    }
+  }
+
+  .plot {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    @media (max-width: 768px) {
+      flex: 0 0 auto;
+      height: 50vh;
+    }
+  }
+
+  .plot-area {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 500px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .plot-area .cell,
+  .plot-area .cell-output {
+    margin: 0;
+  }
+
   .primary-slider { 
     display: grid !important;
     grid-template-columns: 20px auto !important;
@@ -46,6 +84,14 @@ format:
     :webkit-slider-thumb { background: var(--secondary-color); }
     :moz-range-thumb { background: var(--secondary-color); }
     label { color: var(--secondary-color); }
+  }
+
+  .param-values {
+    display: flex; 
+    flex-direction: row; 
+    justify-content: space-between;
+    
+    & > p {font-size: large;}
   }
 </style>
 ```
@@ -89,9 +135,9 @@ mutable rawData = generateRawData()
 mutable showAnswer = false
 ```
 
-::: {.grid}
+::: { .app-container }
 
-:::: {.g-col-sm-5}
+:::: { .params }
 
 ## Primary Parameters {style="color: var(--primary-color);"}
 ```{ojs}
@@ -112,15 +158,17 @@ viewof b1 = {
 }
 ```
 
-<div style="display: flex; flex-direction: row; justify-content: space-between;">
+::: { .param-values }
+
 S₁: `{ojs} S1`
 
 a₁: `{ojs} a1`
 
 b₁: `{ojs} b1`
-</div>
 
-## Secondary Parameters {style="color: var(--secondary-color);"}
+:::
+
+## Secondary Parameters {style="color: var(--secondary-color); margin-top: 0px;"}
 ```{ojs}
 viewof S2 = {
   const input = Inputs.range(S2Range, {value: 0, step: 0.01, label: "S₂", attributes: {class: "secondary-slider"}});
@@ -139,13 +187,15 @@ viewof b2 = {
 }
 ```
 
-<div style="display: flex; flex-direction: row; justify-content: space-between;">
+::: { .param-values }
+
 S₂: `{ojs} S2` 
 
 a₂: `{ojs} a2` 
 
 b₂: `{ojs} b2`
-</div>
+
+:::
 
 ```{ojs}
 {
@@ -177,9 +227,36 @@ showAnswer ? html`<div style="margin-top:12px;padding:10px;border:1px solid #282
 
 ::::
 
-:::: {.g-col-sm-7}
+:::: { .plot }
 
 ## Attempt to fit the data
+
+```{=html}
+<div style="display:flex;gap:1.5rem;margin-bottom:8px;font-size:13px;color:#adafae;align-items:center;flex-wrap:wrap;">
+  <span style="display:flex;align-items:center;gap:6px;">
+    <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="var(--primary-color)" stroke-width="1.5" stroke-dasharray="6,3"/></svg>
+    g₁(t)
+  </span>
+  <span style="display:flex;align-items:center;gap:6px;">
+    <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="var(--secondary-color)" stroke-width="1.5" stroke-dasharray="6,3"/></svg>
+    g₂(t)
+  </span>
+  <span style="display:flex;align-items:center;gap:6px;">
+    <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#2a9fd6" stroke-width="2.5"/></svg>
+    f(t)
+  </span>
+  <span style="display:flex;align-items:center;gap:6px;">
+    <svg width="28" height="12"><circle cx="14" cy="6" r="4" fill="#ffffff"/></svg>
+    Raw data
+  </span>
+  <span style="display:flex;align-items:center;gap:6px;">
+    <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#92ff84" stroke-width="2.5"/></svg>
+    Residual
+  </span>
+</div>
+```
+
+::::: { .plot-area }
 
 ```{ojs}
 curve = Array.from({length: nPoints}, (_, i) => {
@@ -191,50 +268,34 @@ curve = Array.from({length: nPoints}, (_, i) => {
   return {t, g1, g2, f, raw, resid: f - raw};
 })
 
-sidebarHeight = Generators.observe(notify => {
-  const el = document.querySelector(".g-col-sm-5");
-  if (!el) { notify(500); return () => {}; }
-  notify(el.clientHeight);
-  const ro = new ResizeObserver(() => notify(el.clientHeight));
-  ro.observe(el);
-  return () => ro.disconnect();
+plotSize = Generators.observe(notify => {
+  let ro;
+  const attach = () => {
+    const el = document.querySelector(".plot-area");
+    if (!el) { requestAnimationFrame(attach); return; }
+    const measure = () => notify({
+      width: Math.max(200, el.clientWidth),
+      height: Math.max(200, el.clientHeight)
+    });
+    measure();
+    ro = new ResizeObserver(measure);
+    ro.observe(el);
+  };
+  notify({width: 640, height: 500});
+  attach();
+  return () => ro?.disconnect();
 })
 
 {
-  const legend = html`<div style="display:flex;gap:1.5rem;margin-bottom:8px;font-size:13px;color:#adafae;align-items:center;">
-    <span style="display:flex;align-items:center;gap:6px;">
-      <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="var(--primary-color)" stroke-width="1.5" stroke-dasharray="6,3"/></svg>
-      g₁(t)
-    </span>
-    <span style="display:flex;align-items:center;gap:6px;">
-      <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="var(--secondary-color)" stroke-width="1.5" stroke-dasharray="6,3"/></svg>
-      g₂(t)
-    </span>
-    <span style="display:flex;align-items:center;gap:6px;">
-      <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#2a9fd6" stroke-width="2.5"/></svg>
-      f(t)
-    </span>
-    <span style="display:flex;align-items:center;gap:6px;">
-      <svg width="28" height="12"><circle cx="14" cy="6" r="4" fill="#ffffff"/></svg>
-      Raw data
-    </span>
-    <span style="display:flex;align-items:center;gap:6px;">
-      <svg width="28" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#92ff84" stroke-width="2.5"/></svg>
-      Residual
-    </span>
-  </div>`;
-
   const rawMean = curve.reduce((s, d) => s + d.raw, 0) / curve.length;
   const ssTot = curve.reduce((s, d) => s + (d.raw - rawMean) ** 2, 0);
   const ssRes = curve.reduce((s, d) => s + d.resid ** 2, 0);
   const r2 = 1 - ssRes / ssTot;
 
   const plot = Plot.plot({
-    width: width,
-    height: Math.max(sidebarHeight, 700),
+    width: plotSize.width,
+    height: plotSize.height,
     style: {background: "#060606", color: "#adafae", overflow: "visible"},
-    // marginLeft: 60,
-    // marginBottom: 44,
     x: {label: "Time (h)"},
     y: {label: "Normalized RFU"},
     marks: [
@@ -247,21 +308,24 @@ sidebarHeight = Generators.observe(notify => {
       Plot.line(curve, {x: "t", y: "g1", stroke: "#77b300", strokeWidth: 2.5, strokeDasharray: "6,3"}),
       Plot.line(curve, {x: "t", y: "g2", stroke: "#e83e8c", strokeWidth: 2.5, strokeDasharray: "6,3"}),
       Plot.line(curve, {x: "t", y: "f", stroke: "#2a9fd6", strokeWidth: 5}),
+      Plot.ruleY([0], {stroke: "#ffffff", strokeWidth: 1.5, strokeDasharray: "4,4"}),
       Plot.text([{label: `R² = ${r2.toFixed(4)}`}], {
         text: "label",
-        frameAnchor: "top-left",
+        frameAnchor: "right",
         fill: r2 >= 0.9 ? "#77b300" : r2 >= 0.7 ? "#f80" : "#c00",
-        fontSize: 30,
+        fontSize: 20,
         fontWeight: "bold",
-        dx: 5,
-        dy: -5
+        dx: -20,
+        dy: -50
       }),
     ]
   });
 
-  return html`<div>${legend}${plot}</div>`;
+  return plot;
 }
 ```
+
+:::::
 
 ::::
 
