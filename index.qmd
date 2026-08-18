@@ -3,6 +3,11 @@ title: "Codename: HAL-QuIC"
 subtitle: "An R project for the kinetic modeling of the RT-QuIC assay"
 ---
 
+```{r Initialize, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+source("R/main_theme.R")
+```
+
 ```{r Example Graph, echo=FALSE}
 #| fig-caption: "Example Graph highlighting the sum of the two components. The blue line is the combined component, the red line is the growth component, and the green line is the decay component."
 #| fig-height: 6
@@ -12,13 +17,59 @@ source("R/example_graph.R")
 example_graph(S1 <- 25, S2 = -12.5, a1 = 1.5, a2 = 0.5, b1 = 10, b2 = 16)
 ```
 
+# Introduction
+
 ## What is RT-QuIC?
 
-Real-Time Quaking-Induced Conversion (RT-QuIC) is a highly sensitive assay used to detect misfolded prion proteins. A small amount of seed material — typically brain or lymph node homogenate — is incubated with a recombinant substrate prion protein under semi-continuous agitation. When prion seeds are present, they template the misfolding of the substrate, forming amyloid aggregates. These aggregates are measured in real time via thioflavin T (ThT) fluorescence, producing a characteristic **sigmoidal growth curve**.
+Real-Time Quaking-Induced Conversion (RT-QuIC) is a member of the highly sensitive assays known as seed amplification assays (SAA) used to detect misfolded prion proteins (PrP^Sc^) in a sample [@atarashi2011]. A small amount of seed material, typically brain or lymph node homogenate, is incubated with a recombinant substrate prion protein (PrP^C^) under semi-continuous agitation. When prion seeds are present, they template the misfolding of the substrate, forming amyloid aggregates. These aggregates are measured in real time via thioflavin T (ThT) fluorescence, producing a sigmoid curve characteristic of many nucleated self-assembly reactions [@ferrone1999].
 
-## RT-QuIC kinetics
+## Prion Fibril Kinetics
 
-RT-QuIC has been validated repeatedly for its ability to detect prions, however, the shape of the curve may offer further insight into the characteristics of the original prion seed as well as the mechanism of the prion-substrate interaction. It is well-known that generally, higher concentrations of initial seed material lead to a faster reaction, but the overall signal intensity or the steepness of the inflection point may be influenced by other factors.
+The sigmoidal curve is the focus of this project given that, in typical enzyme kinetics, a sigmoid would indicate a co-operative binding effect between PrP^Sc^ and PrP^C^; however, the linear nature of protein fibrils wouldn't explain the allosteric requirements of such a model. @masel1999 proposed that a nucleated polymerization model would more accurately account for the linear structure of PrP^Sc^ while also being simpler to fit.
+
+ThT is commonly used to detect the presence of amyloid fibrils in SAAs, but it is not necessarily a direct indicator of the amount of fibrils present [@levine1999]. A standard curve could be generated using a known amount of PrP^Sc^, however @lee2007 approached the problem by combining UV-vis spectroscopy and ThT fluorescence such as in @fig-absorbance-vs-tht; the absorbance would be a more accurate measure of the amount of available substrate, while the ThT fluorescence would serve as the evidence of fibril formation.
+
+```{r, echo=FALSE}
+#| fig-cap: "Example graph showing the relationship between the absorbance and ThT fluorescence of an RT-QuIC reaction."
+#| label: fig-absorbance-vs-tht
+#| fig-height: 6
+#| fig-width: 12
+a <- 0.25
+b <- 36
+
+primary_color <- "#ff4f4f"
+secondary_color <- "#54a4ff"
+
+tibble(
+  time = seq(0, 72, 0.25),
+  tht  = 1 / (1 + exp(a * (b - time))),
+  abs  = 1 / (1 + exp(a * (time - b)))
+) %>%
+  pivot_longer(c(tht, abs), names_to = "measure", values_to = "value") %>%
+  ggplot(aes(time, value, color = measure)) +
+  geom_line(linewidth=1) +
+  scale_y_continuous(sec.axis = sec_axis(~ .x, name = "Fluorescence (Fibril Percentage)")) +
+  scale_color_manual(values = c(primary_color, secondary_color)) +
+  labs(
+    x = "Time (hr)",
+    y = "Absorbance (Substrate Percentage)",
+  ) +
+  dark_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "none",
+    axis.line.y  = element_line(color = primary_color),
+    axis.ticks.y = element_line(color = primary_color),
+    axis.text.y  = element_text(color = primary_color),
+    axis.title.y = element_text(color = primary_color),
+    axis.line.y.right  = element_line(color = secondary_color),
+    axis.ticks.y.right = element_line(color = secondary_color),
+    axis.text.y.right  = element_text(color = secondary_color),
+    axis.title.y.right = element_text(color = secondary_color),
+  )
+```
+
+It is well-known that generally, higher concentrations of initial seed material lead to a faster reaction, but the overall signal intensity or the steepness of the inflection point may be influenced by other factors. The predominant theory involves a two-step kinetic model, where the first step is the nucleation of a monomer into a fibril, and the second step involves elongation of the fibril [@arosio2015].
 
 ## The Model
 

@@ -6,8 +6,21 @@ project:
     - "*.qmd"
     - "!CLAUDE.md"
 
+author:
+  - name: Gage Rowden 
+    url: https://gagerowden.com
+    affiliation: University of Minnesota
+    affiliation-url: https://umn.edu
+
+citation:
+  url: https://modeling.gagerowden.com
+
+bibliography: references.bib
+csl: static/csl/diabetologia.csl
+
 website:
   title: "HAL-QuIC"
+  favicon: static/images/prp.png
   navbar:
     left:
       - href: index.qmd
