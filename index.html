@@ -6,6 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Gage Rowden">
 
 <title>Codename: HAL-QuIC – HAL-QuIC</title>
 <style>
@@ -26,7 +27,26 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -36,6 +56,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
+<link href="./static/images/prp.png" rel="icon" type="image/png">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
@@ -45,7 +66,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-b85bc7c33db8c58e0ec93c3465666fed.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-788924de87e5983ff5ea844facb3d456.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-86fafa19d40ef0cb8171a6422e308a9d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -166,10 +187,13 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#what-is-rt-quic" id="toc-what-is-rt-quic" class="nav-link active" data-scroll-target="#what-is-rt-quic">What is RT-QuIC?</a></li>
-  <li><a href="#rt-quic-kinetics" id="toc-rt-quic-kinetics" class="nav-link" data-scroll-target="#rt-quic-kinetics">RT-QuIC kinetics</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a>
+  <ul class="collapse">
+  <li><a href="#what-is-rt-quic" id="toc-what-is-rt-quic" class="nav-link" data-scroll-target="#what-is-rt-quic">What is RT-QuIC?</a></li>
+  <li><a href="#prion-fibril-kinetics" id="toc-prion-fibril-kinetics" class="nav-link" data-scroll-target="#prion-fibril-kinetics">Prion Fibril Kinetics</a></li>
   <li><a href="#the-model" id="toc-the-model" class="nav-link" data-scroll-target="#the-model">The Model</a></li>
   <li><a href="#site-navigation" id="toc-site-navigation" class="nav-link" data-scroll-target="#site-navigation">Site Navigation</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -183,10 +207,25 @@ window.Quarto = {
 </div>
 
 
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author"><a href="https://gagerowden.com">Gage Rowden</a> </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            <a href="https://umn.edu">
+            University of Minnesota
+            </a>
+          </p>
+      </div>
+  </div>
 
 <div class="quarto-title-meta">
 
-    
+      
   
     
   </div>
@@ -205,13 +244,31 @@ window.Quarto = {
 </div>
 </div>
 </div>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
 <section id="what-is-rt-quic" class="level2">
 <h2 class="anchored" data-anchor-id="what-is-rt-quic">What is RT-QuIC?</h2>
-<p>Real-Time Quaking-Induced Conversion (RT-QuIC) is a highly sensitive assay used to detect misfolded prion proteins. A small amount of seed material — typically brain or lymph node homogenate — is incubated with a recombinant substrate prion protein under semi-continuous agitation. When prion seeds are present, they template the misfolding of the substrate, forming amyloid aggregates. These aggregates are measured in real time via thioflavin T (ThT) fluorescence, producing a characteristic <strong>sigmoidal growth curve</strong>.</p>
+<p>Real-Time Quaking-Induced Conversion (RT-QuIC) is a member of the highly sensitive assays known as seed amplification assays (SAA) used to detect misfolded prion proteins (PrP<sup>Sc</sup>) in a sample <span class="citation" data-cites="atarashi2011">[<a href="#ref-atarashi2011" role="doc-biblioref">1</a>]</span>. A small amount of seed material, typically brain or lymph node homogenate, is incubated with a recombinant substrate prion protein (PrP<sup>C</sup>) under semi-continuous agitation. When prion seeds are present, they template the misfolding of the substrate, forming amyloid aggregates. These aggregates are measured in real time via thioflavin T (ThT) fluorescence, producing a sigmoid curve characteristic of many nucleated self-assembly reactions <span class="citation" data-cites="ferrone1999">[<a href="#ref-ferrone1999" role="doc-biblioref">2</a>]</span>.</p>
 </section>
-<section id="rt-quic-kinetics" class="level2">
-<h2 class="anchored" data-anchor-id="rt-quic-kinetics">RT-QuIC kinetics</h2>
-<p>RT-QuIC has been validated repeatedly for its ability to detect prions, however, the shape of the curve may offer further insight into the characteristics of the original prion seed as well as the mechanism of the prion-substrate interaction. It is well-known that generally, higher concentrations of initial seed material lead to a faster reaction, but the overall signal intensity or the steepness of the inflection point may be influenced by other factors.</p>
+<section id="prion-fibril-kinetics" class="level2">
+<h2 class="anchored" data-anchor-id="prion-fibril-kinetics">Prion Fibril Kinetics</h2>
+<p>The sigmoidal curve is the focus of this project given that, in typical enzyme kinetics, a sigmoid would indicate a co-operative binding effect between PrP<sup>Sc</sup> and PrP<sup>C</sup>; however, the linear nature of protein fibrils wouldn’t explain the allosteric requirements of such a model. <span class="citation" data-cites="masel1999">[<a href="#ref-masel1999" role="doc-biblioref">3</a>]</span> proposed that a nucleated polymerization model would more accurately account for the linear structure of PrP<sup>Sc</sup> while also being simpler to fit.</p>
+<p>ThT is commonly used to detect the presence of amyloid fibrils in SAAs, but it is not necessarily a direct indicator of the amount of fibrils present <span class="citation" data-cites="levine1999">[<a href="#ref-levine1999" role="doc-biblioref">4</a>]</span>. A standard curve could be generated using a known amount of PrP<sup>Sc</sup>, however <span class="citation" data-cites="lee2007">[<a href="#ref-lee2007" role="doc-biblioref">5</a>]</span> approached the problem by combining UV-vis spectroscopy and ThT fluorescence such as in <a href="#fig-absorbance-vs-tht" class="quarto-xref">Figure&nbsp;1</a>; the absorbance would be a more accurate measure of the amount of available substrate, while the ThT fluorescence would serve as the evidence of fibril formation.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-absorbance-vs-tht" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-absorbance-vs-tht-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-absorbance-vs-tht-1.png" class="img-fluid figure-img" width="1152">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-absorbance-vs-tht-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Example graph showing the relationship between the absorbance and ThT fluorescence of an RT-QuIC reaction.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>It is well-known that generally, higher concentrations of initial seed material lead to a faster reaction, but the overall signal intensity or the steepness of the inflection point may be influenced by other factors. The predominant theory involves a two-step kinetic model, where the first step is the nucleation of a monomer into a fibril, and the second step involves elongation of the fibril <span class="citation" data-cites="arosio2015">[<a href="#ref-arosio2015" role="doc-biblioref">6</a>]</span>.</p>
 </section>
 <section id="the-model" class="level2">
 <h2 class="anchored" data-anchor-id="the-model">The Model</h2>
@@ -271,9 +328,38 @@ f(t)=\frac{S_1}{1+e^{a_1(b_1-t)}}+\frac{S_2}{1+e^{a_2(b_2-t)}}
 </table>
 
 
+
+</section>
 </section>
 
-</main> <!-- /main -->
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body" role="list">
+<div id="ref-atarashi2011" class="csl-entry" role="listitem">
+<div class="csl-left-margin">1. </div><div class="csl-right-inline">Atarashi R, Satoh K, Sano K, et al (2011) Ultrasensitive human prion detection in cerebrospinal fluid by real-time quaking-induced conversion. Nature Medicine 17(2):175–178. <a href="https://doi.org/10.1038/nm.2294">https://doi.org/10.1038/nm.2294</a></div>
+</div>
+<div id="ref-ferrone1999" class="csl-entry" role="listitem">
+<div class="csl-left-margin">2. </div><div class="csl-right-inline">Ferrone FA (1999) [17] analysis of protein aggregation kinetics. Methods in enzymology on CD-ROM/Methods in enzymology 309:256–274. <a href="https://doi.org/10.1016/s0076-6879(99)09019-9">https://doi.org/10.1016/s0076-6879(99)09019-9</a></div>
+</div>
+<div id="ref-masel1999" class="csl-entry" role="listitem">
+<div class="csl-left-margin">3. </div><div class="csl-right-inline">Masel J, Jansen VAA, Nowak MA (1999) Quantifying the kinetic parameters of prion replication. Biophysical Chemistry 77(2-3):139–152. <a href="https://doi.org/10.1016/s0301-4622(99)00016-2">https://doi.org/10.1016/s0301-4622(99)00016-2</a></div>
+</div>
+<div id="ref-levine1999" class="csl-entry" role="listitem">
+<div class="csl-left-margin">4. </div><div class="csl-right-inline">LeVine H (1999) [18] quantification of β-sheet amyloid fibril structures with thioflavin t. Methods in enzymology on CD-ROM/Methods in enzymology 309:274–284. <a href="https://doi.org/10.1016/s0076-6879(99)09020-5">https://doi.org/10.1016/s0076-6879(99)09020-5</a></div>
+</div>
+<div id="ref-lee2007" class="csl-entry" role="listitem">
+<div class="csl-left-margin">5. </div><div class="csl-right-inline">Lee C, Nayak AK, Sethuraman A, Belfort G, McRae GJ (2007) A three-stage kinetic model of amyloid fibrillation. Biophysical Journal 92(10):3448–3458. <a href="https://doi.org/10.1529/biophysj.106.098608">https://doi.org/10.1529/biophysj.106.098608</a></div>
+</div>
+<div id="ref-arosio2015" class="csl-entry" role="listitem">
+<div class="csl-left-margin">6. </div><div class="csl-right-inline">Arosio P LS Knowles TP (2015) On the lag phase in amyloid fibril formation. Phys Chem Chem Phys 17(12):7606–7618. <a href="https://doi.org/10.1039/c4cp05563b">https://doi.org/10.1039/c4cp05563b</a></div>
+</div>
+</div></section><section class="quarto-appendix-contents" id="quarto-citation"><h2 class="anchored quarto-appendix-heading">Citation</h2><div><div class="quarto-appendix-secondary-label">BibTeX citation:</div><pre class="sourceCode code-with-copy quarto-appendix-bibtex"><code class="sourceCode bibtex">@online{rowden,
+  author = {Rowden, Gage},
+  title = {Codename: {HAL-QuIC}},
+  url = {https://modeling.gagerowden.com},
+  langid = {en}
+}
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre><div class="quarto-appendix-secondary-label">For attribution, please cite this work as:</div><div id="ref-rowden" class="csl-entry quarto-appendix-citeas" role="listitem">
+<div class="">Rowden G Codename: HAL-QuIC. <a href="https://modeling.gagerowden.com">https://modeling.gagerowden.com</a></div>
+</div></div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";

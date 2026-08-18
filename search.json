@@ -46,14 +46,14 @@
     "href": "index.html#what-is-rt-quic",
     "title": "Codename: HAL-QuIC",
     "section": "What is RT-QuIC?",
-    "text": "What is RT-QuIC?\nReal-Time Quaking-Induced Conversion (RT-QuIC) is a highly sensitive assay used to detect misfolded prion proteins. A small amount of seed material — typically brain or lymph node homogenate — is incubated with a recombinant substrate prion protein under semi-continuous agitation. When prion seeds are present, they template the misfolding of the substrate, forming amyloid aggregates. These aggregates are measured in real time via thioflavin T (ThT) fluorescence, producing a characteristic sigmoidal growth curve."
+    "text": "What is RT-QuIC?\nReal-Time Quaking-Induced Conversion (RT-QuIC) is a member of the highly sensitive assays known as seed amplification assays (SAA) used to detect misfolded prion proteins (PrPSc) in a sample [1]. A small amount of seed material, typically brain or lymph node homogenate, is incubated with a recombinant substrate prion protein (PrPC) under semi-continuous agitation. When prion seeds are present, they template the misfolding of the substrate, forming amyloid aggregates. These aggregates are measured in real time via thioflavin T (ThT) fluorescence, producing a sigmoid curve characteristic of many nucleated self-assembly reactions [2]."
   },
   {
-    "objectID": "index.html#rt-quic-kinetics",
-    "href": "index.html#rt-quic-kinetics",
+    "objectID": "index.html#prion-fibril-kinetics",
+    "href": "index.html#prion-fibril-kinetics",
     "title": "Codename: HAL-QuIC",
-    "section": "RT-QuIC kinetics",
-    "text": "RT-QuIC kinetics\nRT-QuIC has been validated repeatedly for its ability to detect prions, however, the shape of the curve may offer further insight into the characteristics of the original prion seed as well as the mechanism of the prion-substrate interaction. It is well-known that generally, higher concentrations of initial seed material lead to a faster reaction, but the overall signal intensity or the steepness of the inflection point may be influenced by other factors."
+    "section": "Prion Fibril Kinetics",
+    "text": "Prion Fibril Kinetics\nThe sigmoidal curve is the focus of this project given that, in typical enzyme kinetics, a sigmoid would indicate a co-operative binding effect between PrPSc and PrPC; however, the linear nature of protein fibrils wouldn’t explain the allosteric requirements of such a model. [3] proposed that a nucleated polymerization model would more accurately account for the linear structure of PrPSc while also being simpler to fit.\nThT is commonly used to detect the presence of amyloid fibrils in SAAs, but it is not necessarily a direct indicator of the amount of fibrils present [4]. A standard curve could be generated using a known amount of PrPSc, however [5] approached the problem by combining UV-vis spectroscopy and ThT fluorescence such as in Figure 1; the absorbance would be a more accurate measure of the amount of available substrate, while the ThT fluorescence would serve as the evidence of fibril formation.\n\n\n\n\n\n\n\n\nFigure 1: Example graph showing the relationship between the absorbance and ThT fluorescence of an RT-QuIC reaction.\n\n\n\n\n\nIt is well-known that generally, higher concentrations of initial seed material lead to a faster reaction, but the overall signal intensity or the steepness of the inflection point may be influenced by other factors. The predominant theory involves a two-step kinetic model, where the first step is the nucleation of a monomer into a fibril, and the second step involves elongation of the fibril [6]."
   },
   {
     "objectID": "index.html#the-model",
