@@ -1,7 +1,6 @@
 ---
 title: Positive Seed Dilution Series
 date: 2026-07-15
-author: Gage Rowden
 ---
 
 ## Purpose
@@ -107,9 +106,12 @@ df_mod <- df_ %>%
     - `{r} paste(round(unique(df_$dilutions), 2), collapse = ", ")`
 - **Temperature**: 42°C
 - **Shaking speed**: 700rpm
-- **Reaction time**: 72 hr
-- **Substrate concentration**: 0.1 mg/mL
+- **Shaking time**: 60s
+- **Resting time**: 60s
+- **Read cycle time**: 15min
+- **Reaction time**: 96 hr
 - **Substrate**: HaPrP(90-231)
+- **Substrate concentration**: 0.1 mg/mL
 
 ## Results
 ### Residuals

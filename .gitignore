@@ -4,6 +4,9 @@
 .Ruserdata
 results.parquet
 /.quarto/
+/site_libs/
+*_cache/
+*_files/
 
 **/*.quarto_ipynb
 

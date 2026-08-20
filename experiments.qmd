@@ -1,10 +1,9 @@
 ---
 title: "Experiments"
-date: today
-author: "Gage Rowden"
 ---
 ## Tier 1 — Assay Parameter Exploration
-- [Experiment 1: Seed Concentration](experiments/20260715_pos_dil_series.qmd)
+1. [Seed Concentration](experiments/20260715_pos_dil_series.qmd)
+2. [Substrate Concentration](experiments/20260820_substrate_dil_series.qmd)
 
 ## Tier 2 — Measurement Validation
 

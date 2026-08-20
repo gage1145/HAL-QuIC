@@ -12,8 +12,7 @@ author:
     affiliation: University of Minnesota
     affiliation-url: https://umn.edu
 
-citation:
-  url: https://modeling.gagerowden.com
+date: today
 
 bibliography: references.bib
 csl: static/csl/diabetologia.csl
@@ -50,3 +49,4 @@ format:
 execute:
   warning: false
   message: false
+  cache: true
