@@ -70,6 +70,55 @@
     "text": "Site Navigation\n\n\n\nPage\nDescription\n\n\n\n\nModel\nFull derivation of the double sigmoidal model, fitting procedure, and derived parameters (\\(K_{app}\\), \\(t_{lag}\\))\n\n\nProject Roadmap\nPlanned experiments and research priorities\n\n\nExperiments\nIndividual experiments organized by priority tier"
   },
   {
+    "objectID": "experiments/20260820_substrate_dil_series.html",
+    "href": "experiments/20260820_substrate_dil_series.html",
+    "title": "Substrate Dilution Series",
+    "section": "",
+    "text": "The \\(V_{max}\\) of our prion seed can be determined by performing a dilution series of the substrate. The rate of the reaction should reach some asymptote as the substrate concentration increases. This experiment will hopefully determine that asymptote for a range of substrate concentrations."
+  },
+  {
+    "objectID": "experiments/20260820_substrate_dil_series.html#purpose",
+    "href": "experiments/20260820_substrate_dil_series.html#purpose",
+    "title": "Substrate Dilution Series",
+    "section": "",
+    "text": "The \\(V_{max}\\) of our prion seed can be determined by performing a dilution series of the substrate. The rate of the reaction should reach some asymptote as the substrate concentration increases. This experiment will hopefully determine that asymptote for a range of substrate concentrations."
+  },
+  {
+    "objectID": "experiments/20260820_substrate_dil_series.html#design",
+    "href": "experiments/20260820_substrate_dil_series.html#design",
+    "title": "Substrate Dilution Series",
+    "section": "Design",
+    "text": "Design\n\nPositive seed sample: 141234\nSeed dilution factor: 10-3\nTemperature: 42°C\nShaking speed: 700rpm\nShaking time: 60s\nResting time: 60s\nRead cycle time: 15min\nReaction time: 96 hr\nSubstrate: HaPrP(90-231)\nSubstrate concentrations: 0.01 \\(\\rightarrow\\) 0.4ug/uL\n\n\nVolumes and Concentrations\n\n\n\nVolumes and concentrations. Variable amounts of substrate and water will need to be added to each well in the plate. 2uL of seed were added along with 14.6uL of RT-QuIC buffer concentrate for a total reaction volume of 100uL. The starting concentration of the substrate was 0.74ug/uL.\n\n\nSubstrate Conc (ug/ul)\nSubstrate Vol (uL)\nWater (uL)\n\n\n\n\n0.010\n0.010\n0.010\n\n\n0.027\n0.027\n0.027\n\n\n0.044\n0.044\n0.044\n\n\n0.061\n0.061\n0.061\n\n\n0.078\n0.078\n0.078\n\n\n0.095\n0.095\n0.095\n\n\n0.110\n0.110\n0.110\n\n\n0.130\n0.130\n0.130\n\n\n0.150\n0.150\n0.150\n\n\n0.160\n0.160\n0.160\n\n\n0.180\n0.180\n0.180\n\n\n0.200\n0.200\n0.200\n\n\n0.210\n0.210\n0.210\n\n\n0.230\n0.230\n0.230\n\n\n0.250\n0.250\n0.250\n\n\n0.260\n0.260\n0.260\n\n\n0.280\n0.280\n0.280\n\n\n0.300\n0.300\n0.300\n\n\n0.320\n0.320\n0.320\n\n\n0.330\n0.330\n0.330\n\n\n0.350\n0.350\n0.350\n\n\n0.370\n0.370\n0.370\n\n\n0.380\n0.380\n0.380\n\n\n0.400\n0.400\n0.400\n\n\n\n\n\n\n\nPlate Layout of Substrate Concentrations (ug/uL)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n\n\n\n\nA\n0.010\n0.044\n0.078\n0.110\n0.150\n0.180\n0.210\n0.250\n0.280\n0.320\n0.350\n0.380\n\n\nB\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n\n\nC\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n\n\nD\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\n\nE\n0.027\n0.061\n0.095\n0.130\n0.160\n0.200\n0.230\n0.260\n0.300\n0.330\n0.370\n0.400\n\n\nF\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n\n\nG\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n\n\nH\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)"
+  },
+  {
+    "objectID": "experiments.html",
+    "href": "experiments.html",
+    "title": "Experiments",
+    "section": "",
+    "text": "Seed Concentration\nSubstrate Concentration"
+  },
+  {
+    "objectID": "experiments.html#tier-1-assay-parameter-exploration",
+    "href": "experiments.html#tier-1-assay-parameter-exploration",
+    "title": "Experiments",
+    "section": "",
+    "text": "Seed Concentration\nSubstrate Concentration"
+  },
+  {
+    "objectID": "experiments.html#tier-2-measurement-validation",
+    "href": "experiments.html#tier-2-measurement-validation",
+    "title": "Experiments",
+    "section": "Tier 2 — Measurement Validation",
+    "text": "Tier 2 — Measurement Validation"
+  },
+  {
+    "objectID": "experiments.html#tier-3-generalizability",
+    "href": "experiments.html#tier-3-generalizability",
+    "title": "Experiments",
+    "section": "Tier 3 — Generalizability",
+    "text": "Tier 3 — Generalizability"
+  },
+  {
     "objectID": "experiments/20260715_pos_dil_series.html",
     "href": "experiments/20260715_pos_dil_series.html",
     "title": "Positive Seed Dilution Series",
@@ -88,7 +137,7 @@
     "href": "experiments/20260715_pos_dil_series.html#design",
     "title": "Positive Seed Dilution Series",
     "section": "Design",
-    "text": "Design\n\nLog\\(_{10}\\) seed dilution factors:\n\n-3, -3.26, -3.52, -3.78, -4.04, -4.3, -4.57, -4.83, -5.09, -5.35, -5.61, -5.87, -3.13, -3.39, -3.65, -3.91, -4.17, -4.43, -4.7, -5.22, -5.48, -4.96, -5.74, -6\n\nTemperature: 42°C\nShaking speed: 700rpm\nReaction time: 72 hr\nSubstrate concentration: 0.1 mg/mL\nSubstrate: HaPrP(90-231)"
+    "text": "Design\n\nLog\\(_{10}\\) seed dilution factors:\n\n-3, -3.26, -3.52, -3.78, -4.04, -4.3, -4.57, -4.83, -5.09, -5.35, -5.61, -5.87, -3.13, -3.39, -3.65, -3.91, -4.17, -4.43, -4.7, -5.22, -5.48, -4.96, -5.74, -6\n\nTemperature: 42°C\nShaking speed: 700rpm\nShaking time: 60s\nResting time: 60s\nRead cycle time: 15min\nReaction time: 96 hr\nSubstrate: HaPrP(90-231)\nSubstrate concentration: 0.1 mg/mL"
   },
   {
     "objectID": "experiments/20260715_pos_dil_series.html#results",
@@ -96,34 +145,6 @@
     "title": "Positive Seed Dilution Series",
     "section": "Results",
     "text": "Results\n\nResiduals\n\n\n\n\n\n\n\n\n\n\n\nWorst fits\nThese fits represent the 12 worst fits based on the pseudo-R\\(^2\\) metric. They aren’t necessarily bad fits, but are those that least resemble the emperical data.\n\n\n\n\n\n\n\n\n\n\n\nBest fits\nThese fits represent the 12 best fits based on the pseudo-R\\(^2\\) metric.\n\n\n\n\n\n\n\n\n\n\n\nEffect of seed dilution on model coefficients\nI plotted the parameters as a function of initial seed concentration. The initial seed concentration really has an effect on \\(b_1\\) (basically t\\(_\\text{lag}\\)) which is expected, and to some extent S1 (~ maximum fluorescence). Interestingly, S2 becomes more negative as the seed concentration increases (i.e. more seed = more dampening effect). Also interestingly, there seems to be no effect on either a1 or a2 (i.e. the steepness of the inflection point)."
-  },
-  {
-    "objectID": "experiments.html",
-    "href": "experiments.html",
-    "title": "Experiments",
-    "section": "",
-    "text": "Experiment 1: Seed Concentration"
-  },
-  {
-    "objectID": "experiments.html#tier-1-assay-parameter-exploration",
-    "href": "experiments.html#tier-1-assay-parameter-exploration",
-    "title": "Experiments",
-    "section": "",
-    "text": "Experiment 1: Seed Concentration"
-  },
-  {
-    "objectID": "experiments.html#tier-2-measurement-validation",
-    "href": "experiments.html#tier-2-measurement-validation",
-    "title": "Experiments",
-    "section": "Tier 2 — Measurement Validation",
-    "text": "Tier 2 — Measurement Validation"
-  },
-  {
-    "objectID": "experiments.html#tier-3-generalizability",
-    "href": "experiments.html#tier-3-generalizability",
-    "title": "Experiments",
-    "section": "Tier 3 — Generalizability",
-    "text": "Tier 3 — Generalizability"
   },
   {
     "objectID": "explorer.html",
