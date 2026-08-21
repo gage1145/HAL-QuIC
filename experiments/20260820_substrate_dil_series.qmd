@@ -9,14 +9,6 @@ The $V_{max}$ of our prion seed can be determined by performing a dilution serie
 ```{r Initialize, echo=FALSE}
 library(tidyverse)
 library(kableExtra)
-library(quicR)
-library(janitor)
-library(zoo)
-library(modelr)
-library(ggtext)
-library(latex2exp)
-library(ggpubr)
-library(skimr)
 
 list.files("./R", full.names = TRUE) %>%
   walk(source)
