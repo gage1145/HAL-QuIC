@@ -3,7 +3,7 @@ title: "Experiments"
 ---
 ## Tier 1 — Assay Parameter Exploration
 1. [Seed Concentration](experiments/20260715_pos_dil_series.qmd)
-2. [Substrate Concentration](experiments/20260820_substrate_dil_series.qmd)
+2. [Substrate Concentration](experiments/20260824_substrate_dil_series.qmd)
 
 ## Tier 2 — Measurement Validation
 
