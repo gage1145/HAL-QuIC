@@ -1,31 +1,75 @@
 ---
-title: Positive Seed Dilution Series
-date: 2026-07-15
+title: Substrate Dilution Series
+date: 2026-08-20
 ---
 
 ## Purpose
-In order to determine the effect of seed concentration on the kinetics of RT-QuIC, I performed a series of 10-fold dilutions of a known CWD-positive lymph node sample. After fitting the curves, I should be able to see if any of the coefficients are affected. 
+The $V_{max}$ of our prion seed can be determined by performing a dilution series of the substrate. The rate of the reaction should reach some asymptote as the substrate concentration increases. This experiment will hopefully determine that asymptote for a range of substrate concentrations.
 
 ```{r Initialize, echo=FALSE}
 library(tidyverse)
+library(kableExtra)
 library(quicR)
 library(janitor)
-library(zoo)
 library(modelr)
-library(ggtext)
-library(latex2exp)
+library(zoo)
 library(ggpubr)
-library(skimr)
-
-renv::activate()
 
 list.files("./R", full.names = TRUE) %>%
   walk(source)
 ```
 
+## Design
+
+- **Positive seed sample**: 141234
+- **Seed dilution factor**: 10^-3^
+- **Temperature**: 42°C
+- **Shaking speed**: 700rpm
+- **Shaking time**: 60s
+- **Resting time**: 60s
+- **Read cycle time**: 15min
+- **Reaction time**: 96 hr
+- **Substrate**: HaPrP(90-231)
+- **Substrate concentrations**: 0.01 $\rightarrow$ 0.4ug/uL
+
+### Volumes and Concentrations
+
+```{r Plate Design, echo=FALSE}
+#| tbl-cap: Volumes and concentrations. Variable amounts of substrate and water will need to be added to each well in the plate. 2uL of seed were added along with 14.6uL of RT-QuIC buffer concentrate for a total reaction volume of 100uL. The starting concentration of the substrate was 0.74ug/uL.
+starting_sub_conc <- 0.74
+v2 <- 100
+buffer_vol <- 14.6
+seed_vol <- 2
+tibble(
+  c2 = signif(seq(0.01, 0.4, length.out = 24), 2),
+  v1 = signif(seq(0.01, 0.4, length.out = 24), 2),
+  water_vol = signif(seq(0.01, 0.4, length.out = 24), 2),
+) %>%
+  rename(
+    "Substrate Conc (ug/ul)" = 1,
+    "Substrate Vol (uL)" = 2,
+    "Water (uL)" = 3,
+  ) %>%
+  kable(align="c") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) 
+```
+
+### Plate Layout of Substrate Concentrations (ug/uL)
+|       | **1**  | **2**  | **3**  | **4**  | **5**  | **6**  | **7**  | **8**  | **9**  | **10** | **11** | **12** |
+| :---: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
+| **A** | 0.010  | 0.044  | 0.078  | 0.110  | 0.150  | 0.180  | 0.210  | 0.250  | 0.280  | 0.320  | 0.350  | 0.380  |
+| **B** |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |
+| **C** |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |
+| **D** | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ |
+| **E** | 0.027  | 0.061  | 0.095  | 0.130  | 0.160  | 0.200  | 0.230  | 0.260  | 0.300  | 0.330  | 0.370  | 0.400  |
+| **F** |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |
+| **G** |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |   \|   |
+| **H** | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ | $\vee$ |
+
+## Results
 ```{r Load raw data, echo=FALSE}
 
-files <- list.files("./raw/seed_effects", pattern = "*.xlsx", full.names = TRUE)
+files <- list.files("./raw/substrate_effects", pattern = "*.xlsx", full.names = TRUE)
 group_list <- c("sample", "well", "dilutions", "rxn")
 
 get_raw <- function(file) {
@@ -44,21 +88,21 @@ df_raw <- files %>%
   normalize("time", "rfu", 8, group_list, 3) %>%
   mutate(
     across(c(sample, well, rxn), as.factor),
-    dilutions = -log10(as.integer(dilutions)),
+    dilutions = as.integer(dilutions) / 1000,
   ) %>%
   na.omit()
 
 df_ <- df_raw %>%
   nest(.by = all_of(group_list)) %>%
-  left_join(
-    calculate_metrics(
-      df_raw, group_list, threshold = 3,
-      time_col = "time", ttt_values = "norm", auc_values = "norm",
-      norm_col = "norm", deriv_col = "deriv"
-    ),
-    by = group_list
-  ) %>%
-  filter(MPR > 3) %>%
+#   left_join(
+#     calculate_metrics(
+#       df_raw, group_list, threshold = 3,
+#       time_col = "time", ttt_values = "norm", auc_values = "norm",
+#       norm_col = "norm", deriv_col = "deriv"
+#     ),
+#     by = group_list
+#   ) %>%
+#   filter(MPR > 3) %>%
   estimate_params() %>%
   na.omit()
 ```
@@ -103,19 +147,6 @@ df_mod <- df_ %>%
   )
 ```
 
-## Design
-- **Log$_{10}$ seed dilution factors**: 
-    - `{r} paste(round(unique(df_$dilutions), 2), collapse = ", ")`
-- **Temperature**: 42°C
-- **Shaking speed**: 700rpm
-- **Shaking time**: 60s
-- **Resting time**: 60s
-- **Read cycle time**: 15min
-- **Reaction time**: 96 hr
-- **Substrate**: HaPrP(90-231)
-- **Substrate concentration**: 0.1 mg/mL
-
-## Results
 ### Residuals
 ```{r Residuals, echo=FALSE}
 #| fig-height: 12
@@ -137,84 +168,9 @@ df_mod %>%
   )
 ```
 
-### Worst fits
-These fits represent the 12 worst fits based on the pseudo-R$^2$ metric. They aren't necessarily bad fits, but are those that least resemble the emperical data.
-```{r Worst fits, echo=FALSE}
-#| fig-height: 12
-#| fig-width: 20
-df_worst <- df_mod %>%
-  arrange(pseudo_r2) %>%
-  slice_head(n = 12)
+### Effect of substrate concentration on model coefficients
 
-df_worst %>%
-  unnest(data) %>%
-  pivot_longer(c(pred, growth, decay), names_to = "series") %>%
-  mutate(
-    series = factor(
-      series, 
-      levels = c("growth", "decay", "pred"),
-      labels = c("Growth", "Decay", "Prediction")
-    ),
-  ) %>%
-  ggplot(aes(time, value, color = series)) +
-  geom_point(aes(y = norm), size = 0.5, color = "white") +
-  geom_line(linewidth = 1) +
-  geom_vline(aes(xintercept = time_to_growth_max), linetype = "dashed", linewidth = 1) +
-  facet_wrap(vars(rxn, well), ncol = 4) +
-  scale_x_continuous(breaks = seq(0, 70, by = 8)) +
-  labs(x = "Time (hr)", y = "Normalized Fluorescence") +
-  dark_theme +
-  theme(
-    strip.text = element_blank(),
-    legend.title = element_blank(),
-    legend.position = "inside",
-    legend.position.inside = c(0.01, 0.99),
-    legend.justification = c(0, 1),
-    legend.direction = "horizontal",
-  )
-```
-
-### Best fits
-These fits represent the 12 best fits based on the pseudo-R$^2$ metric.
-```{r Best fits, echo=FALSE}
-#| fig-height: 12
-#| fig-width: 20
-df_worst <- df_mod %>%
-  arrange(desc(pseudo_r2)) %>%
-  slice_head(n = 12)
-
-df_worst %>%
-  unnest(data) %>%
-  pivot_longer(c(pred, growth, decay), names_to = "series") %>%
-  mutate(
-    series = factor(
-      series, 
-      levels = c("growth", "decay", "pred"),
-      labels = c("Growth", "Decay", "Prediction")
-    ),
-  ) %>%
-  ggplot(aes(time, value, color = series)) +
-  geom_point(aes(y = norm), size = 0.5, color = "white") +
-  geom_line(linewidth = 1) +
-  geom_vline(aes(xintercept = time_to_growth_max), linetype = "dashed", linewidth = 1) +
-  facet_wrap(vars(rxn, well), ncol = 4) +
-  scale_x_continuous(breaks = seq(0, 70, by = 8)) +
-  labs(x = "Time (hr)", y = "Normalized Fluorescence") +
-  dark_theme +
-  theme(
-    strip.text = element_blank(),
-    legend.title = element_blank(),
-    legend.position = "inside",
-    legend.position.inside = c(0.01, 0.99),
-    legend.justification = c(0, 1),
-    legend.direction = "horizontal",
-  )
-```
-
-### Effect of seed dilution on model coefficients
-I plotted the parameters as a function of initial seed concentration. The initial seed concentration really has an effect on $b_1$ (basically t$_\text{lag}$) which is expected, and to some extent S1 (~ maximum fluorescence). Interestingly, S2 becomes more negative as the seed concentration increases (i.e. more seed = more dampening effect). Also interestingly, there seems to be no effect on either a1 or a2 (i.e. the steepness of the inflection point).
-
-```{r Parameters vs. seed dilution, echo=FALSE}
+```{r Parameters vs. substrate concentration, echo=FALSE}
 #| fig-height: 12
 #| fig-width: 20
 df_mod %>%
@@ -242,9 +198,9 @@ df_mod %>%
   scale_color_gradient(low = "darkcyan", high = "darkorange") +
   labs(
     title = TeX(
-      r'(Predicted Parameters vs. Seed Dilution Using $f(t)=\frac{\textbf{S_1}}{1+e^{\textbf{a_1}(\textbf{b_1}-t)}}+\frac{\textbf{S_2}}{1+e^{\textbf{a_2}(\textbf{b_2}-t)}}$)'
+      r'(Predicted Parameters vs. Substrate Concentration Using $f(t)=\frac{\textbf{S_1}}{1+e^{\textbf{a_1}(\textbf{b_1}-t)}}+\frac{\textbf{S_2}}{1+e^{\textbf{a_2}(\textbf{b_2}-t)}}$)'
     ),
-    x = TeX(r'(Log$_{10}$ Seed Dilution Factor)'),
+    x = TeX(r'([Substrate] (mg/mL))'),
     y = "Coefficient Value",
     color = "Dilution Factor"
   ) +
