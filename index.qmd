@@ -69,6 +69,39 @@ tibble(
   )
 ```
 
+The Masel model of nucleation-dependent polymerization tracks three components: the normal monomeric protein, the polymer fibrils, and the total mass of polymerized subunits. The following differential equations describe the dynamics of the system:
+
+$$
+\frac{dM}{dt}=-nk_{n}M^{n}-k_{g}MP
+$$
+
+$$
+\frac{dP}{dt}=k_{n}M^{n}+k_{f}Z-k_{f}M_{0}P
+$$
+
+$$
+\frac{dZ}{dt}=nk_{n}M^{n}+k_{g}MP-k_{f}M_{0}^{2}P+2k_{f}M_{0}P-k_{f}Z
+$$
+
+Where:
+
+* $M$: Concentration of PrP^C^ monomers.
+* $P$: Number concentration of PrP^Sc^ fibrils.
+* $Z$: Total mass concentration of subunits incorporated into aggregates.
+* $k_n, k_g, k_f$: Rate constants for nucleation, growth (elongation), and fragmentation.
+* $n$: Minimum nucleation size (critical number of monomers needed to form a stable seed).
+* $M_{0}$: Minimum stable size of a fibril.
+
+In the case of RT-QuIC, a mature fibril is introduced into the system, and so, the spontaneous nucleation ($k_n$) term becomes negligible. Further, if we assume that the introduced fibril is large ($M_0\rightarrow{}0$), then the equations simplify to:
+
+$$
+\frac{dP}{dt}=k_fZ
+$$
+
+$$
+\frac{dZ}{dt}=k_gMP
+$$
+
 It is well-known that generally, higher concentrations of initial seed material lead to a faster reaction, but the overall signal intensity or the steepness of the inflection point may be influenced by other factors. The predominant theory involves a two-step kinetic model, where the first step is the nucleation of a monomer into a fibril, and the second step involves elongation of the fibril [@arosio2015].
 
 ## The Model

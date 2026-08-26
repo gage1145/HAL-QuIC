@@ -14,6 +14,7 @@ library(janitor)
 library(modelr)
 library(zoo)
 library(ggpubr)
+library(magrittr)
 
 list.files("./R", full.names = TRUE) %>%
   walk(source)
@@ -189,7 +190,7 @@ df_mod %>%
     ),
   ) %>%
   ggplot(aes(dilutions, value, color = dilutions)) +
-  geom_point(position = position_jitter(width = 0.05)) +
+  geom_point(position = position_jitter(width = 0.01)) +
   geom_rug(sides = "l") +
   stat_smooth(method = "loess") +
   geom_line(aes(dilutions, hline), linetype = "dashed", color="white", linewidth = 1, inherit.aes = FALSE) +
@@ -200,7 +201,7 @@ df_mod %>%
     title = TeX(
       r'(Predicted Parameters vs. Substrate Concentration Using $f(t)=\frac{\textbf{S_1}}{1+e^{\textbf{a_1}(\textbf{b_1}-t)}}+\frac{\textbf{S_2}}{1+e^{\textbf{a_2}(\textbf{b_2}-t)}}$)'
     ),
-    x = TeX(r'([Substrate] (mg/mL))'),
+    x = "[Substrate] (mg/mL)",
     y = "Coefficient Value",
     color = "Dilution Factor"
   ) +
@@ -217,4 +218,61 @@ df_mod %>%
     legend.background = element_blank()
   )
 # ggsave("figures/kinetics/seed_vs_parameters.png", width = 18, height = 12)
+```
+
+### V vs [S]
+
+```{r Vmax vs. substrate concentration, echo=FALSE}
+#| fig-height: 6
+#| fig-width: 10
+df_mod %<>% mutate(v = 1 / b1)
+
+df_mod_summary <- df_mod %>%
+  summarize(
+    across(c(v), mean),
+    .by = c(sample, dilutions)
+  )
+
+vmax <- max(df_mod_summary$v)
+vmax_substrate <- df_mod_summary[which.max(df_mod_summary$v), ]$dilutions
+Km <- df_mod_summary[which.max(df_mod_summary$v <= vmax / 2), ]$dilutions
+
+df_mod_to_max <- df_mod %>%
+  filter(dilutions <= vmax_substrate)
+
+nls_mod <- nls(
+  v ~ (Vmax * dilutions) / (Km + dilutions), 
+  data = df_mod_to_max, 
+  start = list(Vmax = vmax, Km = Km),
+  algorithm = "port"
+)
+
+v_half <- coef(nls_mod)[1] / 2
+
+coef(nls_mod)
+
+df_mic_men <- tibble(
+  dilutions = seq(0, 0.4, by = 0.01),
+  v = (coef(nls_mod)[1] * dilutions) / (coef(nls_mod)[2] + dilutions)
+)
+
+df_mod %>%
+  # filter(dilutions <= vmax_substrate) %>%
+  ggplot(aes(x = dilutions, y = v)) +
+  geom_point(position = position_jitter(width = 0.01, seed = 157093759), color = "darkorange") +
+  geom_line(data = df_mic_men, aes(x = dilutions, y = v), color = "darkorange", linewidth = 1) +
+  geom_segment(aes(x = coef(nls_mod)[2], xend = coef(nls_mod)[2], y = 0, yend = v_half), color = "darkorange", linewidth = 1, linetype = "dashed") +
+  geom_text(
+    aes(label = sprintf(
+      "Theoretical Vmax = %s\nTheoretical Km = %s", 
+      round(coef(nls_mod)[1], 2), 
+      round(coef(nls_mod)[2], 2)
+    )), x = 0, y = 0.25, color = "darkorange", size = 6, hjust = 0) +
+  # stat_smooth(method = "loess", color = "darkorange", fullrange = TRUE, method.args = list(degree = 2)) +
+  scale_x_continuous(breaks = seq(0, 0.4, by = 0.05)) +
+  labs(
+    x = "[Substrate] (mg/mL)",
+    y = "V",
+  ) +
+  dark_theme
 ```
