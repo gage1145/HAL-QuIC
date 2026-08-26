@@ -35,6 +35,8 @@ website:
     right:
       - href: https://gagerowden.com
         text: "GageRowden.com"
+  sidebar:
+    contents: auto
 
 format:
   html:
