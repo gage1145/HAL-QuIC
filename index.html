@@ -67,7 +67,7 @@ div.csl-indent {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-b85bc7c33db8c58e0ec93c3465666fed.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-86fafa19d40ef0cb8171a6422e308a9d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-64f177e453cb4bb50c5bd819ed6f852d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -275,6 +275,32 @@ Figure&nbsp;1: Example graph showing the relationship between the absorbance and
 </div>
 </div>
 </div>
+<p>The Masel model of nucleation-dependent polymerization tracks three components: the normal monomeric protein, the polymer fibrils, and the total mass of polymerized subunits. The following differential equations describe the dynamics of the system:</p>
+<p><span class="math display">\[
+\frac{dM}{dt}=-nk_{n}M^{n}-k_{g}MP
+\]</span></p>
+<p><span class="math display">\[
+\frac{dP}{dt}=k_{n}M^{n}+k_{f}Z-k_{f}M_{0}P
+\]</span></p>
+<p><span class="math display">\[
+\frac{dZ}{dt}=nk_{n}M^{n}+k_{g}MP-k_{f}M_{0}^{2}P+2k_{f}M_{0}P-k_{f}Z
+\]</span></p>
+<p>Where:</p>
+<ul>
+<li><span class="math inline">\(M\)</span>: Concentration of PrP<sup>C</sup> monomers.</li>
+<li><span class="math inline">\(P\)</span>: Number concentration of PrP<sup>Sc</sup> fibrils.</li>
+<li><span class="math inline">\(Z\)</span>: Total mass concentration of subunits incorporated into aggregates.</li>
+<li><span class="math inline">\(k_n, k_g, k_f\)</span>: Rate constants for nucleation, growth (elongation), and fragmentation.</li>
+<li><span class="math inline">\(n\)</span>: Minimum nucleation size (critical number of monomers needed to form a stable seed).</li>
+<li><span class="math inline">\(M_{0}\)</span>: Minimum stable size of a fibril.</li>
+</ul>
+<p>In the case of RT-QuIC, a mature fibril is introduced into the system, and so, the spontaneous nucleation (<span class="math inline">\(k_n\)</span>) term becomes negligible. Further, if we assume that the introduced fibril is large (<span class="math inline">\(M_0\rightarrow{}0\)</span>), then the equations simplify to:</p>
+<p><span class="math display">\[
+\frac{dP}{dt}=k_fZ
+\]</span></p>
+<p><span class="math display">\[
+\frac{dZ}{dt}=k_gMP
+\]</span></p>
 <p>It is well-known that generally, higher concentrations of initial seed material lead to a faster reaction, but the overall signal intensity or the steepness of the inflection point may be influenced by other factors. The predominant theory involves a two-step kinetic model, where the first step is the nucleation of a monomer into a fibril, and the second step involves elongation of the fibril <span class="citation" data-cites="arosio2015">[<a href="#ref-arosio2015" role="doc-biblioref">6</a>]</span>.</p>
 </section>
 <section id="the-model" class="level2">
@@ -432,7 +458,7 @@ f(t)=\frac{S_1}{1+e^{a_1(b_1-t)}}+\frac{S_2}{1+e^{a_2(b_2-t)}}
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp('/' + window.location.host + '/');
+        var filterRegex = new RegExp("https:\/\/modeling\.gagerowden\.com");
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }

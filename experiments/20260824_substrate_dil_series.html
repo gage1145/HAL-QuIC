@@ -48,7 +48,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-b85bc7c33db8c58e0ec93c3465666fed.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-86fafa19d40ef0cb8171a6422e308a9d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-64f177e453cb4bb50c5bd819ed6f852d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -77,7 +77,9 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 <script src="../site_libs/kePrint-0.0.1/kePrint.js"></script>
+
 <link href="../site_libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
@@ -181,6 +183,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#residuals" id="toc-residuals" class="nav-link" data-scroll-target="#residuals">Residuals</a></li>
   <li><a href="#effect-of-substrate-concentration-on-model-coefficients" id="toc-effect-of-substrate-concentration-on-model-coefficients" class="nav-link" data-scroll-target="#effect-of-substrate-concentration-on-model-coefficients">Effect of substrate concentration on model coefficients</a></li>
+  <li><a href="#v-vs-s" id="toc-v-vs-s" class="nav-link" data-scroll-target="#v-vs-s">V vs [S]</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -570,6 +573,22 @@ window.Quarto = {
 </div>
 </div>
 </div>
+</section>
+<section id="v-vs-s" class="level3">
+<h3 class="anchored" data-anchor-id="v-vs-s">V vs [S]</h3>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>     Vmax        Km 
+0.3518273 0.1229421 </code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="20260824_substrate_dil_series_files/figure-html/Vmax vs. substrate concentration-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
 
 
 </section>
@@ -649,7 +668,7 @@ window.Quarto = {
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp('/' + window.location.host + '/');
+        var filterRegex = new RegExp("https:\/\/modeling\.gagerowden\.com");
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
