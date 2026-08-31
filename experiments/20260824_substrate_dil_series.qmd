@@ -15,6 +15,7 @@ library(modelr)
 library(zoo)
 library(ggpubr)
 library(magrittr)
+library(latex2exp)
 
 list.files("./R", full.names = TRUE) %>%
   walk(source)
@@ -170,10 +171,25 @@ df_mod %>%
 ```
 
 ### Effect of substrate concentration on model coefficients
+#### S~1,2~
+The model asymptotes have both a positive and negative relationship with the substrate concentration ([S]) for S~1~ and S~2~, respectively. The positive relationship with S~1~ is expected given that there is more substrate incorporated into fibrils which would directly result in a higher fluorescent signal.
+
+The negative relationship with S~2~ is interesting. This indicates that the dampening effect increases with [S]. Previously, we observed that the dampening effect had a negative relationship with the rate of the reaction. However, this isn't necessarily the case here because the rate increased only to a point, then decreased as [S] increased.
+
+#### a~1,2~
+The apparent rate constant (a~1~) stayed more or less constant through every [S]. I may be wrong, but I believe this is showing the rate constant of our specific seed (141234).
+
+The secondary rate constant (a~2~) had an initial positive relationship with [S], but reached an equilibrium around 0.2 mg/mL. These low initial values could be explained by S~2~ being near zero, and thus their values could be meaningless, and once an accurate S~2~ was established, the a~2~ values resolved around the true a~2~ value.
+
+#### b~1,2~
+The lag time (b~1~) behaved as expected up to 0.1 mg/mL [S], at which point it peaked around 20 h and then decreased to an equilibrium around 30 h. The peak effect is unexpected if we are framing this in terms of enzyme kinetics. We would expect a smooth curve approaching $1/V_{max}$, but clearly there is an optimal [S] for this reaction.
+
+The same effect was observed for b~2~, but this is expected since generally b~2~ will only be modeled around the same time as b~1~.
 
 ```{r Parameters vs. substrate concentration, echo=FALSE}
 #| fig-height: 12
 #| fig-width: 20
+#| fig-label: fig-coefs
 df_mod %>%
   pivot_longer(c(S1, a1, b1, S2, a2, b2), names_to = "parameter", values_to = "value") %>%
   filter(
@@ -220,11 +236,9 @@ df_mod %>%
 # ggsave("figures/kinetics/seed_vs_parameters.png", width = 18, height = 12)
 ```
 
-### V vs [S]
+### Reaction rate vs. substrate concentration
 
 ```{r Vmax vs. substrate concentration, echo=FALSE}
-#| fig-height: 6
-#| fig-width: 10
 df_mod %<>% mutate(v = 1 / b1)
 
 df_mod_summary <- df_mod %>%
@@ -249,12 +263,17 @@ nls_mod <- nls(
 
 v_half <- coef(nls_mod)[1] / 2
 
-coef(nls_mod)
-
 df_mic_men <- tibble(
   dilutions = seq(0, 0.4, by = 0.01),
   v = (coef(nls_mod)[1] * dilutions) / (coef(nls_mod)[2] + dilutions)
 )
+```
+
+Reaction velocity (V) was roughly calculated as the inverse of the b~1~ coefficient. These values were plotted against the substrate concentration and a non-linear regression was fitted to the data up to the peak [S] mentioned above. This gave us a theoretical V~max~ of `r round(coef(nls_mod)[1], 2)` h^-1^ and a theoretical K~m~ of `r round(coef(nls_mod)[2], 2)` mg/mL.
+
+```{r Vmax vs. [S] plot, echo=FALSE}
+#| fig-height: 6
+#| fig-width: 10
 
 df_mod %>%
   # filter(dilutions <= vmax_substrate) %>%
@@ -272,7 +291,7 @@ df_mod %>%
   scale_x_continuous(breaks = seq(0, 0.4, by = 0.05)) +
   labs(
     x = "[Substrate] (mg/mL)",
-    y = "V",
+    y = TeX("V ($h^{-1}$)")
   ) +
   dark_theme
 ```
