@@ -247,7 +247,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#residuals" id="toc-residuals" class="nav-link" data-scroll-target="#residuals">Residuals</a></li>
   <li><a href="#effect-of-substrate-concentration-on-model-coefficients" id="toc-effect-of-substrate-concentration-on-model-coefficients" class="nav-link" data-scroll-target="#effect-of-substrate-concentration-on-model-coefficients">Effect of substrate concentration on model coefficients</a></li>
-  <li><a href="#v-vs-s" id="toc-v-vs-s" class="nav-link" data-scroll-target="#v-vs-s">V vs [S]</a></li>
+  <li><a href="#reaction-rate-vs.-substrate-concentration" id="toc-reaction-rate-vs.-substrate-concentration" class="nav-link" data-scroll-target="#reaction-rate-vs.-substrate-concentration">Reaction rate vs.&nbsp;substrate concentration</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -628,7 +628,21 @@ window.Quarto = {
 </section>
 <section id="effect-of-substrate-concentration-on-model-coefficients" class="level3">
 <h3 class="anchored" data-anchor-id="effect-of-substrate-concentration-on-model-coefficients">Effect of substrate concentration on model coefficients</h3>
-<div class="cell">
+<section id="s12" class="level4">
+<h4 class="anchored" data-anchor-id="s12">S<sub>1,2</sub></h4>
+<p>The model asymptotes have both a positive and negative relationship with the substrate concentration ([S]) for S<sub>1</sub> and S<sub>2</sub>, respectively. The positive relationship with S<sub>1</sub> is expected given that there is more substrate incorporated into fibrils which would directly result in a higher fluorescent signal.</p>
+<p>The negative relationship with S<sub>2</sub> is interesting. This indicates that the dampening effect increases with [S]. Previously, we observed that the dampening effect had a negative relationship with the rate of the reaction. However, this isn’t necessarily the case here because the rate increased only to a point, then decreased as [S] increased.</p>
+</section>
+<section id="a12" class="level4">
+<h4 class="anchored" data-anchor-id="a12">a<sub>1,2</sub></h4>
+<p>The apparent rate constant (a<sub>1</sub>) stayed more or less constant through every [S]. I may be wrong, but I believe this is showing the rate constant of our specific seed (141234).</p>
+<p>The secondary rate constant (a<sub>2</sub>) had an initial positive relationship with [S], but reached an equilibrium around 0.2 mg/mL. These low initial values could be explained by S<sub>2</sub> being near zero, and thus their values could be meaningless, and once an accurate S<sub>2</sub> was established, the a<sub>2</sub> values resolved around the true a<sub>2</sub> value.</p>
+</section>
+<section id="b12" class="level4">
+<h4 class="anchored" data-anchor-id="b12">b<sub>1,2</sub></h4>
+<p>The lag time (b<sub>1</sub>) behaved as expected up to 0.1 mg/mL [S], at which point it peaked around 20 h and then decreased to an equilibrium around 30 h. The peak effect is unexpected if we are framing this in terms of enzyme kinetics. We would expect a smooth curve approaching <span class="math inline">\(1/V_{max}\)</span>, but clearly there is an optimal [S] for this reaction.</p>
+<p>The same effect was observed for b<sub>2</sub>, but this is expected since generally b<sub>2</sub> will only be modeled around the same time as b<sub>1</sub>.</p>
+<div class="cell" data-fig-label="fig-coefs">
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -638,17 +652,15 @@ window.Quarto = {
 </div>
 </div>
 </section>
-<section id="v-vs-s" class="level3">
-<h3 class="anchored" data-anchor-id="v-vs-s">V vs [S]</h3>
+</section>
+<section id="reaction-rate-vs.-substrate-concentration" class="level3">
+<h3 class="anchored" data-anchor-id="reaction-rate-vs.-substrate-concentration">Reaction rate vs.&nbsp;substrate concentration</h3>
+<p>Reaction velocity (V) was roughly calculated as the inverse of the b<sub>1</sub> coefficient. These values were plotted against the substrate concentration and a non-linear regression was fitted to the data up to the peak [S] mentioned above. This gave us a theoretical V<sub>max</sub> of 0.35 h<sup>-1</sup> and a theoretical K<sub>m</sub> of 0.12 mg/mL.</p>
 <div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>     Vmax        Km 
-0.3518273 0.1229421 </code></pre>
-</div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="20260824_substrate_dil_series_files/figure-html/Vmax vs. substrate concentration-1.png" class="img-fluid figure-img" width="960"></p>
+<p><img src="20260824_substrate_dil_series_files/figure-html/Vmax vs. [S] plot-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>
