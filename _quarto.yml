@@ -40,7 +40,7 @@ website:
 
 format:
   html:
-    theme: cyborg
+    theme: static/custom.scss
     css: styles.css
     toc: true
     toc-depth: 3
