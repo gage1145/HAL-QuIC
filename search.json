@@ -1,5 +1,229 @@
 [
   {
+    "objectID": "presentation.html#enzyme-kinetics",
+    "href": "presentation.html#enzyme-kinetics",
+    "title": "Kinetic Modeling of the RT-QuIC Assay",
+    "section": "Enzyme Kinetics",
+    "text": "Enzyme Kinetics\n\n\n\nThe enzyme (\\(E\\)) forms a reversible complex with the substrate (\\(S\\)).\nThe forward reaction results in the formation of a product (\\(P\\)) and \\(E\\) returning to its original state.\nTypical enzymatic reactions are instantaneous, and asymptotically approach a certain \\(P\\) concentration.\n\n\n\\[E+S \\rightleftharpoons ES \\rightarrow E+P\\]",
+    "crumbs": [
+      "Home",
+      "Kinetic Modeling of the RT-QuIC Assay"
+    ]
+  },
+  {
+    "objectID": "presentation.html#prion-fibril-kinetics",
+    "href": "presentation.html#prion-fibril-kinetics",
+    "title": "Kinetic Modeling of the RT-QuIC Assay",
+    "section": "Prion Fibril Kinetics",
+    "text": "Prion Fibril Kinetics\n\n\n\nPrions form native/misfolded complexes.\nNative prions are integrated into fibrils.\nFibril nucleation sites remain constant (2 ends of the fibril).\nRT-QuIC speeds up the process but introduces a confounding factor.\n\n\n\nConversion of PrPC to PrPFib \\[PrP^C \\xrightleftharpoons[k_{-nuc}]{k_{nuc}} PrP^{Nuc} \\xrightleftharpoons[k_{-oligo}]{k_{oligo}} PrP^{Oligo} \\xrightarrow{k_{fib}} PrP^{Fib}\\]\nPrPFib converting PrPC \\[PrP^{Fib} + PrP^C \\xrightleftharpoons[k_{-nuc}]{k_{nuc}} PrP^{Fib \\cdot C} \\xrightarrow{k_{fib}} PrP^{Fib + 1}\\]",
+    "crumbs": [
+      "Home",
+      "Kinetic Modeling of the RT-QuIC Assay"
+    ]
+  },
+  {
+    "objectID": "presentation.html#why-is-rt-quic-sigmoidal",
+    "href": "presentation.html#why-is-rt-quic-sigmoidal",
+    "title": "Kinetic Modeling of the RT-QuIC Assay",
+    "section": "Why is RT-QuIC sigmoidal?",
+    "text": "Why is RT-QuIC sigmoidal?\n\n\n\nA sigmoid would normally suggest some kind of cooperative interaction or feedback loop.\nPrP fibril formation should follow the hyperbolic curve because the fibril formation is linear.\nWhy is it sigmoidal?\n\n\n\n\nFragmentation \\[\nPrP^{Fib} \\xrightarrow{k_{frag}} 2PrP^{Fib}\n\\]\n\n\n\n\n\\[\nPrP^{Fib} + PrP^C \\xrightleftharpoons[k_{-nuc}]{k_{nuc}} PrP^{Fib \\cdot C} \\xrightarrow{k_{fib}} PrP^{Fib + 1}\\xrightarrow{k_{frag}} 2PrP^{Fib}\n\\]",
+    "crumbs": [
+      "Home",
+      "Kinetic Modeling of the RT-QuIC Assay"
+    ]
+  },
+  {
+    "objectID": "presentation.html#how-do-we-get-the-rate-constants",
+    "href": "presentation.html#how-do-we-get-the-rate-constants",
+    "title": "Kinetic Modeling of the RT-QuIC Assay",
+    "section": "How do we get the rate constants?",
+    "text": "How do we get the rate constants?\n\nAlter [E] and [S] to get the \\(k_{fib}\\) constant.\nAlter RT-QuIC shaking parameters to get \\(k_{frag}\\).\nHow will we characterize the reaction given that RT-QuIC frequently shows more structure than a single sigmoid?",
+    "crumbs": [
+      "Home",
+      "Kinetic Modeling of the RT-QuIC Assay"
+    ]
+  },
+  {
+    "objectID": "presentation.html#the-double-sigmoidal-model",
+    "href": "presentation.html#the-double-sigmoidal-model",
+    "title": "Kinetic Modeling of the RT-QuIC Assay",
+    "section": "The Double Sigmoidal Model",
+    "text": "The Double Sigmoidal Model\n\n\n\nWe frequently observe a dampening effect that pulls the signal back down after the peak.\nUsing a nonlinear least-squares regression, we can summarize the data as the sum of two logistic functions:\n\n\n\n\\[\nf(t)=\\frac{S_1}{1+e^{a_1(b_1-t)}}+\\frac{S_2}{1+e^{a_2(b_2-t)}}\n\\]",
+    "crumbs": [
+      "Home",
+      "Kinetic Modeling of the RT-QuIC Assay"
+    ]
+  },
+  {
+    "objectID": "presentation.html#parameter-interpretation",
+    "href": "presentation.html#parameter-interpretation",
+    "title": "Kinetic Modeling of the RT-QuIC Assay",
+    "section": "Parameter Interpretation",
+    "text": "Parameter Interpretation\nEach sigmoid contributes three parameters — six in total describe a reaction:\n\n\n\nParameter\nMeaning\n\n\n\n\nS1, S2\nAsymptotes of 1\\(^\\circ\\) / 2\\(^\\circ\\) phases\n\n\na1, a2\nSteepness of inflection points\n\n\nb1, b2\nTime to inflection point\n\n\n\n\nTogether, these coefficients form a compact kinetic fingerprint for a single RT-QuIC reaction.",
+    "crumbs": [
+      "Home",
+      "Kinetic Modeling of the RT-QuIC Assay"
+    ]
+  },
+  {
+    "objectID": "presentation.html#derived-parameters",
+    "href": "presentation.html#derived-parameters",
+    "title": "Kinetic Modeling of the RT-QuIC Assay",
+    "section": "Derived Parameters",
+    "text": "Derived Parameters\n\n\n\n\n\n\n\n\n\nParameter\nFormula\nMeaning\n\n\n\n\n\\(k_{fib}\\)\n\\(\\dfrac{V_{max}}{[E]}\\)\nFibrillation rate constant\n\n\n\\(k_{frag}\\)\n\\(\\dfrac{1}{b_2-b_1}\\)\nFragmentation rate constant\n\n\n\\(t_{lag}\\)\n\\(b_1 - \\dfrac{a_1}{2}\\)\nAlternative lag time estimate\n\n\n\\(K_M\\)\n\\(\\frac{k_{fib} + k_{-nuc}}{k_{nuc}}\\)\n\\([S]\\) at \\(\\dfrac{V_{max}}{2}\\)\n\n\n\\(V_{max}\\)\n\\(k_{fib}[E]\\)\nMaximum reaction velocity\n\n\n\\(v_0\\)\n\\(\\dfrac{V_{max}[S]}{K_M + [S]}\\)\nReaction velocity (Michaelis-Menten equation)\n\n\n\n\n\nThese give a bridge back to conventional RT-QuIC metrics (like RAF) while retaining the full shape information the double sigmoid captures.",
+    "crumbs": [
+      "Home",
+      "Kinetic Modeling of the RT-QuIC Assay"
+    ]
+  },
+  {
+    "objectID": "presentation.html#experiment-1-altering-e",
+    "href": "presentation.html#experiment-1-altering-e",
+    "title": "Kinetic Modeling of the RT-QuIC Assay",
+    "section": "Experiment 1: Altering [E]",
+    "text": "Experiment 1: Altering [E]\n\n\n\nQuestion: Does seed concentration modulate the amplitude, timing, or inflection of either phase?\nDesign: Serial dilution of a known CWD-positive lymph node sample, run under standard conditions (42°C, 700 rpm, 15 min read cycle, 96 hr).",
+    "crumbs": [
+      "Home",
+      "Kinetic Modeling of the RT-QuIC Assay"
+    ]
+  },
+  {
+    "objectID": "presentation.html#experiment-2-s",
+    "href": "presentation.html#experiment-2-s",
+    "title": "Kinetic Modeling of the RT-QuIC Assay",
+    "section": "Experiment 2: [S]",
+    "text": "Experiment 2: [S]\n\n\n\nQuestion: Does substrate concentration modulate either phase, and does it behave like classical enzyme kinetics?\nDesign: Fixed seed dilution (\\(10^{-3}\\)), substrate concentration varied from 0.01 to 0.4 µg/µL, standard reaction conditions.",
+    "crumbs": [
+      "Home",
+      "Kinetic Modeling of the RT-QuIC Assay"
+    ]
+  },
+  {
+    "objectID": "presentation.html#determining-v_max-and-k_fib",
+    "href": "presentation.html#determining-v_max-and-k_fib",
+    "title": "Kinetic Modeling of the RT-QuIC Assay",
+    "section": "Determining \\(V_{max}\\) and \\(K_{fib}\\)",
+    "text": "Determining \\(V_{max}\\) and \\(K_{fib}\\)\n\nTreating \\(1/b_1\\) as a reaction velocity and fitting \\(v = \\dfrac{V_{max}[S]}{K_{fib} + [S]}\\) up to the peak:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTheoretical \\(V_{max} = 0.35\\ h^{-1}\\), theoretical \\(K_m = 0.12\\ mg/mL\\).\n\nNext Steps\n\nFragmentation dynamics: does shaking speed / temperature shift the secondary phase, implicating mechanical fragmentation?\nOrthogonal measurements: do absorbance (A600), SyproOrange, and Bradford assays confirm the secondary phase as a real change in fibril/soluble protein state, or is it ThT-specific?\nGeneralizability: does the biphasic profile, and its secondary-phase parameters, hold across prion strains and substrate species, and can this model be used to predict certain characteristics of the initial prion seed?\n\n\nLearn More\nModel: modeling.gagerowden.com/model.html\nRoadmap: modeling.gagerowden.com/roadmap.html\nExperiments: modeling.gagerowden.com/experiments.html",
+    "crumbs": [
+      "Home",
+      "Kinetic Modeling of the RT-QuIC Assay"
+    ]
+  },
+  {
+    "objectID": "presentation.html#next-steps",
+    "href": "presentation.html#next-steps",
+    "title": "Kinetic Modeling of the RT-QuIC Assay",
+    "section": "Next Steps",
+    "text": "Next Steps\n\nFragmentation dynamics: does shaking speed / temperature shift the secondary phase, implicating mechanical fragmentation?\nOrthogonal measurements: do absorbance (A600), SyproOrange, and Bradford assays confirm the secondary phase as a real change in fibril/soluble protein state, or is it ThT-specific?\nGeneralizability: does the biphasic profile, and its secondary-phase parameters, hold across prion strains and substrate species, and can this model be used to predict certain characteristics of the initial prion seed?",
+    "crumbs": [
+      "Home",
+      "Kinetic Modeling of the RT-QuIC Assay"
+    ]
+  },
+  {
+    "objectID": "presentation.html#learn-more",
+    "href": "presentation.html#learn-more",
+    "title": "Kinetic Modeling of the RT-QuIC Assay",
+    "section": "Learn More",
+    "text": "Learn More\nModel: modeling.gagerowden.com/model.html\nRoadmap: modeling.gagerowden.com/roadmap.html\nExperiments: modeling.gagerowden.com/experiments.html",
+    "crumbs": [
+      "Home",
+      "Kinetic Modeling of the RT-QuIC Assay"
+    ]
+  },
+  {
+    "objectID": "experiments/20260824_substrate_dil_series.html",
+    "href": "experiments/20260824_substrate_dil_series.html",
+    "title": "Substrate Dilution Series",
+    "section": "",
+    "text": "The \\(V_{max}\\) of our prion seed can be determined by performing a dilution series of the substrate. The rate of the reaction should reach some asymptote as the substrate concentration increases. This experiment will hopefully determine that asymptote for a range of substrate concentrations.\n\n\n[1] \"20260715_r13_GR_pos-dil-series\"\n[1] \"20260715_r5_GR_pos-dil-series\"\n[1] \"20260715_r7_GR_pos-dil-series\"\n[1] \"20260824_r5_GR_substrate-dil-series\"",
+    "crumbs": [
+      "Home",
+      "Experiments",
+      "Substrate Dilution Series"
+    ]
+  },
+  {
+    "objectID": "experiments/20260824_substrate_dil_series.html#purpose",
+    "href": "experiments/20260824_substrate_dil_series.html#purpose",
+    "title": "Substrate Dilution Series",
+    "section": "",
+    "text": "The \\(V_{max}\\) of our prion seed can be determined by performing a dilution series of the substrate. The rate of the reaction should reach some asymptote as the substrate concentration increases. This experiment will hopefully determine that asymptote for a range of substrate concentrations.\n\n\n[1] \"20260715_r13_GR_pos-dil-series\"\n[1] \"20260715_r5_GR_pos-dil-series\"\n[1] \"20260715_r7_GR_pos-dil-series\"\n[1] \"20260824_r5_GR_substrate-dil-series\"",
+    "crumbs": [
+      "Home",
+      "Experiments",
+      "Substrate Dilution Series"
+    ]
+  },
+  {
+    "objectID": "experiments/20260824_substrate_dil_series.html#design",
+    "href": "experiments/20260824_substrate_dil_series.html#design",
+    "title": "Substrate Dilution Series",
+    "section": "Design",
+    "text": "Design\n\nPositive seed sample: 141234\nSeed dilution factor: 10-3\nTemperature: 42°C\nShaking speed: 700rpm\nShaking time: 60s\nResting time: 60s\nRead cycle time: 15min\nReaction time: 96 hr\nSubstrate: HaPrP(90-231)\nSubstrate concentrations: 0.01 \\(\\rightarrow\\) 0.4ug/uL\n\n\nVolumes and Concentrations\n\n\n\nVolumes and concentrations. Variable amounts of substrate and water will need to be added to each well in the plate. 2uL of seed were added along with 14.6uL of RT-QuIC buffer concentrate for a total reaction volume of 100uL. The starting concentration of the substrate was 0.74ug/uL.\n\n\nSubstrate Conc (ug/ul)\nSubstrate Vol (uL)\nWater (uL)\n\n\n\n\n0.010\n0.010\n0.010\n\n\n0.027\n0.027\n0.027\n\n\n0.044\n0.044\n0.044\n\n\n0.061\n0.061\n0.061\n\n\n0.078\n0.078\n0.078\n\n\n0.095\n0.095\n0.095\n\n\n0.110\n0.110\n0.110\n\n\n0.130\n0.130\n0.130\n\n\n0.150\n0.150\n0.150\n\n\n0.160\n0.160\n0.160\n\n\n0.180\n0.180\n0.180\n\n\n0.200\n0.200\n0.200\n\n\n0.210\n0.210\n0.210\n\n\n0.230\n0.230\n0.230\n\n\n0.250\n0.250\n0.250\n\n\n0.260\n0.260\n0.260\n\n\n0.280\n0.280\n0.280\n\n\n0.300\n0.300\n0.300\n\n\n0.320\n0.320\n0.320\n\n\n0.330\n0.330\n0.330\n\n\n0.350\n0.350\n0.350\n\n\n0.370\n0.370\n0.370\n\n\n0.380\n0.380\n0.380\n\n\n0.400\n0.400\n0.400\n\n\n\n\n\n\n\n\n\nPlate Layout of Substrate Concentrations (ug/uL)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n\n\n\n\nA\n0.010\n0.044\n0.078\n0.110\n0.150\n0.180\n0.210\n0.250\n0.280\n0.320\n0.350\n0.380\n\n\nB\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n\n\nC\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n\n\nD\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\n\nE\n0.027\n0.061\n0.095\n0.130\n0.160\n0.200\n0.230\n0.260\n0.300\n0.330\n0.370\n0.400\n\n\nF\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n\n\nG\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n\n\nH\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)",
+    "crumbs": [
+      "Home",
+      "Experiments",
+      "Substrate Dilution Series"
+    ]
+  },
+  {
+    "objectID": "experiments/20260824_substrate_dil_series.html#results",
+    "href": "experiments/20260824_substrate_dil_series.html#results",
+    "title": "Substrate Dilution Series",
+    "section": "Results",
+    "text": "Results\n\nResiduals\n\n\n\n\n\n\n\n\n\n\n\nEffect of substrate concentration on model coefficients\n\nS1,2\nThe model asymptotes have both a positive and negative relationship with the substrate concentration ([S]) for S1 and S2, respectively. The positive relationship with S1 is expected given that there is more substrate incorporated into fibrils which would directly result in a higher fluorescent signal.\nThe negative relationship with S2 is interesting. This indicates that the dampening effect increases with [S]. Previously, we observed that the dampening effect had a negative relationship with the rate of the reaction. However, this isn’t necessarily the case here because the rate increased only to a point, then decreased as [S] increased.\n\n\na1,2\nThe apparent rate constant (a1) stayed more or less constant through every [S]. I may be wrong, but I believe this is showing the rate constant of our specific seed (141234).\nThe secondary rate constant (a2) had an initial positive relationship with [S], but reached an equilibrium around 0.2 mg/mL. These low initial values could be explained by S2 being near zero, and thus their values could be meaningless, and once an accurate S2 was established, the a2 values resolved around the true a2 value.\n\n\nb1,2\nThe lag time (b1) behaved as expected up to 0.1 mg/mL [S], at which point it peaked around 20 h and then decreased to an equilibrium around 30 h. The peak effect is unexpected if we are framing this in terms of enzyme kinetics. We would expect a smooth curve approaching \\(1/V_{max}\\), but clearly there is an optimal [S] for this reaction.\nThe same effect was observed for b2, but this is expected since generally b2 will only be modeled around the same time as b1.\n\n\n\n\n\n\n\n\n\n\n\n\nReaction rate vs. substrate concentration\nReaction velocity (V) was roughly calculated as the inverse of the b1 coefficient. These values were plotted against the substrate concentration and a non-linear regression was fitted to the data up to the peak [S] mentioned above. This gave us a theoretical Vmax of 0.35 h-1 and a theoretical Km of 0.12 mg/mL.",
+    "crumbs": [
+      "Home",
+      "Experiments",
+      "Substrate Dilution Series"
+    ]
+  },
+  {
+    "objectID": "explorer.html",
+    "href": "explorer.html",
+    "title": "Model Explorer",
+    "section": "",
+    "text": "tex`f(t)=\\frac{${S1.toFixed(2)}}{1+e^{${a1.toFixed(2)}(${b1.toFixed(2)}-t)}}+\\frac{${S2.toFixed(2)}}{1+e^{${a2.toFixed(2)}(${b2.toFixed(2)}-t)}}`\nd3 = require(\"d3-random\");\nmaxTime = 72;\nnPoints = Math.floor(maxTime / 0.25);\nS1Range = [0, 20];\nS2Range = [-15, 5];\na1Range = [0.1, 10];\na2Range = [0, 10];\nb1Range = [5, maxTime];\nb2Range = [-20, maxTime];\n\nfunction getRandom(min, max) {\n  return Math.random() * (max - min + 1) + min;\n}\n\nfunction generateRawData() {\n  const S1 = +getRandom(10, 20).toFixed(2);\n  const S2 = +getRandom(-5, 0).toFixed(2);\n  const a1 = +getRandom(0.15, 10).toFixed(2);\n  const a2 = +getRandom(0, 0.7).toFixed(2);\n  const b1 = +getRandom(10, 60).toFixed(2);\n  const b2 = +getRandom(0.9 * b1, 1.1 * b1).toFixed(2);\n  const points = Array.from({length: nPoints}, (_, i) =&gt; {\n    const t = i * maxTime / (nPoints - 1);\n    return (S1 / (1 + Math.exp(a1 * (b1 - t)))) +\n           (S2 / (1 + Math.exp(a2 * (b2 - t)))) +\n           d3.randomNormal(0, 0.1)();\n  });\n  return {params: {S1, S2, a1, a2, b1, b2}, points};\n}\n\nmutable rawData = generateRawData()\nmutable showAnswer = false",
+    "crumbs": [
+      "Home",
+      "Model Explorer"
+    ]
+  },
+  {
+    "objectID": "explorer.html#primary-parameters",
+    "href": "explorer.html#primary-parameters",
+    "title": "Model Explorer",
+    "section": "Primary Parameters",
+    "text": "Primary Parameters\n\nviewof S1 = {\n  const input = Inputs.range(S1Range, {value: 10, step: 0.01, label: \"S₁\", attributes: {class: \"primary-slider\"}});\n  input.classList.add(\"primary-slider\");\n  return input;\n}\nviewof a1 = {\n  const input = Inputs.range(a1Range, {value: 0.5, step: 0.01, label: \"a₁\", attributes: {class: \"primary-slider\"}});\n  input.classList.add(\"primary-slider\");\n  return input;\n}\nviewof b1 = {\n  const input = Inputs.range(b1Range, {value: 30, step: 0.01, label: \"b₁\", attributes: {class: \"primary-slider\"}});\n  input.classList.add(\"primary-slider\");\n  return input;\n}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nS₁: \na₁: \nb₁:",
+    "crumbs": [
+      "Home",
+      "Model Explorer"
+    ]
+  },
+  {
+    "objectID": "explorer.html#secondary-parameters",
+    "href": "explorer.html#secondary-parameters",
+    "title": "Model Explorer",
+    "section": "Secondary Parameters",
+    "text": "Secondary Parameters\n\nviewof S2 = {\n  const input = Inputs.range(S2Range, {value: 0, step: 0.01, label: \"S₂\", attributes: {class: \"secondary-slider\"}});\n  input.classList.add(\"secondary-slider\");\n  return input;\n}\nviewof a2 = {\n  const input = Inputs.range(a2Range, {value: 0, step: 0.01, label: \"a₂\", attributes: {class: \"secondary-slider\"}});\n  input.classList.add(\"secondary-slider\");\n  return input;\n}\nviewof b2 = {\n  const input = Inputs.range(b2Range, {value: 0, step: 0.01, label: \"b₂\", attributes: {class: \"secondary-slider\"}});\n  input.classList.add(\"secondary-slider\");\n  return input;\n}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nS₂: \na₂: \nb₂: \n\n\n{\n  const reset = Inputs.button(\"Reset Plot\", {\n    reduce: () =&gt; { mutable rawData = generateRawData(); mutable showAnswer = false; }\n  });\n  const reveal = Inputs.button(\"Reveal Answer\", {\n    reduce: () =&gt; (mutable showAnswer = !showAnswer)\n  });\n  return html`&lt;div style=\"display:flex;gap:8px;\"&gt;\n    ${reset}\n    ${reveal}\n  &lt;/div&gt;`;\n}\n\n\n\n\n\n\n\nshowAnswer ? html`&lt;div style=\"margin-top:12px;padding:10px;border:1px solid #282828;border-radius:4px;font-size:13px;\"&gt;\n  &lt;div style=\"color:var(--primary-color);margin-bottom:6px;\"&gt;\n    S₁ = &lt;strong&gt;${rawData.params.S1}&lt;/strong&gt; &emsp;\n    a₁ = &lt;strong&gt;${rawData.params.a1}&lt;/strong&gt; &emsp;\n    b₁ = &lt;strong&gt;${rawData.params.b1}&lt;/strong&gt;\n  &lt;/div&gt;\n  &lt;div style=\"color:var(--secondary-color);\"&gt;\n    S₂ = &lt;strong&gt;${rawData.params.S2}&lt;/strong&gt; &emsp;\n    a₂ = &lt;strong&gt;${rawData.params.a2}&lt;/strong&gt; &emsp;\n    b₂ = &lt;strong&gt;${rawData.params.b2}&lt;/strong&gt;\n  &lt;/div&gt;\n&lt;/div&gt;` : html``",
+    "crumbs": [
+      "Home",
+      "Model Explorer"
+    ]
+  },
+  {
+    "objectID": "explorer.html#attempt-to-fit-the-data",
+    "href": "explorer.html#attempt-to-fit-the-data",
+    "title": "Model Explorer",
+    "section": "Attempt to fit the data",
+    "text": "Attempt to fit the data\n\n  \n    \n    g₁(t)\n  \n  \n    \n    g₂(t)\n  \n  \n    \n    f(t)\n  \n  \n    \n    Raw data\n  \n  \n    \n    Residual\n  \n\n\n\ncurve = Array.from({length: nPoints}, (_, i) =&gt; {\n  const t = i * maxTime / (nPoints - 1);\n  const g1 = S1 / (1 + Math.exp(a1 * (b1 - t)));\n  const g2 = S2 / (1 + Math.exp(a2 * (b2 - t)));\n  const f = g1 + g2;\n  const raw = rawData.points[i];\n  return {t, g1, g2, f, raw, resid: f - raw};\n})\n\nplotSize = Generators.observe(notify =&gt; {\n  let ro;\n  const attach = () =&gt; {\n    const el = document.querySelector(\".plot-area\");\n    if (!el) { requestAnimationFrame(attach); return; }\n    const measure = () =&gt; notify({\n      width: Math.max(200, el.clientWidth),\n      height: Math.max(200, el.clientHeight)\n    });\n    measure();\n    ro = new ResizeObserver(measure);\n    ro.observe(el);\n  };\n  notify({width: 640, height: 500});\n  attach();\n  return () =&gt; ro?.disconnect();\n})\n\n{\n  const rawMean = curve.reduce((s, d) =&gt; s + d.raw, 0) / curve.length;\n  const ssTot = curve.reduce((s, d) =&gt; s + (d.raw - rawMean) ** 2, 0);\n  const ssRes = curve.reduce((s, d) =&gt; s + d.resid ** 2, 0);\n  const r2 = 1 - ssRes / ssTot;\n\n  const plot = Plot.plot({\n    width: plotSize.width,\n    height: plotSize.height,\n    style: {background: \"#060606\", color: \"#adafae\", overflow: \"visible\"},\n    x: {label: \"Time (h)\"},\n    y: {label: \"Normalized RFU\"},\n    marks: [\n      Plot.gridX({stroke: \"#282828\"}),\n      Plot.gridY({stroke: \"#282828\"}),\n      Plot.frame({stroke: \"#282828\"}),\n      Plot.ruleY([0], {stroke: \"#adafae\", strokeOpacity: 0.3}),\n      Plot.dot(curve, {x: \"t\", y: \"raw\", fill: \"#ffffff\", stroke: \"#ffffff\", strokeWidth: 0.5}),\n      Plot.line(curve, {x: \"t\", y: \"resid\", stroke: \"#92ff84\", strokeWidth: 1}),\n      Plot.line(curve, {x: \"t\", y: \"g1\", stroke: \"#77b300\", strokeWidth: 2.5, strokeDasharray: \"6,3\"}),\n      Plot.line(curve, {x: \"t\", y: \"g2\", stroke: \"#e83e8c\", strokeWidth: 2.5, strokeDasharray: \"6,3\"}),\n      Plot.line(curve, {x: \"t\", y: \"f\", stroke: \"#2a9fd6\", strokeWidth: 5}),\n      Plot.ruleY([0], {stroke: \"#ffffff\", strokeWidth: 1.5, strokeDasharray: \"4,4\"}),\n      Plot.text([{label: `R² = ${r2.toFixed(4)}`}], {\n        text: \"label\",\n        frameAnchor: \"right\",\n        fill: r2 &gt;= 0.9 ? \"#77b300\" : r2 &gt;= 0.7 ? \"#f80\" : \"#c00\",\n        fontSize: 20,\n        fontWeight: \"bold\",\n        dx: -20,\n        dy: -50\n      }),\n    ]\n  });\n\n  return plot;\n}",
+    "crumbs": [
+      "Home",
+      "Model Explorer"
+    ]
+  },
+  {
     "objectID": "roadmap.html",
     "href": "roadmap.html",
     "title": "Project Roadmap",
@@ -66,82 +290,6 @@
     ]
   },
   {
-    "objectID": "index.html#what-is-rt-quic",
-    "href": "index.html#what-is-rt-quic",
-    "title": "Codename: HAL-QuIC",
-    "section": "What is RT-QuIC?",
-    "text": "What is RT-QuIC?\nReal-Time Quaking-Induced Conversion (RT-QuIC) is a member of the highly sensitive assays known as seed amplification assays (SAA) used to detect misfolded prion proteins (PrPSc) in a sample [1]. A small amount of seed material, typically brain or lymph node homogenate, is incubated with a recombinant substrate prion protein (PrPC) under semi-continuous agitation. When prion seeds are present, they template the misfolding of the substrate, forming amyloid aggregates. These aggregates are measured in real time via thioflavin T (ThT) fluorescence, producing a sigmoid curve characteristic of many nucleated self-assembly reactions [2]."
-  },
-  {
-    "objectID": "index.html#prion-fibril-kinetics",
-    "href": "index.html#prion-fibril-kinetics",
-    "title": "Codename: HAL-QuIC",
-    "section": "Prion Fibril Kinetics",
-    "text": "Prion Fibril Kinetics\nThe sigmoidal curve is the focus of this project given that, in typical enzyme kinetics, a sigmoid would indicate a co-operative binding effect between PrPSc and PrPC; however, the linear nature of protein fibrils wouldn’t explain the allosteric requirements of such a model. [3] proposed that a nucleated polymerization model would more accurately account for the linear structure of PrPSc while also being simpler to fit.\nThT is commonly used to detect the presence of amyloid fibrils in SAAs, but it is not necessarily a direct indicator of the amount of fibrils present [4]. A standard curve could be generated using a known amount of PrPSc, however [5] approached the problem by combining UV-vis spectroscopy and ThT fluorescence such as in Figure 1; the absorbance would be a more accurate measure of the amount of available substrate, while the ThT fluorescence would serve as the evidence of fibril formation.\n\n\n\n\n\n\n\n\nFigure 1: Example graph showing the relationship between the absorbance and ThT fluorescence of an RT-QuIC reaction.\n\n\n\n\n\nThe Masel model of nucleation-dependent polymerization tracks three components: the normal monomeric protein, the polymer fibrils, and the total mass of polymerized subunits. The following differential equations describe the dynamics of the system:\n\\[\n\\frac{dM}{dt}=-nk_{n}M^{n}-k_{g}MP\n\\]\n\\[\n\\frac{dP}{dt}=k_{n}M^{n}+k_{f}Z-k_{f}M_{0}P\n\\]\n\\[\n\\frac{dZ}{dt}=nk_{n}M^{n}+k_{g}MP-k_{f}M_{0}^{2}P+2k_{f}M_{0}P-k_{f}Z\n\\]\nWhere:\n\n\\(M\\): Concentration of PrPC monomers.\n\\(P\\): Number concentration of PrPSc fibrils.\n\\(Z\\): Total mass concentration of subunits incorporated into aggregates.\n\\(k_n, k_g, k_f\\): Rate constants for nucleation, growth (elongation), and fragmentation.\n\\(n\\): Minimum nucleation size (critical number of monomers needed to form a stable seed).\n\\(M_{0}\\): Minimum stable size of a fibril.\n\nIn the case of RT-QuIC, a mature fibril is introduced into the system, and so, the spontaneous nucleation (\\(k_n\\)) term becomes negligible. Further, if we assume that the introduced fibril is large (\\(M_0\\rightarrow{}0\\)), then the equations simplify to:\n\\[\n\\frac{dP}{dt}=k_fZ\n\\]\n\\[\n\\frac{dZ}{dt}=k_gMP\n\\]\nIt is well-known that generally, higher concentrations of initial seed material lead to a faster reaction, but the overall signal intensity or the steepness of the inflection point may be influenced by other factors. The predominant theory involves a two-step kinetic model, where the first step is the nucleation of a monomer into a fibril, and the second step involves elongation of the fibril [6]."
-  },
-  {
-    "objectID": "index.html#the-model",
-    "href": "index.html#the-model",
-    "title": "Codename: HAL-QuIC",
-    "section": "The Model",
-    "text": "The Model\nStandard RT-QuIC analysis focuses on a single kinetic metric, the lag time to threshold (i.e. rate of amyloid formation, RAF). However, normalized fluorescence traces frequently exhibit a second kinetic phase — a dampening effect following the initial growth phase — that is poorly captured by single-sigmoidal models. The underlying function is named fit_model() and is described in more detail in the model page.\nHAL-QuIC proposes that the full kinetic behavior of an RT-QuIC reaction can be better described by the sum of two logistic functions:\n\\[\nf(t)=\\frac{S_1}{1+e^{a_1(b_1-t)}}+\\frac{S_2}{1+e^{a_2(b_2-t)}}\n\\]\nEach sigmoid has three parameters:\n\n\n\nParameter\nMeaning\n\n\n\n\n\\(S\\)\nAsymptote\n\n\n\\(a\\)\nSteepness of the inflection point\n\n\n\\(b\\)\nTime to inflection point\n\n\n\nTogether, these six coefficients \\((S_1, a_1, b_1, S_2, a_2, b_2)\\) provide a compact kinetic fingerprint for any RT-QuIC reaction."
-  },
-  {
-    "objectID": "index.html#site-navigation",
-    "href": "index.html#site-navigation",
-    "title": "Codename: HAL-QuIC",
-    "section": "Site Navigation",
-    "text": "Site Navigation\n\n\n\nPage\nDescription\n\n\n\n\nModel\nFull derivation of the double sigmoidal model, fitting procedure, and derived parameters (\\(K_{app}\\), \\(t_{lag}\\))\n\n\nProject Roadmap\nPlanned experiments and research priorities\n\n\nExperiments\nIndividual experiments organized by priority tier"
-  },
-  {
-    "objectID": "experiments/20260824_substrate_dil_series.html",
-    "href": "experiments/20260824_substrate_dil_series.html",
-    "title": "Substrate Dilution Series",
-    "section": "",
-    "text": "The \\(V_{max}\\) of our prion seed can be determined by performing a dilution series of the substrate. The rate of the reaction should reach some asymptote as the substrate concentration increases. This experiment will hopefully determine that asymptote for a range of substrate concentrations.",
-    "crumbs": [
-      "Home",
-      "Experiments",
-      "Substrate Dilution Series"
-    ]
-  },
-  {
-    "objectID": "experiments/20260824_substrate_dil_series.html#purpose",
-    "href": "experiments/20260824_substrate_dil_series.html#purpose",
-    "title": "Substrate Dilution Series",
-    "section": "",
-    "text": "The \\(V_{max}\\) of our prion seed can be determined by performing a dilution series of the substrate. The rate of the reaction should reach some asymptote as the substrate concentration increases. This experiment will hopefully determine that asymptote for a range of substrate concentrations.",
-    "crumbs": [
-      "Home",
-      "Experiments",
-      "Substrate Dilution Series"
-    ]
-  },
-  {
-    "objectID": "experiments/20260824_substrate_dil_series.html#design",
-    "href": "experiments/20260824_substrate_dil_series.html#design",
-    "title": "Substrate Dilution Series",
-    "section": "Design",
-    "text": "Design\n\nPositive seed sample: 141234\nSeed dilution factor: 10-3\nTemperature: 42°C\nShaking speed: 700rpm\nShaking time: 60s\nResting time: 60s\nRead cycle time: 15min\nReaction time: 96 hr\nSubstrate: HaPrP(90-231)\nSubstrate concentrations: 0.01 \\(\\rightarrow\\) 0.4ug/uL\n\n\nVolumes and Concentrations\n\n\n\nVolumes and concentrations. Variable amounts of substrate and water will need to be added to each well in the plate. 2uL of seed were added along with 14.6uL of RT-QuIC buffer concentrate for a total reaction volume of 100uL. The starting concentration of the substrate was 0.74ug/uL.\n\n\nSubstrate Conc (ug/ul)\nSubstrate Vol (uL)\nWater (uL)\n\n\n\n\n0.010\n0.010\n0.010\n\n\n0.027\n0.027\n0.027\n\n\n0.044\n0.044\n0.044\n\n\n0.061\n0.061\n0.061\n\n\n0.078\n0.078\n0.078\n\n\n0.095\n0.095\n0.095\n\n\n0.110\n0.110\n0.110\n\n\n0.130\n0.130\n0.130\n\n\n0.150\n0.150\n0.150\n\n\n0.160\n0.160\n0.160\n\n\n0.180\n0.180\n0.180\n\n\n0.200\n0.200\n0.200\n\n\n0.210\n0.210\n0.210\n\n\n0.230\n0.230\n0.230\n\n\n0.250\n0.250\n0.250\n\n\n0.260\n0.260\n0.260\n\n\n0.280\n0.280\n0.280\n\n\n0.300\n0.300\n0.300\n\n\n0.320\n0.320\n0.320\n\n\n0.330\n0.330\n0.330\n\n\n0.350\n0.350\n0.350\n\n\n0.370\n0.370\n0.370\n\n\n0.380\n0.380\n0.380\n\n\n0.400\n0.400\n0.400\n\n\n\n\n\n\n\nPlate Layout of Substrate Concentrations (ug/uL)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n\n\n\n\nA\n0.010\n0.044\n0.078\n0.110\n0.150\n0.180\n0.210\n0.250\n0.280\n0.320\n0.350\n0.380\n\n\nB\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n\n\nC\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n\n\nD\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\n\nE\n0.027\n0.061\n0.095\n0.130\n0.160\n0.200\n0.230\n0.260\n0.300\n0.330\n0.370\n0.400\n\n\nF\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n\n\nG\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n\n\nH\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)\n\\(\\vee\\)",
-    "crumbs": [
-      "Home",
-      "Experiments",
-      "Substrate Dilution Series"
-    ]
-  },
-  {
-    "objectID": "experiments/20260824_substrate_dil_series.html#results",
-    "href": "experiments/20260824_substrate_dil_series.html#results",
-    "title": "Substrate Dilution Series",
-    "section": "Results",
-    "text": "Results\n\nResiduals\n\n\n\n\n\n\n\n\n\n\n\nEffect of substrate concentration on model coefficients\n\nS1,2\nThe model asymptotes have both a positive and negative relationship with the substrate concentration ([S]) for S1 and S2, respectively. The positive relationship with S1 is expected given that there is more substrate incorporated into fibrils which would directly result in a higher fluorescent signal.\nThe negative relationship with S2 is interesting. This indicates that the dampening effect increases with [S]. Previously, we observed that the dampening effect had a negative relationship with the rate of the reaction. However, this isn’t necessarily the case here because the rate increased only to a point, then decreased as [S] increased.\n\n\na1,2\nThe apparent rate constant (a1) stayed more or less constant through every [S]. I may be wrong, but I believe this is showing the rate constant of our specific seed (141234).\nThe secondary rate constant (a2) had an initial positive relationship with [S], but reached an equilibrium around 0.2 mg/mL. These low initial values could be explained by S2 being near zero, and thus their values could be meaningless, and once an accurate S2 was established, the a2 values resolved around the true a2 value.\n\n\nb1,2\nThe lag time (b1) behaved as expected up to 0.1 mg/mL [S], at which point it peaked around 20 h and then decreased to an equilibrium around 30 h. The peak effect is unexpected if we are framing this in terms of enzyme kinetics. We would expect a smooth curve approaching \\(1/V_{max}\\), but clearly there is an optimal [S] for this reaction.\nThe same effect was observed for b2, but this is expected since generally b2 will only be modeled around the same time as b1.\n\n\n\n\n\n\n\n\n\n\n\n\nReaction rate vs. substrate concentration\nReaction velocity (V) was roughly calculated as the inverse of the b1 coefficient. These values were plotted against the substrate concentration and a non-linear regression was fitted to the data up to the peak [S] mentioned above. This gave us a theoretical Vmax of 0.35 h-1 and a theoretical Km of 0.12 mg/mL.",
-    "crumbs": [
-      "Home",
-      "Experiments",
-      "Substrate Dilution Series"
-    ]
-  },
-  {
     "objectID": "experiments.html",
     "href": "experiments.html",
     "title": "Experiments",
@@ -186,11 +334,39 @@
     ]
   },
   {
+    "objectID": "index.html#what-is-rt-quic",
+    "href": "index.html#what-is-rt-quic",
+    "title": "Codename: HAL-QuIC",
+    "section": "What is RT-QuIC?",
+    "text": "What is RT-QuIC?\nReal-Time Quaking-Induced Conversion (RT-QuIC) is a member of the highly sensitive assays known as seed amplification assays (SAA) used to detect misfolded prion proteins (PrPSc) in a sample [1]. A small amount of seed material, typically brain or lymph node homogenate, is incubated with a recombinant substrate prion protein (PrPC) under semi-continuous agitation. When prion seeds are present, they template the misfolding of the substrate, forming amyloid aggregates. These aggregates are measured in real time via thioflavin T (ThT) fluorescence, producing a sigmoid curve characteristic of many nucleated self-assembly reactions [2]."
+  },
+  {
+    "objectID": "index.html#prion-fibril-kinetics",
+    "href": "index.html#prion-fibril-kinetics",
+    "title": "Codename: HAL-QuIC",
+    "section": "Prion Fibril Kinetics",
+    "text": "Prion Fibril Kinetics\nThe sigmoidal curve is the focus of this project given that, in typical enzyme kinetics, a sigmoid would indicate a co-operative binding effect between PrPSc and PrPC; however, the linear nature of protein fibrils wouldn’t explain the allosteric requirements of such a model. [3] proposed that a nucleated polymerization model would more accurately account for the linear structure of PrPSc while also being simpler to fit.\nThT is commonly used to detect the presence of amyloid fibrils in SAAs, but it is not necessarily a direct indicator of the amount of fibrils present [4]. A standard curve could be generated using a known amount of PrPSc, however [5] approached the problem by combining UV-vis spectroscopy and ThT fluorescence such as in Figure 1; the absorbance would be a more accurate measure of the amount of available substrate, while the ThT fluorescence would serve as the evidence of fibril formation.\n\n\n\n\n\n\n\n\nFigure 1: Example graph showing the relationship between the absorbance and ThT fluorescence of an RT-QuIC reaction.\n\n\n\n\n\nThe Masel model of nucleation-dependent polymerization tracks three components: the normal monomeric protein, the polymer fibrils, and the total mass of polymerized subunits. The following differential equations describe the dynamics of the system:\n\\[\n\\frac{dM}{dt}=-nk_{n}M^{n}-k_{g}MP\n\\]\n\\[\n\\frac{dP}{dt}=k_{n}M^{n}+k_{f}Z-k_{f}M_{0}P\n\\]\n\\[\n\\frac{dZ}{dt}=nk_{n}M^{n}+k_{g}MP-k_{f}M_{0}^{2}P+2k_{f}M_{0}P-k_{f}Z\n\\]\nWhere:\n\n\\(M\\): Concentration of PrPC monomers.\n\\(P\\): Number concentration of PrPSc fibrils.\n\\(Z\\): Total mass concentration of subunits incorporated into aggregates.\n\\(k_n, k_g, k_f\\): Rate constants for nucleation, growth (elongation), and fragmentation.\n\\(n\\): Minimum nucleation size (critical number of monomers needed to form a stable seed).\n\\(M_{0}\\): Minimum stable size of a fibril.\n\nIn the case of RT-QuIC, a mature fibril is introduced into the system, and so, the spontaneous nucleation (\\(k_n\\)) term becomes negligible. Further, if we assume that the introduced fibril is large (\\(M_0\\rightarrow{}0\\)), then the equations simplify to:\n\\[\n\\frac{dP}{dt}=k_fZ\n\\]\n\\[\n\\frac{dZ}{dt}=k_gMP\n\\]\nIt is well-known that generally, higher concentrations of initial seed material lead to a faster reaction, but the overall signal intensity or the steepness of the inflection point may be influenced by other factors. The predominant theory involves a two-step kinetic model, where the first step is the nucleation of a monomer into a fibril, and the second step involves elongation of the fibril [6]."
+  },
+  {
+    "objectID": "index.html#the-model",
+    "href": "index.html#the-model",
+    "title": "Codename: HAL-QuIC",
+    "section": "The Model",
+    "text": "The Model\nStandard RT-QuIC analysis focuses on a single kinetic metric, the lag time to threshold (i.e. rate of amyloid formation, RAF). However, normalized fluorescence traces frequently exhibit a second kinetic phase — a dampening effect following the initial growth phase — that is poorly captured by single-sigmoidal models. The underlying function is named fit_model() and is described in more detail in the model page.\nHAL-QuIC proposes that the full kinetic behavior of an RT-QuIC reaction can be better described by the sum of two logistic functions:\n\\[\nf(t)=\\frac{S_1}{1+e^{a_1(b_1-t)}}+\\frac{S_2}{1+e^{a_2(b_2-t)}}\n\\]\nEach sigmoid has three parameters:\n\n\n\nParameter\nMeaning\n\n\n\n\n\\(S\\)\nAsymptote\n\n\n\\(a\\)\nSteepness of the inflection point\n\n\n\\(b\\)\nTime to inflection point\n\n\n\nTogether, these six coefficients \\((S_1, a_1, b_1, S_2, a_2, b_2)\\) provide a compact kinetic fingerprint for any RT-QuIC reaction."
+  },
+  {
+    "objectID": "index.html#site-navigation",
+    "href": "index.html#site-navigation",
+    "title": "Codename: HAL-QuIC",
+    "section": "Site Navigation",
+    "text": "Site Navigation\n\n\n\nPage\nDescription\n\n\n\n\nModel\nFull derivation of the double sigmoidal model, fitting procedure, and derived parameters (\\(K_{app}\\), \\(t_{lag}\\))\n\n\nProject Roadmap\nPlanned experiments and research priorities\n\n\nExperiments\nIndividual experiments organized by priority tier"
+  },
+  {
     "objectID": "experiments/20260715_pos_dil_series.html",
     "href": "experiments/20260715_pos_dil_series.html",
     "title": "Positive Seed Dilution Series",
     "section": "",
-    "text": "In order to determine the effect of seed concentration on the kinetics of RT-QuIC, I performed a series of 10-fold dilutions of a known CWD-positive lymph node sample. After fitting the curves, I should be able to see if any of the coefficients are affected.",
+    "text": "In order to determine the effect of seed concentration on the kinetics of RT-QuIC, I performed a series of 10-fold dilutions of a known CWD-positive lymph node sample. After fitting the curves, I should be able to see if any of the coefficients are affected.\n\n\n[1] \"20260715_r13_GR_pos-dil-series\"\n[1] \"20260715_r5_GR_pos-dil-series\"\n[1] \"20260715_r7_GR_pos-dil-series\"\n[1] \"20260824_r5_GR_substrate-dil-series\"",
     "crumbs": [
       "Home",
       "Experiments",
@@ -202,7 +378,7 @@
     "href": "experiments/20260715_pos_dil_series.html#purpose",
     "title": "Positive Seed Dilution Series",
     "section": "",
-    "text": "In order to determine the effect of seed concentration on the kinetics of RT-QuIC, I performed a series of 10-fold dilutions of a known CWD-positive lymph node sample. After fitting the curves, I should be able to see if any of the coefficients are affected.",
+    "text": "In order to determine the effect of seed concentration on the kinetics of RT-QuIC, I performed a series of 10-fold dilutions of a known CWD-positive lymph node sample. After fitting the curves, I should be able to see if any of the coefficients are affected.\n\n\n[1] \"20260715_r13_GR_pos-dil-series\"\n[1] \"20260715_r5_GR_pos-dil-series\"\n[1] \"20260715_r7_GR_pos-dil-series\"\n[1] \"20260824_r5_GR_substrate-dil-series\"",
     "crumbs": [
       "Home",
       "Experiments",
@@ -234,55 +410,11 @@
     ]
   },
   {
-    "objectID": "explorer.html",
-    "href": "explorer.html",
-    "title": "Model Explorer",
-    "section": "",
-    "text": "tex`f(t)=\\frac{${S1.toFixed(2)}}{1+e^{${a1.toFixed(2)}(${b1.toFixed(2)}-t)}}+\\frac{${S2.toFixed(2)}}{1+e^{${a2.toFixed(2)}(${b2.toFixed(2)}-t)}}`\nd3 = require(\"d3-random\");\nmaxTime = 72;\nnPoints = Math.floor(maxTime / 0.25);\nS1Range = [0, 20];\nS2Range = [-15, 5];\na1Range = [0.1, 10];\na2Range = [0, 10];\nb1Range = [5, maxTime];\nb2Range = [-20, maxTime];\n\nfunction getRandom(min, max) {\n  return Math.random() * (max - min + 1) + min;\n}\n\nfunction generateRawData() {\n  const S1 = +getRandom(10, 20).toFixed(2);\n  const S2 = +getRandom(-5, 0).toFixed(2);\n  const a1 = +getRandom(0.15, 10).toFixed(2);\n  const a2 = +getRandom(0, 0.7).toFixed(2);\n  const b1 = +getRandom(10, 60).toFixed(2);\n  const b2 = +getRandom(0.9 * b1, 1.1 * b1).toFixed(2);\n  const points = Array.from({length: nPoints}, (_, i) =&gt; {\n    const t = i * maxTime / (nPoints - 1);\n    return (S1 / (1 + Math.exp(a1 * (b1 - t)))) +\n           (S2 / (1 + Math.exp(a2 * (b2 - t)))) +\n           d3.randomNormal(0, 0.1)();\n  });\n  return {params: {S1, S2, a1, a2, b1, b2}, points};\n}\n\nmutable rawData = generateRawData()\nmutable showAnswer = false",
-    "crumbs": [
-      "Home",
-      "Model Explorer"
-    ]
-  },
-  {
-    "objectID": "explorer.html#primary-parameters",
-    "href": "explorer.html#primary-parameters",
-    "title": "Model Explorer",
-    "section": "Primary Parameters",
-    "text": "Primary Parameters\n\nviewof S1 = {\n  const input = Inputs.range(S1Range, {value: 10, step: 0.01, label: \"S₁\", attributes: {class: \"primary-slider\"}});\n  input.classList.add(\"primary-slider\");\n  return input;\n}\nviewof a1 = {\n  const input = Inputs.range(a1Range, {value: 0.5, step: 0.01, label: \"a₁\", attributes: {class: \"primary-slider\"}});\n  input.classList.add(\"primary-slider\");\n  return input;\n}\nviewof b1 = {\n  const input = Inputs.range(b1Range, {value: 30, step: 0.01, label: \"b₁\", attributes: {class: \"primary-slider\"}});\n  input.classList.add(\"primary-slider\");\n  return input;\n}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nS₁: \na₁: \nb₁:",
-    "crumbs": [
-      "Home",
-      "Model Explorer"
-    ]
-  },
-  {
-    "objectID": "explorer.html#secondary-parameters",
-    "href": "explorer.html#secondary-parameters",
-    "title": "Model Explorer",
-    "section": "Secondary Parameters",
-    "text": "Secondary Parameters\n\nviewof S2 = {\n  const input = Inputs.range(S2Range, {value: 0, step: 0.01, label: \"S₂\", attributes: {class: \"secondary-slider\"}});\n  input.classList.add(\"secondary-slider\");\n  return input;\n}\nviewof a2 = {\n  const input = Inputs.range(a2Range, {value: 0, step: 0.01, label: \"a₂\", attributes: {class: \"secondary-slider\"}});\n  input.classList.add(\"secondary-slider\");\n  return input;\n}\nviewof b2 = {\n  const input = Inputs.range(b2Range, {value: 0, step: 0.01, label: \"b₂\", attributes: {class: \"secondary-slider\"}});\n  input.classList.add(\"secondary-slider\");\n  return input;\n}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nS₂: \na₂: \nb₂: \n\n\n{\n  const reset = Inputs.button(\"Reset Plot\", {\n    reduce: () =&gt; { mutable rawData = generateRawData(); mutable showAnswer = false; }\n  });\n  const reveal = Inputs.button(\"Reveal Answer\", {\n    reduce: () =&gt; (mutable showAnswer = !showAnswer)\n  });\n  return html`&lt;div style=\"display:flex;gap:8px;\"&gt;\n    ${reset}\n    ${reveal}\n  &lt;/div&gt;`;\n}\n\n\n\n\n\n\n\nshowAnswer ? html`&lt;div style=\"margin-top:12px;padding:10px;border:1px solid #282828;border-radius:4px;font-size:13px;\"&gt;\n  &lt;div style=\"color:var(--primary-color);margin-bottom:6px;\"&gt;\n    S₁ = &lt;strong&gt;${rawData.params.S1}&lt;/strong&gt; &emsp;\n    a₁ = &lt;strong&gt;${rawData.params.a1}&lt;/strong&gt; &emsp;\n    b₁ = &lt;strong&gt;${rawData.params.b1}&lt;/strong&gt;\n  &lt;/div&gt;\n  &lt;div style=\"color:var(--secondary-color);\"&gt;\n    S₂ = &lt;strong&gt;${rawData.params.S2}&lt;/strong&gt; &emsp;\n    a₂ = &lt;strong&gt;${rawData.params.a2}&lt;/strong&gt; &emsp;\n    b₂ = &lt;strong&gt;${rawData.params.b2}&lt;/strong&gt;\n  &lt;/div&gt;\n&lt;/div&gt;` : html``",
-    "crumbs": [
-      "Home",
-      "Model Explorer"
-    ]
-  },
-  {
-    "objectID": "explorer.html#attempt-to-fit-the-data",
-    "href": "explorer.html#attempt-to-fit-the-data",
-    "title": "Model Explorer",
-    "section": "Attempt to fit the data",
-    "text": "Attempt to fit the data\n\n  \n    \n    g₁(t)\n  \n  \n    \n    g₂(t)\n  \n  \n    \n    f(t)\n  \n  \n    \n    Raw data\n  \n  \n    \n    Residual\n  \n\n\n\ncurve = Array.from({length: nPoints}, (_, i) =&gt; {\n  const t = i * maxTime / (nPoints - 1);\n  const g1 = S1 / (1 + Math.exp(a1 * (b1 - t)));\n  const g2 = S2 / (1 + Math.exp(a2 * (b2 - t)));\n  const f = g1 + g2;\n  const raw = rawData.points[i];\n  return {t, g1, g2, f, raw, resid: f - raw};\n})\n\nplotSize = Generators.observe(notify =&gt; {\n  let ro;\n  const attach = () =&gt; {\n    const el = document.querySelector(\".plot-area\");\n    if (!el) { requestAnimationFrame(attach); return; }\n    const measure = () =&gt; notify({\n      width: Math.max(200, el.clientWidth),\n      height: Math.max(200, el.clientHeight)\n    });\n    measure();\n    ro = new ResizeObserver(measure);\n    ro.observe(el);\n  };\n  notify({width: 640, height: 500});\n  attach();\n  return () =&gt; ro?.disconnect();\n})\n\n{\n  const rawMean = curve.reduce((s, d) =&gt; s + d.raw, 0) / curve.length;\n  const ssTot = curve.reduce((s, d) =&gt; s + (d.raw - rawMean) ** 2, 0);\n  const ssRes = curve.reduce((s, d) =&gt; s + d.resid ** 2, 0);\n  const r2 = 1 - ssRes / ssTot;\n\n  const plot = Plot.plot({\n    width: plotSize.width,\n    height: plotSize.height,\n    style: {background: \"#060606\", color: \"#adafae\", overflow: \"visible\"},\n    x: {label: \"Time (h)\"},\n    y: {label: \"Normalized RFU\"},\n    marks: [\n      Plot.gridX({stroke: \"#282828\"}),\n      Plot.gridY({stroke: \"#282828\"}),\n      Plot.frame({stroke: \"#282828\"}),\n      Plot.ruleY([0], {stroke: \"#adafae\", strokeOpacity: 0.3}),\n      Plot.dot(curve, {x: \"t\", y: \"raw\", fill: \"#ffffff\", stroke: \"#ffffff\", strokeWidth: 0.5}),\n      Plot.line(curve, {x: \"t\", y: \"resid\", stroke: \"#92ff84\", strokeWidth: 1}),\n      Plot.line(curve, {x: \"t\", y: \"g1\", stroke: \"#77b300\", strokeWidth: 2.5, strokeDasharray: \"6,3\"}),\n      Plot.line(curve, {x: \"t\", y: \"g2\", stroke: \"#e83e8c\", strokeWidth: 2.5, strokeDasharray: \"6,3\"}),\n      Plot.line(curve, {x: \"t\", y: \"f\", stroke: \"#2a9fd6\", strokeWidth: 5}),\n      Plot.ruleY([0], {stroke: \"#ffffff\", strokeWidth: 1.5, strokeDasharray: \"4,4\"}),\n      Plot.text([{label: `R² = ${r2.toFixed(4)}`}], {\n        text: \"label\",\n        frameAnchor: \"right\",\n        fill: r2 &gt;= 0.9 ? \"#77b300\" : r2 &gt;= 0.7 ? \"#f80\" : \"#c00\",\n        fontSize: 20,\n        fontWeight: \"bold\",\n        dx: -20,\n        dy: -50\n      }),\n    ]\n  });\n\n  return plot;\n}",
-    "crumbs": [
-      "Home",
-      "Model Explorer"
-    ]
-  },
-  {
     "objectID": "model.html",
     "href": "model.html",
     "title": "Modeling RT-QuIC Kinetics",
     "section": "",
-    "text": "This R project contains code for modeling the kinetics of the prion protein misfolding in the RT-QuIC assay. This misfolding is modeled using a two-component model, with the primary and secondary phases of the reaction being modeled separately.\nThe model is described by the following function, \\(g_1\\) and \\(g_2\\):\n\\[\n  g_1(t)=\\frac{S_1}{1+e^{a_1(b_1-\\text{t})}} \\hspace{3em} g_2(t)=\\frac{S_2}{1+e^{a_2(b_2-\\text{t})}}\n\\]\nwhere \\(S_1\\) and \\(S_2\\) represent the primary and secondary phase asymptotes, respectively. Parameters \\(a_1\\) and \\(a_2\\), modulate the steepness of the inflection point; \\(b_1\\) and \\(b_2\\) represent the midpoint of the inflection point of the curves. The model can be described as the sum of these two logistic functions.\n\\[\nf(t)=g_1(t)+g_2(t)\n\\]",
+    "text": "[1] \"20260715_r13_GR_pos-dil-series\"\n[1] \"20260715_r5_GR_pos-dil-series\"\n[1] \"20260715_r7_GR_pos-dil-series\"\n[1] \"20260824_r5_GR_substrate-dil-series\"",
     "crumbs": [
       "Home",
       "Modeling RT-QuIC Kinetics"
@@ -292,8 +424,8 @@
     "objectID": "model.html#introduction",
     "href": "model.html#introduction",
     "title": "Modeling RT-QuIC Kinetics",
-    "section": "",
-    "text": "This R project contains code for modeling the kinetics of the prion protein misfolding in the RT-QuIC assay. This misfolding is modeled using a two-component model, with the primary and secondary phases of the reaction being modeled separately.\nThe model is described by the following function, \\(g_1\\) and \\(g_2\\):\n\\[\n  g_1(t)=\\frac{S_1}{1+e^{a_1(b_1-\\text{t})}} \\hspace{3em} g_2(t)=\\frac{S_2}{1+e^{a_2(b_2-\\text{t})}}\n\\]\nwhere \\(S_1\\) and \\(S_2\\) represent the primary and secondary phase asymptotes, respectively. Parameters \\(a_1\\) and \\(a_2\\), modulate the steepness of the inflection point; \\(b_1\\) and \\(b_2\\) represent the midpoint of the inflection point of the curves. The model can be described as the sum of these two logistic functions.\n\\[\nf(t)=g_1(t)+g_2(t)\n\\]",
+    "section": "Introduction",
+    "text": "Introduction\nThis R project contains code for modeling the kinetics of the prion protein misfolding in the RT-QuIC assay. This misfolding is modeled using a two-component model, with the primary and secondary phases of the reaction being modeled separately.\nThe model is described by the following function, \\(g_1\\) and \\(g_2\\):\n\\[\n  g_1(t)=\\frac{S_1}{1+e^{a_1(b_1-\\text{t})}} \\hspace{3em} g_2(t)=\\frac{S_2}{1+e^{a_2(b_2-\\text{t})}}\n\\]\nwhere \\(S_1\\) and \\(S_2\\) represent the primary and secondary phase asymptotes, respectively. Parameters \\(a_1\\) and \\(a_2\\), modulate the steepness of the inflection point; \\(b_1\\) and \\(b_2\\) represent the midpoint of the inflection point of the curves. The model can be described as the sum of these two logistic functions.\n\\[\nf(t)=g_1(t)+g_2(t)\n\\]",
     "crumbs": [
       "Home",
       "Modeling RT-QuIC Kinetics"
