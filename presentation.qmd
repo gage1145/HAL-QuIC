@@ -1,17 +1,24 @@
 ---
-title: "HAL-QuIC"
-subtitle: "Kinetic Modeling of the RT-QuIC Assay"
+title: "Kinetic Modeling of the RT-QuIC Assay"
+subtitle: "A classical enzymatic approach"
 author: "Gage Rowden"
 date: today
-format:
+format: 
   revealjs:
-    theme: 
-        - static/custom.scss
+    theme: static/custom.scss
     slide-number: true
     transition: fade
     chalkboard: false
-    mermaid:
-      theme: dark
+    html-math-method: mathjax
+    incremental: true
+    include-in-header:
+      - text: |
+          <script>
+          window.MathJax = {
+            loader: { load: ['[tex]/mathtools'] },
+            tex: { packages: {'[+]': ['mathtools']} }
+          };
+          </script>
 execute:
   echo: false
   warning: false
@@ -48,104 +55,231 @@ secondary_color <- "#54a4ff"
 
 list.files("R", full.names = TRUE) %>%
   walk(source)
+  
 
 main_theme <- theme(
-    plot.background = element_rect(fill = color_bg),
-    panel.grid = element_line(color = color_base),
-    panel.background = element_rect(fill = color_bg),
-    axis.line.y  = element_line(color = primary_color),
-    axis.ticks.y = element_line(color = primary_color),
-    axis.text.y  = element_text(color = primary_color),
-    axis.title.y = element_text(color = primary_color),
-    axis.line.y.right  = element_line(color = secondary_color),
-    axis.ticks.y.right = element_line(color = secondary_color),
-    axis.text.y.right  = element_text(color = secondary_color),
-    axis.title.y.right = element_text(color = secondary_color)
+    # text = element_text(color = "white"),
+    # axis.text = element_text(color = "white"),
+    # plot.background = element_rect(fill = color_bg),
+    # panel.grid = element_line(color = color_base),
+    # panel.background = element_rect(fill = color_bg),
+    # strip.background = element_rect(fill = color_bg),
 )
 ```
 
-# Background
+## Enzyme Kinetics
 
-## What is RT-QuIC?
+:::: {.columns}
 
-Real-Time Quaking-Induced Conversion is a seed amplification assay (SAA) used to detect misfolded prion protein (PrP^Sc^) [@atarashi2011].
+::: {.column width="50%"}
 
-- A small amount of seed material (brain or lymph node homogenate) is incubated with recombinant substrate protein (PrP^C^) under cyclic shaking
-- Prion seeds template misfolding of the substrate, forming amyloid aggregates
-- Aggregation is tracked in real time via thioflavin T (ThT) fluorescence
-- The result is a **sigmoidal fluorescence trace**, characteristic of nucleated self-assembly [@ferrone1999]
+- The enzyme ($E$) forms a reversible complex with the substrate ($S$).
+- The forward reaction results in the formation of a product ($P$) and $E$ returning to its original state.
+- Typical enzymatic reactions are instantaneous, and asymptotically approach a certain $P$ concentration.
 
-## Prion Fibril Kinetics
+:::
 
-A sigmoid would normally suggest cooperative binding — but PrP^Sc^ is a linear fibril, not an allosteric complex.
+::: {.column width="50%"}
 
-@masel1999 proposed a **nucleated polymerization** model instead, tracking monomer, fibril number, and aggregated mass:
+$$E+S \rightleftharpoons ES \rightarrow E+P$$
 
-$$
-\frac{dM}{dt}=-nk_{n}M^{n}-k_{g}MP \qquad
-\frac{dP}{dt}=k_{n}M^{n}+k_{f}Z-k_{f}M_{0}P
-$$
+::: {.fragment}
 
-Because RT-QuIC seeds with a **mature** fibril, spontaneous nucleation ($k_n$) becomes negligible, simplifying to:
-
-$$
-\frac{dP}{dt}=k_fZ \qquad\qquad \frac{dZ}{dt}=k_gMP
-$$
-
-## Measuring the Reaction
-
-ThT fluorescence tracks fibril formation, but isn't a direct measure of substrate consumption. @lee2007 paired it with UV-vis absorbance to track both sides of the reaction simultaneously.
-
-```{r Absorbance vs ThT}
+```{r Enzyme plot}
 #| fig-height: 5
-#| fig-width: 9
-#| fig-align: center
-a <- 0.25
-b <- 36
-
+#| fig-width: 7
 tibble(
-  time = seq(0, 72, 0.25),
-  tht  = 1 / (1 + exp(a * (b - time))),
-  abs  = 1 / (1 + exp(a * (time - b)))
+    time = seq(0, 100, 0.25),
+    p    = 10 * time / (10 + time)
 ) %>%
-  pivot_longer(c(tht, abs), names_to = "measure", values_to = "value") %>%
-  ggplot(aes(time, value, color = measure)) +
-  geom_line(linewidth = 1.2) +
-  scale_y_continuous(sec.axis = sec_axis(~ .x, name = "Fluorescence (Fibril %)")) +
-  scale_color_manual(values = c(primary_color, secondary_color)) +
-  labs(x = "Time (hr)", y = "Absorbance (Substrate %)") +
-  main_theme +
+  ggplot(aes(time, p)) +
+  geom_line(linewidth = 1.2, color = primary_color) +
+  coord_cartesian(expand = FALSE) +
+  labs(x = "Time", y = "[P]") +
   theme(
-    legend.position = "none",
+    plot.background = element_rect(fill = color_bg),
+    panel.grid = element_line(color = color_base),
+    panel.background = element_rect(fill = color_bg),
+    strip.background = element_rect(fill = color_bg),
+    text = element_text(color = "white"),
+    axis.text = element_text(color = "white"),
+    axis.line = element_line(color = "white"),
+    axis.ticks = element_line(color = "white"),
+    axis.title = element_text(color = "white")
   )
 ```
 
-## A Missing Piece
+:::
 
-Standard RT-QuIC analysis reports one number: the **lag time to threshold** (rate of amyloid formation, RAF).
+::: {.fragment}
 
-But normalized fluorescence traces frequently show more structure:
+![](https://cdn.kastatic.org/ka-perseus-images/e72e4f67d724939b0aa31c7fb361e5c8a5976c31.png){.absolute width="450" bottom="200" right="-100"}
 
-- A rapid **growth** phase, then
-- A **dampening** phase that pulls the signal back down after the peak
+:::
 
-This second phase is poorly captured by a single sigmoid — and it's currently ignored by standard analysis.
+:::
 
-# How the Model Is Generated
+::::
+
+## Prion Fibril Kinetics
+:::: {.columns}
+
+::: {.column width="50%"}
+
+- Prions form native/misfolded complexes.
+- Native prions are integrated into fibrils.
+- Fibril nucleation sites remain constant (2 ends of the fibril).
+- RT-QuIC speeds up the process but introduces a confounding factor.
+
+:::
+
+::: {.column width="50%"}
+
+::: {style="font-size: 0.6em;"}
+[Conversion of PrP^C^ to PrP^Fib^]{style="color: #ff4f4f; margin-bottom: 0;"}
+$$PrP^C \xrightleftharpoons[k_{-nuc}]{k_{nuc}} PrP^{Nuc} \xrightleftharpoons[k_{-oligo}]{k_{oligo}} PrP^{Oligo} \xrightarrow{k_{fib}} PrP^{Fib}$$
+
+[PrP^Fib^ converting PrP^C^]{style="color: #ff4f4f; margin-bottom: 0;"}
+$$PrP^{Fib} + PrP^C \xrightleftharpoons[k_{-nuc}]{k_{nuc}} PrP^{Fib \cdot C} \xrightarrow{k_{fib}} PrP^{Fib + 1}$$
+:::
+
+::: {.fragment}
+::: {.absolute bottom="-20" right="-150"}
+```{r Prion plot}
+#| fig-height: 3.5
+#| fig-width: 6
+sig_plot <- tibble(
+    time = seq(0, 100, 0.25),
+    p    = 10 / (1 + exp(0.5 * (50 - time)))
+) %>%
+  ggplot(aes(time, p)) +
+  geom_line(linewidth = 1.2, color = primary_color) +
+  coord_cartesian(expand = FALSE) +
+  labs(x = "Time", y = "[P]") +
+  theme(
+    plot.background = element_rect(fill = color_bg),
+    panel.grid = element_line(color = color_base),
+    panel.background = element_rect(fill = color_bg),
+    strip.background = element_rect(fill = color_bg),
+    text = element_text(color = "white"),
+    axis.text = element_text(color = "white"),
+    axis.line = element_line(color = "white"),
+    axis.ticks = element_line(color = "white"),
+    axis.title = element_text(color = "white")
+  )
+sig_plot
+```
+:::
+
+:::
+
+:::
+
+::::
+
+## Why is RT-QuIC sigmoidal?
+
+:::: {.columns}
+::: {.column width="50%"}
+- A sigmoid would normally suggest some kind of cooperative interaction or feedback loop.
+- PrP fibril formation should follow the hyperbolic curve because the fibril formation is linear.
+- Why is it sigmoidal?
+:::
+::: {.column width="50%"}
+::: {.fragment}
+::: {style="font-size: 0.6em;"}
+[**Fragmentation**]{style="color: #ff4f4f;"}
+$$
+PrP^{Fib} \xrightarrow{k_{frag}} 2PrP^{Fib}
+$$
+:::
+:::
+::: {.fragment}
+::: {style="font-size: 0.6em;"}
+$$
+PrP^{Fib} + PrP^C \xrightleftharpoons[k_{-nuc}]{k_{nuc}} PrP^{Fib \cdot C} \xrightarrow{k_{fib}} PrP^{Fib + 1}\xrightarrow{k_{frag}} 2PrP^{Fib}
+$$
+:::
+:::
+
+::: {.absolute bottom="-20" right="-150"}
+```{r}
+#| fig-height: 3.5
+#| fig-width: 6
+sig_plot
+```
+:::
+:::
+::::
+
+## How do we get the rate constants?
+
+- Alter [E] and [S] to get the $k_{fib}$ constant.
+- Alter RT-QuIC shaking parameters to get $k_{frag}$.
+- How will we characterize the reaction given that RT-QuIC frequently shows more structure than a single sigmoid?
+
+::: {.fragment}
+::: {.center}
+
+```{r}
+#| fig-height: 3
+#| fig-width: 6
+S1 <- 25
+S2 = -7.5
+a1 = 1.5
+a2 = 0.5
+b1 = 10
+b2 = 16
+df_example <- tibble(time = seq(0, 48, 0.25)) %>%
+  mutate(
+    growth = S1 / (1 + exp(a1 * (b1 - time))),
+    decay = S2 / (1 + exp(a2 * (b2 - time))),
+    combined = growth + decay,
+    raw = combined + rnorm(length(time), 0, 0.2)
+  )
+
+df_example %>%
+  ggplot(aes(time, combined)) +
+  geom_line(linewidth = 1.2, color = "#7c7c7c") +
+  geom_point(aes(y = raw), size = 0.5, color = "#adafae") +
+  scale_color_manual(values = color_palette) +
+  dark_theme +
+  theme(
+    legend.title = element_blank(),
+    axis.title = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0, .95),
+    legend.justification = c(0, 1),
+    legend.background = element_blank(),
+  )
+
+```
+:::
+:::
+
+# Nonlinear Model
 
 ## The Double Sigmoidal Model
-
-HAL-QuIC models the full trace as the **sum of two logistic functions**:
-
+:::: {.columns}
+::: {.column width="50%"}
+- We frequently observe a **dampening** effect that pulls the signal back down after the peak.
+- Using a nonlinear least-squares regression, we can summarize the data as the **sum of two logistic functions**:
+:::
+::: {.column width="50%"}
+::: {.fragment}
 $$
 f(t)=\frac{S_1}{1+e^{a_1(b_1-t)}}+\frac{S_2}{1+e^{a_2(b_2-t)}}
 $$
-
+:::
+::: {.fragment}
 ```{r Example Graph}
-#| fig-height: 5
-#| fig-width: 9
-example_graph(S1 <- 25, S2 = -12.5, a1 = 1.5, a2 = 0.5, b1 = 10, b2 = 16)
+#| fig-height: 6
+#| fig-width: 10
+example_graph(S1 = 25, S2 = -12.5, a1 = 1.5, a2 = 0.5, b1 = 10, b2 = 16)
 ```
+:::
+:::
+::::
 
 ## Parameter Interpretation
 
@@ -153,88 +287,42 @@ Each sigmoid contributes three parameters — six in total describe a reaction:
 
 | Parameter | Meaning |
 |:---:|---|
-| $S_1$, $S_2$ | Asymptotes of 1$^\circ$ / 2$^\circ$ phases |
-| $a_1$, $a_2$ | Steepness of inflection points |
-| $b_1$, $b_2$ | Time to inflection point |
+| S~1~, S~2~ | Asymptotes of 1$^\circ$ / 2$^\circ$ phases |
+| a~1~, a~2~ | Steepness of inflection points |
+| b~1~, b~2~ | Time to inflection point |
 
-Together, $(S_1, a_1, b_1, S_2, a_2, b_2)$ form a compact **kinetic fingerprint** for a single RT-QuIC reaction.
-
-## Data Processing Pipeline
-
-```{mermaid}
-flowchart LR
-  A["Raw fluorescence\n(.parquet)"] --> B["normalize()\nsmooth + normalize + derivatives"]
-  B --> C["calculate_metrics()\nMPR, AUC, time-to-threshold"]
-  C --> D["estimate_params()\nlandmark starting values"]
-  D --> E["fit_model()\ndouble sigmoidal nls()"]
-  E --> F["results.parquet\ncoefficients + derived params"]
-```
-
-Landmark values (peak fluorescence, inflection times, decay characteristics) are extracted directly from the smoothed data and its derivatives, giving the nonlinear fitter informed starting values instead of arbitrary guesses.
-
-## Fitting Procedure
-
-`fit_model()` uses bounded `nls()` with `algorithm = "port"`, and a 10-second timeout per call:
-
-1. Attempt the **double sigmoidal** fit using landmark-derived starting values
-2. If it fails, fall back to a **single sigmoidal** fit
-3. Re-attempt the **double** fit, seeded with the single fit's coefficients
-4. If that also fails, report the single sigmoidal result
-
-This staged fallback keeps the pipeline resilient across thousands of individual well reactions with widely varying signal quality.
+::: {.fragment}
+Together, these coefficients form a compact **kinetic fingerprint** for a single RT-QuIC reaction.
+:::
 
 ## Derived Parameters
-
-From the six fitted coefficients, three additional kinetic quantities are calculated:
-
+::: {style="font-size: 0.6em;"}
 | Parameter | Formula | Meaning |
-|:---:|:---:|---|
-| $K_{app}$ | $1 / b_1$ | Apparent rate constant |
-| $t_{lag}$ | $b_1 - \dfrac{S_1}{2a_1}$ | Lag time (x-intercept of tangent at inflection) |
-| $t_{lag}'$ | $b_1 - \dfrac{a_1}{2}$ | Alternative lag time estimate |
+|---|---|---|
+| $k_{fib}$ | $\dfrac{V_{max}}{[E]}$ | Fibrillation rate constant |
+| $k_{frag}$| $\dfrac{1}{b_2-b_1}$ | Fragmentation rate constant |
+| $t_{lag}$ | $b_1 - \dfrac{a_1}{2}$ | Alternative lag time estimate |
+| $K_M$     | $\frac{k_{fib} + k_{-nuc}}{k_{nuc}}$ | $[S]$ at $\dfrac{V_{max}}{2}$ | 
+| $V_{max}$ | $k_{fib}[E]$ | Maximum reaction velocity |
+| $v_0$     | $\dfrac{V_{max}[S]}{K_M + [S]}$ | Reaction velocity (Michaelis-Menten equation) |
+:::
 
+::: {.fragment}
 These give a bridge back to conventional RT-QuIC metrics (like RAF) while retaining the full shape information the double sigmoid captures.
+:::
 
 # Current Work: Describing Reaction Kinetics
 
-## Research Roadmap
+## Experiment 1: Altering [E] {.smaller}
 
-The open question: is the secondary phase a genuine kinetic phenomenon, or an assay artifact? Experiments are tiered by required effort.
+:::: {.columns}
+::: {.column width="30%"}
+- **Question:** Does seed concentration modulate the amplitude, timing, or inflection of either phase?
 
-```{mermaid}
-flowchart LR
-  subgraph T1["Tier 1 — Assay Parameters"]
-    direction TB
-    E1(["Seed Concentration"])
-    E2(["Fragmentation Dynamics"])
-    E7(["Substrate Concentration"])
-    E1-->E7
-    E7-->E2
-  end
-
-  subgraph T2["Tier 2 — Measurement Validation"]
-    direction TB
-    E3(["Absorbance & Fluorescence"])
-    E4(["Fibril/Soluble Protein"])
-    E3-->E4
-  end
-
-  subgraph T3["Tier 3 — Generalizability"]
-    direction TB
-    E5(["Prion Strain Effects"])
-    E6(["Substrate Species Effects"])
-    E5-->E6
-  end
-
-  T1 --> T2 --> T3
-```
-
-## Experiment 1 — Seed Concentration {.smaller}
-
-**Question:** Does seed concentration modulate the amplitude, timing, or inflection of the secondary phase?
-
-**Design:** 10-fold serial dilution of a known CWD-positive lymph node sample, run under standard conditions (42°C, 700 rpm, 15 min read cycle, 96 hr).
-
+- **Design:** Serial dilution of a known CWD-positive lymph node sample, run under standard conditions (42°C, 700 rpm, 15 min read cycle, 96 hr).
+:::
+::: {.column width="70%"}
+::: {.fragment}
 ```{r Load seed data}
 #| include: false
 seed_files <- list.files("raw/seed_effects", pattern = "*.xlsx", full.names = TRUE)
@@ -281,13 +369,9 @@ seed_mod <- seed_df %>%
   unnest_wider(coefficients)
 ```
 
-Fits the same double sigmoidal model to each dilution and compares the six coefficients across the dilution series.
-
-## Seed Concentration: Results
-
 ```{r Seed vs Parameters}
-#| fig-height: 5.5
-#| fig-width: 10
+#| fig-height: 8
+#| fig-width: 12
 seed_mod %>%
   pivot_longer(c(S1, a1, b1, S2, a2, b2), names_to = "parameter", values_to = "value") %>%
   filter(
@@ -312,20 +396,29 @@ seed_mod %>%
   facet_wrap(vars(parameter), scales = "free_y", labeller = label_parsed) +
   scale_color_gradient(low = "darkcyan", high = "darkorange") +
   labs(x = TeX(r'(Log$_{10}$ Seed Dilution Factor)'), y = "Coefficient Value") +
-  main_theme +
-  theme(legend.position = "none")
+  dark_theme +
+  theme(
+    legend.position = "none",
+    strip.text = element_text(color="white", size = 24)
+  )
 ```
 
-- $b_1$ (lag time) shifts with dilution, as expected
-- $S_2$ becomes **more negative** as seed concentration increases — more seed, stronger dampening
-- $a_1$ and $a_2$ (steepness) are largely unaffected by dilution
+:::
+:::
+::::
 
-## Experiment 2 — Substrate Concentration {.smaller}
 
-**Question:** Does substrate concentration modulate the secondary phase, and does it behave like classical enzyme kinetics?
+## Experiment 2: [S] {.smaller}
 
-**Design:** Fixed seed dilution ($10^{-3}$), substrate concentration varied from 0.01 to 0.4 µg/µL, standard reaction conditions.
+:::: {.columns}
+::: {.column width="30%"}
+- **Question:** Does substrate concentration modulate either phase, and does it behave like classical enzyme kinetics?
 
+- **Design:** Fixed seed dilution ($10^{-3}$), substrate concentration varied from 0.01 to 0.4 µg/µL, standard reaction conditions.
+:::
+
+::: {.column width="70%"}
+::: {.fragment}
 ```{r Load substrate data}
 #| include: false
 sub_files <- list.files("raw/substrate_effects", pattern = "*.xlsx", full.names = TRUE)
@@ -355,13 +448,10 @@ sub_mod <- sub_df %>%
   mutate(v = 1 / b1)
 ```
 
-If substrate behaves like a classical enzyme system, reaction rate should rise with $[S]$ and saturate at $V_{max}$.
-
-## Substrate Concentration: Results
 
 ```{r Substrate vs Parameters}
-#| fig-height: 5.5
-#| fig-width: 10
+#| fig-height: 8
+#| fig-width: 12
 sub_mod %>%
   pivot_longer(c(S1, a1, b1, S2, a2, b2), names_to = "parameter", values_to = "value") %>%
   filter(
@@ -386,21 +476,21 @@ sub_mod %>%
   facet_wrap(vars(parameter), scales = "free_y", labeller = label_parsed) +
   scale_color_gradient(low = "darkcyan", high = "darkorange") +
   labs(x = "[Substrate] (mg/mL)", y = "Coefficient Value") +
-  main_theme +
+  dark_theme +
   theme(legend.position = "none")
 ```
 
-- $S_1$ rises and $S_2$ falls with $[S]$ — more substrate, stronger dampening
-- $b_1$ is **non-monotonic**: it peaks around 0.1 mg/mL before settling to an equilibrium near 30 hr
-- Not the smooth saturation curve classical enzyme kinetics would predict — there appears to be an optimal $[S]$
+:::
+:::
+::::
 
-## Determining $V_{max}$ and $K_m$
+## Determining $V_{max}$ and $K_{fib}$
 
-Treating $1/b_1$ as a reaction velocity and fitting $v = \dfrac{V_{max}[S]}{K_m + [S]}$ up to the peak:
+::: {style="font-size: 0.6em;"}
+Treating $1/b_1$ as a reaction velocity and fitting $v = \dfrac{V_{max}[S]}{K_{fib} + [S]}$ up to the peak:
+:::
 
 ```{r Vmax fit}
-#| fig-height: 5
-#| fig-width: 9
 sub_summary <- sub_mod %>%
   summarize(across(c(v), mean), .by = c(sample, dilutions))
 
@@ -418,35 +508,70 @@ nls_mod <- nls(
 )
 
 mic_men <- tibble(
-  dilutions = seq(0, 0.4, by = 0.01),
-  v = (coef(nls_mod)[1] * dilutions) / (coef(nls_mod)[2] + dilutions)
-)
+  dilutions = seq(-0.1, 0.5, by = 0.01),
+  v = (coef(nls_mod)[1] * dilutions) / (coef(nls_mod)[2] + dilutions),
+  d_inv = 1 / dilutions,
+  v_inv = 1 / v
+) %>%
+  filter(dilutions != 0)
+```
 
+:::: {.columns}
+::: {.column width="50%"}
+
+```{r}
+#| fig-height: 5
+#| fig-width: 9
 sub_mod %>%
   ggplot(aes(x = dilutions, y = v)) +
   geom_point(position = position_jitter(width = 0.01, seed = 157093759), color = "darkorange") +
   geom_line(data = mic_men, aes(x = dilutions, y = v), color = "darkorange", linewidth = 1) +
-  scale_x_continuous(breaks = seq(0, 0.4, by = 0.05)) +
-  labs(x = "[Substrate] (mg/mL)", y = TeX("V ($h^{-1}$)")) +
-  main_theme
+  scale_x_continuous(breaks = seq(0, 0.4, by = 0.05), limits = c(0, 0.4)) +
+  scale_y_continuous(limits = c(0, NA)) +
+  labs(
+    title = "Saturation Plot",
+    x = "[Substrate] (mg/mL)", 
+    y = TeX("V ($h^{-1}$)")
+  ) +
+  dark_theme
 ```
+:::
+::: {.column width="50%"}
+```{r}
+#| fig-height: 5
+#| fig-width: 9
+sub_mod %>%
+  ggplot(aes(x = 1/dilutions, y = 1/v)) +
+  geom_hline(yintercept = 0, color = "white", linewidth = 1, linetype = "dashed") +
+  geom_vline(xintercept = 0, color = "white", linewidth = 1, linetype = "dashed") +
+  geom_point(position = position_jitter(width = 0.01, seed = 157093759), color = "darkorange") +
+  geom_line(data = mic_men, aes(x = d_inv, y = v_inv), color = "darkorange", linewidth = 1) +
+  scale_x_continuous(breaks = seq(-100, 100, by = 25), limits = c(-20, NA)) +
+  scale_y_continuous(limits = c(-10, NA)) +
+  coord_cartesian(expand = FALSE) +
+  labs(
+    title = "Lineweaver-Burk Plot",
+    x = TeX("\\[S]$^{-1}$ (mL/mg)"), 
+    y = TeX("V$^{-1}$ (h)")
+  ) +
+  dark_theme
+```
+:::
 
+::: {style="font-size: 0.6em;"}
 Theoretical $V_{max} = `r round(coef(nls_mod)[1], 2)`\ h^{-1}$, theoretical $K_m = `r round(coef(nls_mod)[2], 2)`\ mg/mL$.
+:::
 
 ## Next Steps
 
-- **Tier 1:** Fragmentation dynamics — does shaking speed / temperature shift the secondary phase, implicating mechanical fragmentation?
-- **Tier 2:** Orthogonal measurement — do absorbance (A600), SyproOrange, and Bradford assays confirm the secondary phase as a real change in fibril/soluble protein state, or is it ThT-specific?
-- **Tier 3:** Generalizability — does the biphasic profile, and its secondary-phase parameters, hold across prion strains and substrate species?
-
-Each tier builds toward the same question: **is the dampening phase biology, or artifact?**
-
-# Thank You
+- **Fragmentation dynamics**: does shaking speed / temperature shift the secondary phase, implicating mechanical fragmentation?
+- **Orthogonal measurements**: do absorbance (A600), SyproOrange, and Bradford assays confirm the secondary phase as a real change in fibril/soluble protein state, or is it ThT-specific?
+- **Generalizability**: does the biphasic profile, and its secondary-phase parameters, hold across prion strains and substrate species, and can this model be used to predict certain characteristics of the initial prion seed?
 
 ## Learn More
 
-- **Model:** [modeling.gagerowden.com/model.html](https://modeling.gagerowden.com/model.html)
-- **Roadmap:** [modeling.gagerowden.com/roadmap.html](https://modeling.gagerowden.com/roadmap.html)
-- **Experiments:** [modeling.gagerowden.com/experiments.html](https://modeling.gagerowden.com/experiments.html)
+**Model:** [modeling.gagerowden.com/model.html](https://modeling.gagerowden.com/model.html)
 
-[gagerowden.com](https://gagerowden.com)
+**Roadmap:** [modeling.gagerowden.com/roadmap.html](https://modeling.gagerowden.com/roadmap.html)
+
+**Experiments:** [modeling.gagerowden.com/experiments.html](https://modeling.gagerowden.com/experiments.html)

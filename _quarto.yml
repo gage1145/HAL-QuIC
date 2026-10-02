@@ -32,6 +32,8 @@ website:
         text: Explorer
       - href: experiments.qmd
         text: Experiments
+      - href: presentation.qmd
+        text: Slides
     right:
       - href: https://gagerowden.com
         text: "GageRowden.com"
@@ -51,4 +53,4 @@ format:
 execute:
   warning: false
   message: false
-  cache: true
+  cache: false
