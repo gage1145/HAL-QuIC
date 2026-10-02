@@ -1,0 +1,135 @@
+---
+format: 
+  html:
+    include-in-header:
+      - text: |
+          <style>
+          /* Targets MathJax and KaTeX containers */
+          .math, .MathJax, .katex {
+            color: #d9534f !important; 
+          }
+          </style>
+---
+
+## Kinetic Model with Fragmentation
+
+This is a well-studied framework in the fibril nucleation/polymerization literature (Knowles et al., 2009 Science). Here's how to think through it systematically.
+
+---
+
+### State Variables
+
+Rather than tracking the full length distribution, use moment equations — track two aggregate quantities:
+
+| Symbol |                                  Meaning                                   |
+|--------|----------------------------------------------------------------------------|
+| $M(t)$   | Free monomer concentration                                                 |
+| $P(t)$   | Total fibril number concentration (count of fibrils)                       |
+| $N(t)$   | Total fibril mass concentration (∑ of all monomer units locked in fibrils) |
+
+Note: $M + N = M₀$ (conservation — total monomer is constant).
+
+The mean fibril length is implicitly $L = N/P$.
+
+---
+
+### Incorporating Size-Dependent Fragmentation
+
+A fibril of length $n$ has $n - 1$ internal bonds that can break. So its fragmentation rate scales as $k_f(n - 1) ≈ k_fn$ for large fibrils.
+
+When you sum this over all fibrils in the population:
+
+$$V_{frag}=k_f\sum nf(n,t)=k_fN$$
+
+Each fragmentation event: +1 fibril (one fibril becomes two), no change in N (mass is conserved).
+
+So the size-dependence falls out naturally. Longer fibrils contribute proportionally more to the fragmentation rate.
+
+---
+
+### The ODE System
+
+- $\frac{dP}{dt} = k_fN$: fragmentation multiplies fibrils
+- $\frac{dN}{dt} = 2k_eMP$: elongation adds mass; factor 2 for both ends
+- $\frac{dM}{dt} = -2k_eMP$: monomer consumed by elongation
+
+Conservation gives $M = M₀ - N$, reducing it to two equations:
+
+$$\frac{dP}{dt} = k_fN$$
+$$\frac{dN}{dt} = 2k_e(M₀ - N)P$$
+
+---
+
+### The Key Result: Exponential Amplification
+
+In the early phase where monomer is not yet depleted ($M ≈ M₀$):
+
+$$\frac{dP}{dt} = k_fN$$
+$$\frac{dN}{dt} ≈ 2k_eM₀P$$
+
+Differentiate the first and substitute the second:
+
+$$\frac{d^2P}{dt^2} = k_f\frac{dN}{dt} = 2k_ek_fM₀P$$
+
+This is exponential growth with characteristic amplification rate:
+
+$$κ = \sqrt{2k_ek_fM₀}$$
+
+So $P(t) \sim sinh(κt)$ (hyperbolic sine, since you have both growing and decaying modes with initial conditions).
+
+This is why fragmentation is so critical — it's not additive, it's multiplicative. Fragmentation generates new ends → those ends elongate → longer fibrils fragment more → more ends. The $κ$ couples both constants: you can't get fast amplification with just fast elongation or just fast fragmentation alone.
+
+---
+
+### Steady-State Mean Fibril Length
+
+From $\frac{dL}{dt} = \frac{dN}{Pdt} - \frac{NdP}{P^2dt}$:
+
+$\frac{dL}{dt} = 2k_eM - k_fL²$
+
+At steady state: $L_{ss} = \sqrt{\frac{2k_eM}{k_f}}$
+
+This is the balance point — elongation drives fibrils longer, fragmentation keeps them shorter. Shaking faster (higher $k_f$) → shorter mean fibril length at steady state.
+
+---
+
+### Connection to Your Fitted Parameters
+
+Your current double-sigmoidal parameters map onto this framework:
+
+|   Model param   |               Mechanistic meaning                |
+| --- | --- |
+| $b_1$ (inflection) | Related to $1/κ$ and initial seed concentration $P₀$ |
+| $a_1$ (steepness)  | Related to $κ = \sqrt{2k_ek_fM₀}$                   |
+| $S_1$ (plateau)    | Related to $M₀$ (total convertible monomer)        |
+
+The lag time tlag scales as $t_{lag} ~ \frac{1}{κ\log(P₀^{-1})}$ — so it's sensitive to both rate constants and seeding.
+
+---
+
+### Implementation in R
+
+You can fit this mechanistically using deSolve:
+
+```{r, eval=FALSE}
+library(deSolve)
+
+fibril_odes <- function(t, state, parms) {
+M <- state["M"]; P <- state["P"]; N <- state["N"]
+k_e <- parms["k_e"]; k_f <- parms["k_f"]
+
+dP <- k_f * N
+dN <- 2 * k_e * M * P
+dM <- -2 * k_e * M * P
+
+list(c(dM, dP, dN))
+}
+
+## Initial conditions: M0 = total monomer, P0/N0 from seed
+state0 <- c(M = M0, P = P0_seed, N = N0_seed)
+parms  <- c(k_e = 0.01, k_f = 0.001)
+
+out <- ode(y = state0, times = time_vec, func = fibril_odes, parms = parms)
+```
+
+Fluorescence is proportional to N(t), so you'd fit by minimizing the residuals between N(t) and your observed RFU.
